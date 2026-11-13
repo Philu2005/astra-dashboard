@@ -1,0 +1,786 @@
+@import "tailwindcss";
+
+@theme {
+  --color-astra-purple: #4b46c8;
+  --color-astra-cyan: #7de3ff;
+  --color-layout-sidebar: #0f0f1b;
+  --color-layout-topbar: #131522;
+  --color-layout-divider: #212131;
+  --color-layout-hover: #1a1a2a;
+
+  --color-background: #070912;
+  --color-foreground: #ffffff;
+
+  --color-card: #131726;
+  --color-card-foreground: #ffffff;
+
+  --color-popover: #121423;
+  --color-popover-foreground: #ffffff;
+
+  --color-primary: #4b46c8;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #131625;
+  --color-secondary-foreground: #ffffff;
+
+  --color-muted: #171a2b;
+  --color-muted-foreground: #8d92a8;
+
+  --color-accent: #4b46c8;
+  --color-accent-foreground: #ffffff;
+
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: #2a2f45;
+  --color-input: #2a2f45;
+  --color-ring: #4b46c8;
+
+  --radius-xl: 1.5rem;
+  --radius-lg: 1.25rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+  
+  --shadow-astra: 0 22px 45px -36px rgba(0, 0, 0, 0.92), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  --shadow-astra-glow: 0 0 24px -14px rgba(125, 227, 255, 0.45), 0 0 36px -18px rgba(75, 70, 200, 0.7);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-[#070912] text-foreground font-sans antialiased selection:bg-astra-purple/30;
+    background-image: radial-gradient(circle at 82% 0%, rgba(75, 70, 200, 0.28) 0%, rgba(75, 70, 200, 0) 33%), linear-gradient(180deg, #11142a 0%, #0b0e1c 28%, #080a14 100%);
+    color: #f5f7ff;
+  }
+}
+
+@keyframes astra-float {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes astra-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate3d(18px, -12px, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.65;
+  }
+}
+
+@keyframes astra-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes astra-wave {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(14deg);
+  }
+  20% {
+    transform: rotate(-10deg);
+  }
+  30% {
+    transform: rotate(13deg);
+  }
+  40% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes astra-orbit {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(10px, -8px, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes astra-loader-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes astra-loader-progress {
+  0% {
+    transform: translateX(-110%);
+  }
+  50% {
+    transform: translateX(40%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes astra-hero-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-5deg);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(4deg);
+  }
+}
+
+@keyframes astra-chart-draw {
+  0% {
+    stroke-dashoffset: 420;
+    opacity: 0.2;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+}
+
+@keyframes astra-chart-point {
+  0%,
+  18% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  34% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.82;
+  }
+}
+
+@keyframes astra-chart-impulse {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.95;
+  }
+  82% {
+    transform: translateX(342px);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(342px);
+    opacity: 0;
+  }
+}
+
+@keyframes astra-scan {
+  0% {
+    transform: translateY(-115%);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.9;
+  }
+  80% {
+    transform: translateY(126%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(126%);
+    opacity: 0;
+  }
+}
+
+@keyframes astra-threat {
+  0%,
+  45% {
+    opacity: 0.35;
+    transform: translateY(7px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0.88;
+    transform: translateY(0);
+  }
+}
+
+@keyframes astra-blocked {
+  0%,
+  56% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+}
+
+@keyframes astra-network-shift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-6px, 4px, 0);
+  }
+}
+
+@keyframes astra-network-line {
+  0%,
+  25% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.78;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes astra-network-impulse {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    transform: translate(188px, 82px);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(188px, 82px);
+    opacity: 0;
+  }
+}
+
+@keyframes astra-ticket-progress {
+  0% {
+    width: 26%;
+  }
+  55% {
+    width: 62%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes astra-module-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+
+.astra-chart-line {
+  fill: none;
+  stroke: url(#astra-analytics-gradient);
+  stroke-width: 2.6;
+  stroke-dasharray: 420;
+  stroke-dashoffset: 420;
+  animation: astra-chart-draw 3.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.astra-chart-point {
+  fill: #7de3ff;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: astra-chart-point 2.8s ease-in-out infinite;
+}
+
+.astra-chart-pulse {
+  fill: #a855f7;
+  filter: drop-shadow(0 0 7px rgba(168, 85, 247, 0.8));
+  animation: astra-chart-impulse 3.8s ease-in-out infinite;
+}
+
+.astra-scan-beam {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 0;
+  height: 36px;
+  background: linear-gradient(180deg, rgba(125, 227, 255, 0) 0%, rgba(125, 227, 255, 0.3) 48%, rgba(125, 227, 255, 0) 100%);
+  filter: blur(0.4px);
+  animation: astra-scan 3.8s ease-in-out infinite;
+}
+
+.astra-threat-detected {
+  animation: astra-threat 3.8s ease-in-out infinite;
+}
+
+.astra-threat-blocked {
+  animation: astra-blocked 3.8s ease-in-out infinite;
+}
+
+.astra-network-field {
+  animation: astra-network-shift 6.6s ease-in-out infinite;
+}
+
+.astra-network-node {
+  fill: #91e8ff;
+  filter: drop-shadow(0 0 8px rgba(125, 227, 255, 0.65));
+}
+
+.astra-network-line {
+  stroke: rgba(154, 174, 255, 0.72);
+  stroke-width: 1.4;
+  animation: astra-network-line 3.4s ease-in-out infinite;
+}
+
+.astra-network-impulse {
+  fill: #f1d1ff;
+  filter: drop-shadow(0 0 9px rgba(241, 209, 255, 0.85));
+  animation: astra-network-impulse 3.4s ease-in-out infinite;
+}
+
+.astra-ticket-progress {
+  animation: astra-ticket-progress 3.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.astra-module-card {
+  animation: astra-module-float 3.3s ease-in-out infinite;
+}
+
+@keyframes astra-hero-scene-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(18px, 0, 0) scale(0.97);
+    filter: blur(2px);
+  }
+  60% {
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes astra-hero-element-appear {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes astra-hero-level-once {
+  0% {
+    transform: scaleX(0.1);
+  }
+  100% {
+    transform: scaleX(0.86);
+  }
+}
+
+@keyframes astra-hero-shimmer {
+  0% {
+    transform: translateX(-100%) rotate(-12deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(-12deg);
+  }
+}
+
+@keyframes astra-hero-cursor-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(125, 227, 255, 0.25), 0 0 16px 4px rgba(75, 70, 200, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 12px 3px rgba(125, 227, 255, 0.4), 0 0 22px 6px rgba(75, 70, 200, 0.25);
+  }
+}
+
+@keyframes astra-hero-cursor-click {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.astra-hero-scene {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(44, 50, 72, 0.9);
+  background:
+    radial-gradient(circle at 16% 10%, rgba(125, 227, 255, 0.08) 0%, rgba(125, 227, 255, 0) 40%),
+    radial-gradient(circle at 85% 85%, rgba(75, 70, 200, 0.06) 0%, rgba(75, 70, 200, 0) 40%),
+    linear-gradient(180deg, #141728 0%, #121524 100%);
+  padding: 1rem;
+  opacity: 0;
+  transform: translate3d(18px, 0, 0) scale(0.97);
+  filter: blur(2px);
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 850ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 850ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.astra-hero-scene-active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0px);
+  pointer-events: auto;
+  animation: astra-hero-scene-enter 850ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 640px) {
+  .astra-hero-scene {
+    padding: 1.25rem;
+  }
+}
+
+.astra-hero-element {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  will-change: transform, opacity;
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.astra-hero-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2c3248;
+  background: linear-gradient(180deg, #141728 0%, #121524 100%);
+  box-shadow:
+    0 22px 45px -36px rgba(0, 0, 0, 0.92),
+    0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  transition: box-shadow 300ms ease;
+}
+
+.astra-hero-card-vivid {
+  border-color: #303752;
+  background: linear-gradient(180deg, #171b32 0%, #131626 100%);
+  box-shadow:
+    0 22px 45px -36px rgba(0, 0, 0, 0.92),
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 0 24px -14px rgba(75, 70, 200, 0.15);
+}
+
+.astra-hero-card-soft {
+  border-color: #2c3248;
+  background: linear-gradient(180deg, #131625 0%, #111422 100%);
+}
+
+.astra-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid #303752;
+  background: #111527;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.61rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.astra-hero-status-positive {
+  border-color: rgba(88, 190, 164, 0.4);
+  background: #0f2e32;
+  color: #8ee7ff;
+}
+
+.astra-hero-status-neutral {
+  border-color: #303752;
+  color: #b9c8ef;
+}
+
+.astra-hero-card-row {
+  transition: background-color 200ms ease;
+}
+
+.astra-hero-scene-active .astra-hero-element {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  animation: astra-hero-element-appear 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.astra-hero-step-1 {
+  transition-delay: 90ms;
+  animation-delay: 90ms;
+}
+
+.astra-hero-step-2 {
+  transition-delay: 180ms;
+  animation-delay: 180ms;
+}
+
+.astra-hero-step-3 {
+  transition-delay: 270ms;
+  animation-delay: 270ms;
+}
+
+.astra-hero-step-4 {
+  transition-delay: 360ms;
+  animation-delay: 360ms;
+}
+
+.astra-hero-step-5 {
+  transition-delay: 450ms;
+  animation-delay: 450ms;
+}
+
+.astra-hero-step-6 {
+  transition-delay: 540ms;
+  animation-delay: 540ms;
+}
+
+.astra-hero-step-7 {
+  transition-delay: 620ms;
+  animation-delay: 620ms;
+}
+
+.astra-hero-config-panel {
+  position: relative;
+  --astra-pointer-x: -76px;
+  --astra-pointer-y: -34px;
+  --astra-pointer-opacity: 0;
+  --astra-pointer-scale: 0.92;
+  --astra-pointer-click: 0;
+}
+
+.astra-hero-pointer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: var(--astra-pointer-opacity);
+  transform: translate3d(var(--astra-pointer-x), var(--astra-pointer-y), 0) scale(var(--astra-pointer-scale));
+  transform-origin: 0 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 10px rgba(125, 227, 255, 0.35)) drop-shadow(0 0 3px rgba(75, 70, 200, 0.5));
+}
+
+.astra-hero-pointer svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.astra-hero-cursor-ring {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(125, 227, 255, 0.3);
+  pointer-events: none;
+  opacity: var(--astra-pointer-opacity);
+  transform: translate3d(var(--astra-pointer-x), var(--astra-pointer-y), 0) scale(calc(var(--astra-pointer-scale) * 1.1));
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+  animation: astra-hero-cursor-pulse 2s ease-in-out infinite;
+}
+
+.astra-hero-cursor-click-ring {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(125, 227, 255, 0.6);
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.astra-hero-cursor-click-ring.astra-hero-cursor-clicking {
+  animation: astra-hero-cursor-click 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.astra-hero-toggle-track {
+  position: relative;
+  background-color: #263157;
+  border: 1px solid rgba(114, 130, 183, 0.28);
+  border-radius: 9999px;
+  overflow: visible;
+  box-shadow: inset 0 0 0 1px rgba(114, 130, 183, 0.18);
+  transition:
+    background-color 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.astra-hero-toggle-track-on {
+  background-color: #244e62;
+  border-color: rgba(125, 227, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(125, 227, 255, 0.42), 0 0 0 2px rgba(125, 227, 255, 0.12);
+}
+
+.astra-hero-toggle {
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 0 1px rgba(169, 227, 255, 0.35), 0 4px 10px -5px rgba(125, 227, 255, 0.7);
+}
+
+.astra-hero-toggle-on {
+  transform: translate3d(18px, 0, 0);
+  background-color: #d6f8ff;
+  box-shadow: 0 0 0 1px rgba(216, 248, 255, 0.62), 0 6px 14px -8px rgba(125, 227, 255, 0.8);
+}
+
+.astra-hero-level-progress {
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0.1);
+  will-change: transform;
+}
+
+.astra-hero-paused .astra-hero-scene,
+.astra-hero-paused .astra-hero-element,
+.astra-hero-paused .astra-hero-pointer,
+.astra-hero-paused .astra-hero-cursor-ring,
+.astra-hero-paused .astra-hero-toggle,
+.astra-hero-paused .astra-hero-toggle-track,
+.astra-hero-paused .astra-hero-level-progress,
+.astra-hero-paused .astra-hero-indicator {
+  animation-play-state: paused;
+}
+
+.astra-hero-indicator {
+  height: 8px;
+  width: 8px;
+  border-radius: 9999px;
+  border: 1px solid #4a557d;
+  background: #333e66;
+  opacity: 0.8;
+  transform: translateZ(0);
+  transition:
+    background-color 360ms ease,
+    border-color 360ms ease,
+    opacity 360ms ease,
+    box-shadow 360ms ease,
+    transform 360ms ease;
+}
+
+.astra-hero-indicator-active {
+  border-color: #8fd6ff;
+  background: linear-gradient(135deg, #a3ebff, #8fd6ff);
+  opacity: 1;
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px rgba(143, 214, 255, 0.15), 0 0 8px 1px rgba(125, 227, 255, 0.2);
+}
+
+.astra-hero-scene-5.astra-hero-scene-active .astra-hero-level-progress {
+  animation: astra-hero-level-once 1500ms cubic-bezier(0.22, 1, 0.36, 1) 240ms both;
+}
+
+.astra-hero-stat-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.astra-hero-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(125, 227, 255, 0.2);
+  background: linear-gradient(160deg, #1f2338 0%, #161a2e 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.astra-hero-icon-container-vivid {
+  background: linear-gradient(160deg, #4b46c8 0%, #302d91 100%);
+  border-color: rgba(125, 227, 255, 0.35);
+  box-shadow: 0 0 20px rgba(75, 70, 200, 0.4), inset 0 0 12px rgba(125, 227, 255, 0.15);
+}
+
+.astra-hero-inner-panel {
+  border-radius: 0.5rem;
+  border: 1px solid #303752;
+  background: #111527;
+}
+
+[data-reduced-motion='true'] .astra-hero-scene,
+[data-reduced-motion='true'] .astra-hero-element,
+[data-reduced-motion='true'] .astra-hero-pointer,
+[data-reduced-motion='true'] .astra-hero-cursor-ring,
+[data-reduced-motion='true'] .astra-hero-toggle,
+[data-reduced-motion='true'] .astra-hero-toggle-track,
+[data-reduced-motion='true'] .astra-hero-level-progress,
+[data-reduced-motion='true'] .astra-hero-indicator {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
