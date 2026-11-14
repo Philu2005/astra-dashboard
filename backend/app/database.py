@@ -108,14 +108,25 @@ async def init_tables() -> None:
                     subject VARCHAR(200) NOT NULL,
                     category VARCHAR(50) NOT NULL,
                     status ENUM('open','in_progress','resolved','closed') NOT NULL DEFAULT 'open',
+                    priority ENUM('low','normal','high','critical') NOT NULL DEFAULT 'normal',
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     closed_at DATETIME NULL,
                     INDEX idx_user (user_id),
                     INDEX idx_status (status),
+                    INDEX idx_priority (priority),
                     INDEX idx_updated (updated_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+
+            # Für bestehende Installationen: Spalte priority idempotent ergänzen (MySQL 8+ unterstützt IF NOT EXISTS)
+            await cur.execute(
+                """
+                ALTER TABLE support_tickets
+                ADD COLUMN IF NOT EXISTS priority ENUM('low','normal','high','critical') NOT NULL DEFAULT 'normal',
+                ADD INDEX IF NOT EXISTS idx_priority (priority)
+                """
+            )
 
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS support_ticket_messages (

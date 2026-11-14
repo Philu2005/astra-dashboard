@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, constr
 
 
 TicketStatus = Literal["open", "in_progress", "resolved", "closed"]
+TicketPriority = Literal["low", "normal", "high", "critical"]
 
 
 class TicketBase(BaseModel):
@@ -28,6 +29,7 @@ class TicketSummary(BaseModel):
     subject: str
     category: str
     status: TicketStatus
+    priority: TicketPriority = Field(default="normal")
     created_at: str
     updated_at: str
 
@@ -53,10 +55,39 @@ class TicketDetail(BaseModel):
     subject: str
     category: str
     status: TicketStatus
+    priority: TicketPriority = Field(default="normal")
     created_at: str
     updated_at: str
     closed_at: Optional[str] = None
     messages: List[Message] = Field(default_factory=list)
+
+
+class TicketUpdatePriority(BaseModel):
+    priority: TicketPriority
+
+
+class UserInfo(BaseModel):
+    user_id: str
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    account_created_at: Optional[str] = None
+    total_tickets: int
+    open_tickets: int
+    resolved_tickets: int
+    closed_tickets: int
+    last_support_activity: Optional[str] = None
+
+
+class UserHistoryItem(BaseModel):
+    id: int
+    ticket_number: str
+    subject: str
+    category: str
+    status: TicketStatus
+    priority: TicketPriority
+    created_at: str
+    updated_at: str
 
 
 class TicketCounters(BaseModel):

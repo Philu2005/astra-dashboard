@@ -13,6 +13,9 @@ from .schemas import (
     MessageCreate,
     TicketUpdateStatus,
     TicketCounters,
+    TicketUpdatePriority,
+    UserInfo,
+    UserHistoryItem,
 )
 
 
@@ -50,7 +53,7 @@ async def list_my_tickets(request: Request, offset: int = 0, limit: int = 50):
     rows = await service.list_user_tickets(session.user_id, offset=offset, limit=limit)
     return [
         TicketSummary(
-            id=r[0], ticket_number=r[1], user_id=r[2], user_name=r[3], subject=r[4], category=r[5], status=r[6], created_at=r[7], updated_at=r[8]
+            id=r[0], ticket_number=r[1], user_id=r[2], user_name=r[3], subject=r[4], category=r[5], status=r[6], priority=r[7], created_at=r[8], updated_at=r[9]
         )
         for r in rows
     ]
@@ -126,6 +129,7 @@ async def admin_list_tickets(
     request: Request,
     status: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
+    priority: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     offset: int = 0,
     limit: int = 50,
@@ -133,10 +137,10 @@ async def admin_list_tickets(
     session = await _require_session(request)
     if not _is_admin(session.user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
-    rows = await service.list_all_tickets(status=status, category=category, search=search, offset=offset, limit=limit)
+    rows = await service.list_all_tickets(status=status, category=category, search=search, offset=offset, limit=limit, priority=priority)
     return [
         TicketSummary(
-            id=r[0], ticket_number=r[1], user_id=r[2], user_name=r[3], subject=r[4], category=r[5], status=r[6], created_at=r[7], updated_at=r[8]
+            id=r[0], ticket_number=r[1], user_id=r[2], user_name=r[3], subject=r[4], category=r[5], status=r[6], priority=r[7], created_at=r[8], updated_at=r[9]
         )
         for r in rows
     ]
@@ -154,3 +158,72 @@ async def admin_set_status(request: Request, ticket_id: int, payload: TicketUpda
     if not detail:
         raise HTTPException(status_code=404, detail="Ticket not found")
     return TicketDetail(**detail)
+
+
+@router.post("/admin/tickets/{ticket_id}/priority", response_model=TicketDetail)
+async def admin_set_priority(request: Request, ticket_id: int, payload: TicketUpdatePriority):
+    session = await _require_session(request)
+    if not _is_admin(session.user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if payload.priority not in ("low", "normal", "high", "critical"):
+        raise HTTPException(status_code=400, detail="Invalid priority")
+    await service.set_priority(ticket_id, payload.priority)
+    detail = await service.get_ticket_detail(ticket_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return TicketDetail(**detail)
+
+
+@router.delete("/admin/tickets/{ticket_id}")
+async def admin_delete_ticket(request: Request, ticket_id: int):
+    session = await _require_session(request)
+    if not _is_admin(session.user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    owner = await service.get_ticket_owner(ticket_id)
+    if owner is None:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    await service.delete_ticket(ticket_id)
+    return {"ok": True}
+
+
+@router.get("/admin/tickets/{ticket_id}/user-info", response_model=UserInfo)
+async def admin_user_info(request: Request, ticket_id: int):
+    session = await _require_session(request)
+    if not _is_admin(session.user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    detail = await service.get_ticket_detail(ticket_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    user_id = detail["user_id"]
+    profile = await service.get_user_profile(user_id)
+    stats = await service.get_user_ticket_stats(user_id)
+    return UserInfo(
+        user_id=user_id,
+        username=profile.get("username"),
+        display_name=profile.get("display_name"),
+        avatar_url=profile.get("avatar_url"),
+        account_created_at=profile.get("account_created_at"),
+        total_tickets=stats["total"],
+        open_tickets=stats["open"],
+        resolved_tickets=stats["resolved"],
+        closed_tickets=stats["closed"],
+        last_support_activity=stats["last_support_activity"],
+    )
+
+
+@router.get("/admin/tickets/{ticket_id}/user-history", response_model=list[UserHistoryItem])
+async def admin_user_history(request: Request, ticket_id: int):
+    session = await _require_session(request)
+    if not _is_admin(session.user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    detail = await service.get_ticket_detail(ticket_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    user_id = detail["user_id"]
+    rows = await service.list_user_history(user_id=user_id, exclude_ticket_id=ticket_id)
+    return [
+        UserHistoryItem(
+            id=r[0], ticket_number=r[1], subject=r[2], category=r[3], status=r[4], priority=r[5], created_at=r[6], updated_at=r[7]
+        )
+        for r in rows
+    ]

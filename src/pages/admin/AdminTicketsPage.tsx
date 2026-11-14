@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supportApi } from '@/services/support-api';
-import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary } from '@/types/support';
+import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary, TicketPriority, UserHistoryItem, UserInfo } from '@/types/support';
 import { SUPPORT_CATEGORIES } from '@/types/support';
 import { cn } from '@/lib/utils';
 
@@ -25,13 +25,17 @@ export const AdminTicketsPage: React.FC = () => {
   const [detail, setDetail] = useState<TicketDetail | null>(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | ''>('');
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [userHistory, setUserHistory] = useState<UserHistoryItem[] | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     try {
       setLoadingList(true);
       const [c, list] = await Promise.all([
         supportApi.counters(),
-        supportApi.listAll({ status: status || undefined, category: category || undefined, search: search || undefined, limit: 100 }),
+        supportApi.listAll({ status: status || undefined, category: category || undefined, priority: priorityFilter || undefined, search: search || undefined, limit: 100 }),
       ]);
       setCounters(c);
       setTickets(list);
@@ -55,6 +59,11 @@ export const AdminTicketsPage: React.FC = () => {
     supportApi.getTicket(selected.id)
       .then((d) => { if (mounted) setDetail(d); })
       .catch(() => { if (mounted) setDetail(null); });
+    // Nutzerinfo & Historie laden
+    setUserInfo(null);
+    setUserHistory(null);
+    supportApi.getUserInfoForTicket(selected.id).then((info) => { if (mounted) setUserInfo(info); }).catch(() => {});
+    supportApi.getUserHistoryForTicket(selected.id).then((hist) => { if (mounted) setUserHistory(hist); }).catch(() => {});
     return () => { mounted = false };
   }, [selected]);
 
@@ -68,6 +77,32 @@ export const AdminTicketsPage: React.FC = () => {
       setCounters(await supportApi.counters());
     } catch (e: any) {
       setError(e.message || 'Status konnte nicht gesetzt werden');
+    }
+  };
+
+  const handleSetPriority = async (ticketId: number, newPriority: TicketPriority) => {
+    try {
+      const updated = await supportApi.setPriority(ticketId, newPriority);
+      setDetail(updated);
+      setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, priority: updated.priority, updated_at: updated.updated_at } : t)));
+    } catch (e: any) {
+      setError(e.message || 'Priorität konnte nicht gesetzt werden');
+    }
+  };
+
+  const handleDelete = async (ticketId: number) => {
+    if (!confirm('Ticket wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+    try {
+      setDeleting(true);
+      await supportApi.deleteTicket(ticketId);
+      setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+      setDetail(null);
+      setSelected(null);
+      setCounters(await supportApi.counters());
+    } catch (e: any) {
+      setError(e.message || 'Ticket konnte nicht gelöscht werden');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -124,7 +159,7 @@ export const AdminTicketsPage: React.FC = () => {
               <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Suche</label>
               <input value={search} onChange={(e) => setSearch(e.target.value)} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" placeholder="Ticketnummer, Nutzer, Betreff" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Status</label>
                 <select value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | '')} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
@@ -142,10 +177,20 @@ export const AdminTicketsPage: React.FC = () => {
                   {SUPPORT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Priorität</label>
+                <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | '')} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                  <option value="">Alle</option>
+                  <option value="low">low</option>
+                  <option value="normal">normal</option>
+                  <option value="high">high</option>
+                  <option value="critical">critical</option>
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-3 pt-1">
               <button className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200 bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]">Anwenden</button>
-              <button type="button" onClick={() => { setSearch(''); setStatus(''); setCategory(''); }} className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200 bg-[#171a2b] border-[#2a2f45] text-[#d6dbf0]">Zurücksetzen</button>
+              <button type="button" onClick={() => { setSearch(''); setStatus(''); setCategory(''); setPriorityFilter(''); }} className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200 bg-[#171a2b] border-[#2a2f45] text-[#d6dbf0]">Zurücksetzen</button>
             </div>
           </form>
         </div>
@@ -165,12 +210,20 @@ export const AdminTicketsPage: React.FC = () => {
                       <p className="text-[#d6dbf0] font-medium truncate">{t.subject}</p>
                       <p className="text-[#9ca2bd] text-[0.78rem] truncate">{t.user_name} • {t.category}</p>
                     </div>
-                    <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border shrink-0',
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border',
                       t.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
                       t.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
                       t.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
                       t.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
                     )}>{t.status}</span>
+                      <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border',
+                        t.priority === 'low' && 'border-[#2f3a55] bg-[#0f162a] text-[#8aa2ff]',
+                        t.priority === 'normal' && 'border-[#2a2f45] bg-[#131625] text-[#cdd2ea]',
+                        t.priority === 'high' && 'border-amber-500/30 bg-amber-500/10 text-amber-400',
+                        t.priority === 'critical' && 'border-rose-500/30 bg-rose-500/10 text-rose-400'
+                      )}>{t.priority}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-[#8a90ad] text-[0.72rem] mt-1.5">
                     <span>#{t.ticket_number}</span>
@@ -203,12 +256,94 @@ export const AdminTicketsPage: React.FC = () => {
                     <p className="text-white font-semibold truncate">{detail.subject}</p>
                     <p className="text-[#9ca2bd] text-[0.85rem] truncate">#{detail.ticket_number} • {detail.user_name} • {detail.category}</p>
                   </div>
-                  <select value={detail.status} onChange={(e) => handleSetStatus(detail.id, e.target.value as TicketStatus)} className="h-9 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
-                    <option value="open">open</option>
-                    <option value="in_progress">in_progress</option>
-                    <option value="resolved">resolved</option>
-                    <option value="closed">closed</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select value={detail.priority} onChange={(e) => handleSetPriority(detail.id, e.target.value as TicketPriority)} className="h-9 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                      <option value="low">low</option>
+                      <option value="normal">normal</option>
+                      <option value="high">high</option>
+                      <option value="critical">critical</option>
+                    </select>
+                    <select value={detail.status} onChange={(e) => handleSetStatus(detail.id, e.target.value as TicketStatus)} className="h-9 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                      <option value="open">open</option>
+                      <option value="in_progress">in_progress</option>
+                      <option value="resolved">resolved</option>
+                      <option value="closed">closed</option>
+                    </select>
+                    <button onClick={() => handleDelete(detail.id)} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem]', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
+                  </div>
+                </div>
+
+                {/* Nutzerinfo */}
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[#8a90ad] text-[0.85rem]">Nutzerprofil</div>
+                    {userInfo ? <div className="text-[0.8rem] text-[#9ca2bd]">ID {userInfo.user_id}</div> : <div className="text-[0.8rem] text-[#8a90ad]">Laden…</div>}
+                  </div>
+                  {userInfo && (
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-[0.9rem]">
+                      <div className="col-span-2 flex items-center gap-3">
+                        {userInfo.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={userInfo.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-[#2a2f45]" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full border border-[#2a2f45] bg-[#131625]" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-white font-medium truncate">{userInfo.display_name || userInfo.username || 'Unbekannt'}</div>
+                          <div className="text-[#8a90ad] text-[0.8rem] truncate">{userInfo.username || '—'}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[#8a90ad] text-[0.8rem]">Tickets gesamt</div>
+                        <div className="text-white">{userInfo.total_tickets}</div>
+                      </div>
+                      <div>
+                        <div className="text-[#8a90ad] text-[0.8rem]">Offen</div>
+                        <div className="text-white">{userInfo.open_tickets}</div>
+                      </div>
+                      <div>
+                        <div className="text-[#8a90ad] text-[0.8rem]">Gelöst</div>
+                        <div className="text-white">{userInfo.resolved_tickets}</div>
+                      </div>
+                      <div>
+                        <div className="text-[#8a90ad] text-[0.8rem]">Geschlossen</div>
+                        <div className="text-white">{userInfo.closed_tickets}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="text-[#8a90ad] text-[0.8rem]">Letzte Aktivität</div>
+                        <div className="text-white">{userInfo.last_support_activity ? new Date(userInfo.last_support_activity).toLocaleString('de-DE') : '—'}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Nutzerhistorie */}
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3">
+                  <div className="text-[#8a90ad] text-[0.85rem] mb-2">Weitere Tickets des Nutzers</div>
+                  <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                    {!userHistory ? (
+                      <div className="text-[#8a90ad] text-[0.9rem]">Laden…</div>
+                    ) : userHistory.length === 0 ? (
+                      <div className="text-[#9ca2bd] text-[0.9rem]">Keine weiteren Tickets.</div>
+                    ) : (
+                      userHistory.map((h) => (
+                        <button key={h.id} onClick={() => setSelected({ ...selected!, id: h.id, ticket_number: h.ticket_number, user_id: selected!.user_id, user_name: selected!.user_name, subject: h.subject, category: h.category, status: h.status, priority: h.priority, created_at: h.created_at, updated_at: h.updated_at })} className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#131625]">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-[#d6dbf0] text-[0.9rem] truncate">{h.subject}</div>
+                              <div className="text-[#8a90ad] text-[0.75rem] truncate">#{h.ticket_number} • {h.category}</div>
+                            </div>
+                            <span className={cn('px-2 py-0.5 rounded-md text-[0.72rem] border',
+                              h.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
+                              h.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
+                              h.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+                              h.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
+                            )}>{h.status}</span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3 max-h-[36vh] overflow-y-auto pr-1">

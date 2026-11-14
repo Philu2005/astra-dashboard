@@ -1,4 +1,5 @@
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type TicketPriority = 'low' | 'normal' | 'high' | 'critical';
 
 export interface TicketSummary {
   id: number;
@@ -8,6 +9,7 @@ export interface TicketSummary {
   subject: string;
   category: string;
   status: TicketStatus;
+  priority: TicketPriority;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +43,30 @@ export interface TicketCounters {
   in_progress: number;
   resolved: number;
   closed: number;
+}
+
+export interface UserInfo {
+  user_id: string;
+  username?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  account_created_at?: string | null;
+  total_tickets: number;
+  open_tickets: number;
+  resolved_tickets: number;
+  closed_tickets: number;
+  last_support_activity?: string | null;
+}
+
+export interface UserHistoryItem {
+  id: number;
+  ticket_number: string;
+  subject: string;
+  category: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  created_at: string;
+  updated_at: string;
 }
 
 // Zentrale, vorgegebene Kategorien

@@ -60,6 +60,7 @@ export const SupportPage: React.FC = () => {
           subject: created.subject,
           category: created.category,
           status: created.status,
+          priority: created.priority,
           created_at: created.created_at,
           updated_at: created.updated_at,
         },

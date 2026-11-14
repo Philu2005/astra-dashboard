@@ -62,7 +62,7 @@ async def get_ticket_detail(ticket_id: int) -> Optional[dict[str, Any]]:
         async with conn.cursor() as cur:
             await cur.execute(
                 """
-                SELECT id, ticket_number, user_id, user_name, subject, category, status,
+                SELECT id, ticket_number, user_id, user_name, subject, category, status, priority,
                        DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
                        DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
                        IFNULL(DATE_FORMAT(closed_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'), NULL)
@@ -91,9 +91,10 @@ async def get_ticket_detail(ticket_id: int) -> Optional[dict[str, Any]]:
                 "subject": t[4],
                 "category": t[5],
                 "status": t[6],
-                "created_at": t[7],
-                "updated_at": t[8],
-                "closed_at": t[9],
+                "priority": t[7],
+                "created_at": t[8],
+                "updated_at": t[9],
+                "closed_at": t[10],
                 "messages": [
                     {
                         "id": m[0],
@@ -114,7 +115,7 @@ async def list_user_tickets(user_id: str, offset: int = 0, limit: int = 50) -> S
         async with conn.cursor() as cur:
             await cur.execute(
                 """
-                SELECT id, ticket_number, user_id, user_name, subject, category, status,
+                SELECT id, ticket_number, user_id, user_name, subject, category, status, priority,
                        DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
                        DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
                 FROM support_tickets
@@ -133,6 +134,7 @@ async def list_all_tickets(
     search: Optional[str] = None,
     offset: int = 0,
     limit: int = 50,
+    priority: Optional[str] = None,
 ) -> Sequence[tuple]:
     pool = get_pool()
     async with pool.acquire() as conn:
@@ -145,13 +147,16 @@ async def list_all_tickets(
             if category:
                 where.append("category=%s")
                 params.append(category)
+            if priority:
+                where.append("priority=%s")
+                params.append(priority)
             if search:
                 where.append("(ticket_number LIKE %s OR user_name LIKE %s OR subject LIKE %s)")
                 like = f"%{search}%"
                 params.extend([like, like, like])
             where_sql = (" WHERE " + " AND ".join(where)) if where else ""
             sql = f"""
-                SELECT id, ticket_number, user_id, user_name, subject, category, status,
+                SELECT id, ticket_number, user_id, user_name, subject, category, status, priority,
                        DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
                        DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
                 FROM support_tickets
@@ -192,6 +197,120 @@ async def set_status(ticket_id: int, status: str) -> None:
                     "UPDATE support_tickets SET status=%s, closed_at=NULL, updated_at=NOW() WHERE id=%s",
                     (status, ticket_id),
                 )
+
+
+async def set_priority(ticket_id: int, priority: str) -> None:
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE support_tickets SET priority=%s, updated_at=NOW() WHERE id=%s",
+                (priority, ticket_id),
+            )
+
+
+async def delete_ticket(ticket_id: int) -> None:
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            # FK sorgt für ON DELETE CASCADE der Messages
+            await cur.execute("DELETE FROM support_tickets WHERE id=%s", (ticket_id,))
+
+
+async def get_user_profile(user_id: str) -> dict[str, Any]:
+    """Holt zuletzt bekannte Profilinfos aus dashboard_sessions (falls vorhanden)."""
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT username, display_name, avatar_url, DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                       DATE_FORMAT(last_active,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
+                FROM dashboard_sessions
+                WHERE user_id=%s
+                ORDER BY last_active DESC
+                LIMIT 1
+                """,
+                (user_id,),
+            )
+            row = await cur.fetchone()
+            if not row:
+                return {
+                    "user_id": user_id,
+                    "username": None,
+                    "display_name": None,
+                    "avatar_url": None,
+                    "account_created_at": None,
+                    "last_active": None,
+                }
+            return {
+                "user_id": user_id,
+                "username": row[0],
+                "display_name": row[1],
+                "avatar_url": row[2],
+                # Wir haben kein Discord-Account-Erstellungsdatum gespeichert → None
+                "account_created_at": None,
+                "last_active": row[4],
+            }
+
+
+async def get_user_ticket_stats(user_id: str) -> dict[str, Any]:
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT COUNT(*) FROM support_tickets WHERE user_id=%s", (user_id,))
+            total = int((await cur.fetchone())[0])
+            await cur.execute("SELECT COUNT(*) FROM support_tickets WHERE user_id=%s AND status='open'", (user_id,))
+            open_cnt = int((await cur.fetchone())[0])
+            await cur.execute("SELECT COUNT(*) FROM support_tickets WHERE user_id=%s AND status='resolved'", (user_id,))
+            resolved_cnt = int((await cur.fetchone())[0])
+            await cur.execute("SELECT COUNT(*) FROM support_tickets WHERE user_id=%s AND status='closed'", (user_id,))
+            closed_cnt = int((await cur.fetchone())[0])
+            await cur.execute(
+                "SELECT DATE_FORMAT(MAX(updated_at),'%%Y-%%m-%%dT%%H:%%i:%%sZ') FROM support_tickets WHERE user_id=%s",
+                (user_id,),
+            )
+            last_support_activity = (await cur.fetchone())[0]
+            return {
+                "total": total,
+                "open": open_cnt,
+                "resolved": resolved_cnt,
+                "closed": closed_cnt,
+                "last_support_activity": last_support_activity,
+            }
+
+
+async def list_user_history(user_id: str, exclude_ticket_id: Optional[int] = None) -> Sequence[tuple]:
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            if exclude_ticket_id is None:
+                await cur.execute(
+                    """
+                    SELECT id, ticket_number, subject, category, status, priority,
+                           DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                           DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
+                    FROM support_tickets
+                    WHERE user_id=%s
+                    ORDER BY updated_at DESC
+                    LIMIT 200
+                    """,
+                    (user_id,),
+                )
+            else:
+                await cur.execute(
+                    """
+                    SELECT id, ticket_number, subject, category, status, priority,
+                           DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                           DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
+                    FROM support_tickets
+                    WHERE user_id=%s AND id<>%s
+                    ORDER BY updated_at DESC
+                    LIMIT 200
+                    """,
+                    (user_id, exclude_ticket_id),
+                )
+            return await cur.fetchall()
 
 
 async def counters() -> dict[str, int]:

@@ -63,6 +63,19 @@ export const apiClient = {
     return response;
   },
 
+  async delete(endpoint: string) {
+    assertNoDoubleApiPrefix(endpoint);
+    const base = resolveBase(endpoint);
+    const response = await fetch(`${base}${endpoint}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    return response;
+  },
+
   getLoginUrl() {
     // In production/test the frontend and backend share the same origin
     // (Apache reverse-proxies /auth/* to the backend), so a relative path
