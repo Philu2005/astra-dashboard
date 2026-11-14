@@ -27,12 +27,18 @@ export const StaticInfoPage = ({ title, description, showHomeActions = false }: 
           <p className="mt-4 text-[#c2c8df] text-[1.05rem] sm:text-[1.15rem] leading-relaxed max-w-2xl">{description}</p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href="/dashboard" className="inline-flex items-center justify-center rounded-xl border border-[#6861e1] bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] px-5 py-2.5 text-sm font-semibold tracking-wide hover:scale-[1.01] transition-transform">
-              Dashboard öffnen
-            </a>
-            {showHomeActions && (
-              <a href="/" className="inline-flex items-center justify-center rounded-xl border border-layout-divider bg-layout-hover px-5 py-2.5 text-sm font-semibold tracking-wide hover:border-[#5e66a0] transition-colors">
-                Zur Homepage
+            {showHomeActions ? (
+              <>
+                <a href="/login" className="inline-flex items-center justify-center rounded-xl border border-[#6861e1] bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] px-5 py-2.5 text-sm font-semibold tracking-wide hover:scale-[1.01] transition-transform">
+                  Anmelden
+                </a>
+                <a href="/" className="inline-flex items-center justify-center rounded-xl border border-layout-divider bg-layout-hover px-5 py-2.5 text-sm font-semibold tracking-wide hover:border-[#5e66a0] transition-colors">
+                  Zur Homepage
+                </a>
+              </>
+            ) : (
+              <a href="/dashboard" className="inline-flex items-center justify-center rounded-xl border border-[#6861e1] bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] px-5 py-2.5 text-sm font-semibold tracking-wide hover:scale-[1.01] transition-transform">
+                Dashboard öffnen
               </a>
             )}
           </div>

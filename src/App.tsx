@@ -91,11 +91,11 @@ function App() {
 
     if (pathname === '/dashboard') {
       if (!authenticated) {
+        window.location.replace('/login');
         return (
           <StaticInfoPage
-            title="Nicht angemeldet"
-            description="Du musst dich anmelden, um auf das Dashboard zuzugreifen."
-            showHomeActions
+            title="Weiterleitung..."
+            description="Du wirst zur Anmeldung weitergeleitet."
           />
         );
       }
@@ -108,11 +108,11 @@ function App() {
 
     if (pathname === '/servers') {
       if (!authenticated) {
+        window.location.replace('/login');
         return (
           <StaticInfoPage
-            title="Nicht angemeldet"
-            description="Du musst dich anmelden, um auf die Serverliste zuzugreifen."
-            showHomeActions
+            title="Weiterleitung..."
+            description="Du wirst zur Anmeldung weitergeleitet."
           />
         );
       }
