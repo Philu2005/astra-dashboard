@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supportApi } from '@/services/support-api';
 import type { TicketSummary, TicketCreate, TicketDetail } from '@/types/support';
 import { SUPPORT_CATEGORIES } from '@/types/support';
@@ -24,6 +24,7 @@ export const SupportPage: React.FC = () => {
 
   const [form, setForm] = useState<TicketCreate>({ subject: '', category: SUPPORT_CATEGORIES[0], description: '' });
   const [formError, setFormError] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement | null>(null);
 
   // Polling neuer Nachrichten, solange in dieser Seite ein Ticket offen ist
   const getCurrentMessages = useCallback(() => detail?.messages ?? [], [detail]);
@@ -63,6 +64,24 @@ export const SupportPage: React.FC = () => {
       .finally(() => { if (mounted) setDetailLoading(false); });
     return () => { mounted = false };
   }, [selected]);
+
+  // Abgeleitete Daten: Aufteilung und Kennzahlen
+  const { openTickets, closedTickets, counters } = useMemo(() => {
+    const list = tickets ?? [];
+    const open = list.filter((t) => t.status !== 'closed');
+    const closed = list.filter((t) => t.status === 'closed');
+    return {
+      openTickets: open,
+      closedTickets: closed,
+      counters: {
+        total: list.length,
+        open: open.length,
+        closed: closed.length,
+        in_progress: list.filter((t) => t.status === 'in_progress').length,
+        resolved: list.filter((t) => t.status === 'resolved').length,
+      },
+    } as const;
+  }, [tickets]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,55 +162,78 @@ export const SupportPage: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1680px]">
-        <div className="mb-6">
-          <h1 className="text-white text-3xl font-bold">Wie können wir dir helfen?</h1>
-          <p className="text-[#9ca2bd] mt-1">Erstelle ein neues Ticket oder verwalte deine bisherigen Anfragen. Die Dokumentation findest du unter <a className="text-astra-cyan hover:underline" href="/docs">/docs</a>.</p>
+        {/* Hero / Header */}
+        <div className="mb-6 rounded-2xl border border-[#2a2f45] bg-[#0f1220] overflow-hidden shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+          <div className="relative px-6 py-6 md:px-8 md:py-7">
+            <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(1200px_300px_at_10%_-20%,rgba(125,227,255,0.12)_0%,rgba(125,227,255,0)_60%),radial-gradient(900px_220px_at_80%_-30%,rgba(75,70,200,0.18)_0%,rgba(75,70,200,0)_55%)]" />
+            <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-white text-3xl font-bold tracking-tight">Wie können wir dir helfen?</h1>
+                <p className="text-[#9ca2bd] mt-1 max-w-3xl">
+                  Unser Support antwortet in der Regel innerhalb weniger Minuten. Stelle ein Ticket ein oder verwalte deine laufenden Anfragen.
+                  Die Dokumentation findest du unter <a className="text-astra-cyan hover:underline" href="/docs">/docs</a>.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <button
+                  onClick={() => {
+                    setSelected(null);
+                    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200 bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]"
+                >
+                  Neues Ticket
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Kennzahlen */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 md:px-8 pb-6">
+            <StatCard label="Gesamt" value={counters.total} accent="cyan" loading={loading || loadingList} />
+            <StatCard label="Offen" value={counters.open} accent="purple" loading={loading || loadingList} />
+            <StatCard label="In Arbeit" value={counters.in_progress} accent="indigo" loading={loading || loadingList} />
+            <StatCard label="Geschlossen" value={counters.closed} accent="slate" loading={loading || loadingList} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1.4fr] gap-6 items-start">
           {/* Linke Spalte: eigene Tickets */}
           <div>
+            {/* Offen & in Arbeit */}
             <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
               <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
-                <h2 className="text-white font-semibold">Deine Tickets</h2>
-                {(loading || loadingList) && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
+                <h2 className="text-white font-semibold">Offene Tickets</h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-[0.8rem] text-[#8a90ad]">{openTickets.length}</span>
+                  {(loading || loadingList) && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
+                </div>
               </div>
               <div className="p-3">
-                {error && (
-                  <div className="mb-3 text-[0.9rem] text-red-400">{error}</div>
-                )}
-                {!loadingList && (tickets?.length ?? 0) === 0 && (
-                  <div className="p-6 text-center text-[#9ca2bd]">Du hast noch keine Support-Tickets erstellt.</div>
+                {error && <div className="mb-3 text-[0.9rem] text-red-400">{error}</div>}
+                {!loadingList && openTickets.length === 0 && (
+                  <div className="p-6 text-center text-[#9ca2bd]">Keine offenen Tickets.</div>
                 )}
                 <div className="space-y-2">
-                  {tickets?.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setSelected(t)}
-                      className={cn(
-                        "w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200",
-                        selected?.id === t.id
-                          ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]'
-                          : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]'
-                      )}
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-[#171a2b] flex items-center justify-center text-[#8a90ad] text-[0.76rem] font-mono">
-                        {t.ticket_number.slice(-4)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[0.95rem] text-[#d6dbf0] font-medium truncate">{t.subject}</p>
-                        <p className="text-[0.8rem] text-[#9ca2bd] truncate">{t.category} • Letzte Aktivität {new Date(t.updated_at).toLocaleString('de-DE')}</p>
-                      </div>
-                      <span className={cn(
-                        "px-2 py-1 rounded-md text-[0.72rem] border",
-                        t.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
-                        t.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
-                        t.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-                        t.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
-                      )}>
-                        {t.status}
-                      </span>
-                    </button>
+                  {openTickets.map((t) => (
+                    <TicketRow key={t.id} t={t} active={selected?.id === t.id} onClick={() => setSelected(t)} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Geschlossen */}
+            <div className="mt-6 rounded-2xl border border-[#2a2f45] bg-[#0f1220] shadow-[0_0_0_1px_rgba(104,97,225,0.04),0_30px_60px_-30px_rgba(0,0,0,0.45)]">
+              <div className="px-5 py-3 border-b border-[#212131] flex items-center justify-between">
+                <h3 className="text-white/90 font-semibold">Geschlossene Tickets</h3>
+                <span className="text-[0.8rem] text-[#8a90ad]">{closedTickets.length}</span>
+              </div>
+              <div className="p-3">
+                {!loadingList && closedTickets.length === 0 && (
+                  <div className="p-6 text-center text-[#9ca2bd]">Noch keine geschlossenen Tickets.</div>
+                )}
+                <div className="space-y-2">
+                  {closedTickets.map((t) => (
+                    <TicketRow key={t.id} t={t} active={selected?.id === t.id} onClick={() => setSelected(t)} subtle />
                   ))}
                 </div>
               </div>
@@ -201,7 +243,7 @@ export const SupportPage: React.FC = () => {
           {/* Rechte Spalte: Detail oder Formular */}
           <div className="min-w-[360px] sm:min-w-0">
             {!selected ? (
-              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+              <div ref={formRef} className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
                 <h2 className="text-white font-semibold mb-1">Neues Ticket</h2>
                 <p className="text-[#9ca2bd] text-[0.9rem] mb-4">Beschreibe dein Anliegen möglichst präzise, damit wir dir schneller helfen können.</p>
                 {formError && (
@@ -304,3 +346,66 @@ export const SupportPage: React.FC = () => {
 };
 
 export default SupportPage;
+
+// Kleine UI-Hilfskomponenten innerhalb dieser Datei, um Abhängigkeiten gering zu halten
+const StatCard: React.FC<{ label: string; value: number; accent?: 'cyan' | 'purple' | 'indigo' | 'slate'; loading?: boolean }> = ({ label, value, accent = 'slate', loading }) => {
+  const accentStyles = {
+    cyan: 'bg-[linear-gradient(180deg,rgba(125,227,255,0.12)_0%,rgba(125,227,255,0)_100%)] border-cyan-400/20',
+    purple: 'bg-[linear-gradient(180deg,rgba(75,70,200,0.12)_0%,rgba(75,70,200,0)_100%)] border-astra-purple/30',
+    indigo: 'bg-[linear-gradient(180deg,rgba(99,102,241,0.12)_0%,rgba(99,102,241,0)_100%)] border-indigo-400/20',
+    slate: 'bg-[linear-gradient(180deg,rgba(148,163,184,0.10)_0%,rgba(148,163,184,0)_100%)] border-slate-400/20',
+  } as const;
+  return (
+    <div className={cn('rounded-xl border p-3', accentStyles[accent])}>
+      <div className="text-[0.82rem] text-[#9ca2bd]">{label}</div>
+      <div className="mt-1 text-white text-2xl font-semibold tabular-nums">{loading ? '—' : value}</div>
+    </div>
+  );
+};
+
+const TicketRow: React.FC<{
+  t: TicketSummary;
+  active?: boolean;
+  subtle?: boolean;
+  onClick?: () => void;
+}> = ({ t, active, subtle, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200',
+        active
+          ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]'
+          : cn(
+              subtle
+                ? 'border-[#22263a] bg-[#0f1220] hover:bg-[#121626]'
+                : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]'
+            )
+      )}
+    >
+      <div className="w-10 h-10 rounded-lg bg-[#171a2b] flex items-center justify-center text-[#8a90ad] text-[0.76rem] font-mono">
+        {t.ticket_number.slice(-4)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <p className="text-[0.95rem] text-[#d6dbf0] font-medium truncate">{t.subject}</p>
+          <span className="text-[0.75rem] text-[#8a90ad] shrink-0">#{t.ticket_number}</span>
+        </div>
+        <p className="text-[0.8rem] text-[#9ca2bd] truncate">
+          {t.category} • Erstellt {new Date(t.created_at).toLocaleDateString('de-DE')} • Letzte Aktivität {new Date(t.updated_at).toLocaleString('de-DE')}
+        </p>
+      </div>
+      <span
+        className={cn(
+          'px-2 py-1 rounded-md text-[0.72rem] border shrink-0',
+          t.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
+          t.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
+          t.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+          t.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
+        )}
+      >
+        {t.status}
+      </span>
+    </button>
+  );
+};
