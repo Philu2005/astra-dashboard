@@ -51,8 +51,13 @@ export interface ServerRolesResponse {
   roles: ServerRole[];
 }
 
+export type BotStatusValue = 'online' | 'offline' | 'connecting' | 'unknown';
+
 export interface AstraStatusResponse {
   online: boolean;
+  status?: BotStatusValue;
+  last_heartbeat?: string | null;
+  stale_after_seconds?: number | null;
 }
 
 export interface ApiErrorResponse {

@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { appConfig } from '@/lib/app-config';
 import { AstraLogo } from '@/components/AstraLogo';
 import { useServerContext, iconColors } from '@/contexts/ServerContext';
+import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 
 const inviteUrl = appConfig.botInviteUrl;
 
@@ -63,6 +64,8 @@ export const Sidebar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') || '/' : '/';
   const { servers, selectedServer, selectServer } = useServerContext();
+  const botStatus = useBotStatus();
+  const sidebarStatusConfig = botStatusConfig[botStatus];
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -279,8 +282,8 @@ export const Sidebar = () => {
           <div className="flex items-center justify-between rounded-xl border border-layout-divider bg-layout-hover px-3 py-2.5 text-[11px] text-[#9ca2be]">
             <span className="font-semibold">v3.2.0</span>
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.75)]" />
-              <span className="font-medium text-[#c9cedf]">Astra ist online</span>
+              <div className={`w-2.5 h-2.5 rounded-full ${sidebarStatusConfig.dotColor}`} />
+              <span className="font-medium text-[#c9cedf]">{sidebarStatusConfig.labelShort || 'Lade\u2026'}</span>
             </div>
           </div>
         </div>
