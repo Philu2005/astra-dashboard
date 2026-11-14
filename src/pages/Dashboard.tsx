@@ -2,6 +2,8 @@ import React from 'react';
 import { StatCard } from '@/components/StatCard';
 import { QuickAccessCard } from '@/components/QuickAccessCard';
 import { AstraLogo } from '@/components/AstraLogo';
+import { serverApi } from '@/services/server-api';
+import { Loader2 } from 'lucide-react';
 import {
   Users,
   Layout,
@@ -52,7 +54,52 @@ const maxValue = 6000;
 const pointX = (index: number) => chartPadding.left + (chartInnerWidth / (commandData.length - 1)) * index;
 const pointY = (value: number) => chartPadding.top + ((maxValue - value) / maxValue) * chartInnerHeight;
 
+type BotStatus = 'loading' | 'online' | 'offline' | 'unknown';
+
+function useBotStatus(intervalMs = 15_000) {
+  const [status, setStatus] = React.useState<BotStatus>('loading');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    let pending = false;
+
+    const fetchStatus = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const data = await serverApi.getAstraStatus();
+        if (!cancelled) {
+          setStatus(data.online ? 'online' : 'offline');
+        }
+      } catch {
+        if (!cancelled) {
+          setStatus('unknown');
+        }
+      } finally {
+        pending = false;
+      }
+    };
+
+    fetchStatus();
+    const id = setInterval(fetchStatus, intervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [intervalMs]);
+
+  return status;
+}
+
+const statusConfig: Record<BotStatus, { label: string; bg: string; text: string; border: string }> = {
+  online:  { label: 'Online',    bg: 'bg-emerald-500/18', text: 'text-emerald-300', border: 'border-emerald-500/30' },
+  offline: { label: 'Offline',   bg: 'bg-red-500/18',     text: 'text-red-300',     border: 'border-red-500/30' },
+  unknown: { label: 'Unbekannt', bg: 'bg-gray-500/18',    text: 'text-gray-300',    border: 'border-gray-500/30' },
+  loading: { label: '',          bg: 'bg-gray-500/18',    text: 'text-gray-400',    border: 'border-gray-500/30' },
+};
+
 export const Dashboard = () => {
+  const botStatus = useBotStatus();
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(commandData.length - 1);
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(commandData.length - 1);
 
@@ -171,7 +218,15 @@ export const Dashboard = () => {
                  </div>
                </div>
                <div className="flex flex-col items-end gap-1">
-                  <span className="bg-emerald-500/18 text-emerald-300 text-[0.76rem] font-semibold px-2.5 py-1 rounded-full border border-emerald-500/30 uppercase tracking-[0.08em]">Online</span>
+                  {botStatus === 'loading' ? (
+                    <span className={`${statusConfig.loading.bg} ${statusConfig.loading.text} text-[0.76rem] font-semibold px-2.5 py-1 rounded-full border ${statusConfig.loading.border} uppercase tracking-[0.08em] flex items-center gap-1.5`}>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    </span>
+                  ) : (
+                    <span className={`${statusConfig[botStatus].bg} ${statusConfig[botStatus].text} text-[0.76rem] font-semibold px-2.5 py-1 rounded-full border ${statusConfig[botStatus].border} uppercase tracking-[0.08em]`}>
+                      {statusConfig[botStatus].label}
+                    </span>
+                  )}
                </div>
              </div>
              <div className="h-px bg-[#2e3449] mt-0.5" />
