@@ -277,7 +277,9 @@ export const Sidebar = () => {
             </p>
             <div className="space-y-1">
               <NavItem icon={Server} label="Meine Server" active={pathname === '/servers'} href="/servers" onClick={() => setIsOpen(false)} />
-              <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={() => setIsOpen(false)} />
+              {!isAdmin && (
+                <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={() => setIsOpen(false)} />
+              )}
               <NavItem icon={BookOpen} label="Dokumentation" href="/docs" onClick={() => setIsOpen(false)} />
               {isAdmin && (
                 <NavItem icon={FileText} label="Support-Tickets" active={pathname === '/dashboard/tickets'} href="/dashboard/tickets" onClick={() => setIsOpen(false)} />

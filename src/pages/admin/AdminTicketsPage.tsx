@@ -165,7 +165,7 @@ export const AdminTicketsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] h-full grid grid-cols-1 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr] gap-6 lg:grid-rows-[1fr] lg:min-h-0">
+      <div className={cn("mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] h-full grid grid-cols-1 gap-6 lg:grid-rows-[1fr] lg:min-h-0", selected ? "lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr]" : "lg:grid-cols-[320px_1fr] xl:grid-cols-[340px_1fr] 2xl:grid-cols-[360px_1fr]")}>
         {/* Linke Spalte: Kennzahlen + Filter */}
         <div className="space-y-5 lg:overflow-y-auto lg:h-full scrollbar-hide">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
@@ -283,6 +283,7 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
+        {selected && (
         <div className="lg:h-full lg:min-h-0 flex flex-col">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col lg:h-full lg:min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
             <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0 space-y-3">
@@ -295,9 +296,7 @@ export const AdminTicketsPage: React.FC = () => {
               </button>
               <h2 className="text-white font-semibold">Details</h2>
             </div>
-            {!selected ? (
-              <div className="p-5 text-[#9ca2bd]">Bitte ein Ticket aus der Liste auswählen.</div>
-            ) : !detail ? (
+            {!detail ? (
               <div className="p-5 text-[#8a90ad]">Laden…</div>
             ) : (
               <div className="flex flex-col flex-1 min-h-0">
@@ -436,6 +435,7 @@ export const AdminTicketsPage: React.FC = () => {
             )}
           </div>
         </div>
+        )}
       </div>
       <AstraConfirmDialog
         open={deleteDialogOpen}
