@@ -90,9 +90,13 @@ app.add_middleware(
 
 
 # API routers
+# Auth bleibt bewusst ohne /api-Prefix, da die bestehende Infrastruktur /auth/* direkt zum Backend proxied
 app.include_router(auth_router)
 app.include_router(servers_router)
-app.include_router(support_router)
+
+# Support-API wird unter /api/support/* bereitgestellt, damit der Frontend-Client
+# (Basis /api) konsistent darauf zugreifen kann und Apache /api/* → FastAPI weiterleitet
+app.include_router(support_router, prefix="/api")
 
 
 # Health check
