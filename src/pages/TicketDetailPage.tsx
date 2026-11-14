@@ -50,8 +50,10 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
 
   return (
     <DashboardLayout>
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6">
-        <button onClick={() => window.history.back()} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">← Zurück</button>
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1600px]">
+        <div className="flex items-center justify-between gap-3">
+          <button onClick={() => window.history.back()} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">← Zurück</button>
+        </div>
         <div className="mt-3 rounded-2xl border border-[#2a2f45] bg-[#131625]">
           <div className="px-5 py-4 border-b border-[#212131]">
             {loadingDetail ? (
@@ -59,7 +61,7 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
             ) : ticket ? (
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <h1 className="text-white font-semibold text-xl truncate">{ticket.subject}</h1>
+                  <h1 className="text-white font-semibold text-2xl truncate">{ticket.subject}</h1>
                   <p className="text-[#9ca2bd] text-[0.9rem] truncate">#{ticket.ticket_number} • {ticket.category}</p>
                 </div>
                 <span className={cn(
@@ -81,15 +83,17 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
           {ticket && (
             <div className="p-5 space-y-3">
               {ticket.messages.map((m) => (
-                <div key={m.id} className={cn(
-                  'rounded-xl border p-3',
-                  m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]'
-                )}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}</span>
-                    <span className="text-[0.76rem] text-[#8a90ad]">{new Date(m.created_at).toLocaleString('de-DE')}</span>
+                <div key={m.id} className={cn('flex', m.is_admin ? 'justify-end' : 'justify-start')}>
+                  <div className={cn(
+                    'max-w-[82%] rounded-2xl border p-3',
+                    m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]'
+                  )}>
+                    <div className="flex items-center justify-between mb-1.5 gap-3">
+                      <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}</span>
+                      <span className="text-[0.76rem] text-[#8a90ad] whitespace-nowrap">{new Date(m.created_at).toLocaleString('de-DE')}</span>
+                    </div>
+                    <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed">{m.message}</p>
                   </div>
-                  <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed">{m.message}</p>
                 </div>
               ))}
             </div>
@@ -106,7 +110,7 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="w-full min-h-28 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
+                    className="w-full min-h-32 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-3 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
                     placeholder="Schreibe deine Nachricht…"
                   />
                   <div className="flex items-center gap-3">

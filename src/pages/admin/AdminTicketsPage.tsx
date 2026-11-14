@@ -131,7 +131,7 @@ export const AdminTicketsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] grid grid-cols-1 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr] gap-6 items-start">
         {/* Linke Spalte: Kennzahlen + Filter */}
         <div className="space-y-5">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5">
@@ -196,13 +196,13 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Mittlere Spalte: Liste */}
-        <div className="lg:col-span-1">
+        <div>
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625]">
             <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between">
               <h2 className="text-white font-semibold">Tickets</h2>
               {loadingList && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
             </div>
-            <div className="p-3 space-y-2 max-h-[60vh] overflow-y-auto">
+            <div className="p-3 space-y-2 max-h-[72vh] overflow-y-auto">
               {tickets.map((t) => (
                 <button key={t.id} onClick={() => setSelected(t)} className={cn('w-full text-left p-3 rounded-xl border transition-colors', selected?.id === t.id ? 'border-astra-purple/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40')}>
                   <div className="flex items-center justify-between gap-3">
@@ -240,8 +240,8 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
-        <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] min-h-[60vh]">
+        <div>
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] min-h-[72vh]">
             <div className="px-5 py-4 border-b border-[#212131]">
               <h2 className="text-white font-semibold">Details</h2>
             </div>
@@ -346,7 +346,7 @@ export const AdminTicketsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 max-h-[36vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[48vh] overflow-y-auto pr-1">
                   {detail.messages.map((m) => (
                     <div key={m.id} className={cn('rounded-xl border p-3', m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]')}>
                       <div className="flex items-center justify-between mb-1.5">

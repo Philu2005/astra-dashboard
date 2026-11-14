@@ -90,15 +90,15 @@ export const SupportPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1680px]">
         <div className="mb-6">
           <h1 className="text-white text-3xl font-bold">Wie können wir dir helfen?</h1>
           <p className="text-[#9ca2bd] mt-1">Erstelle ein neues Ticket oder verwalte deine bisherigen Anfragen. Die Dokumentation findest du unter <a className="text-astra-cyan hover:underline" href="/docs">/docs</a>.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1.4fr] gap-6 items-start">
           {/* Linke Spalte: eigene Tickets */}
-          <div className="lg:col-span-2">
+          <div>
             <div className="rounded-2xl border border-[#2a2f45] bg-[#131625]">
               <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between">
                 <h2 className="text-white font-semibold">Deine Tickets</h2>
@@ -145,7 +145,7 @@ export const SupportPage: React.FC = () => {
           </div>
 
           {/* Rechte Spalte: Formular */}
-          <div>
+          <div className="min-w-[360px] sm:min-w-0">
             <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5">
               <h2 className="text-white font-semibold mb-1">Neues Ticket</h2>
               <p className="text-[#9ca2bd] text-[0.9rem] mb-4">Beschreibe dein Anliegen möglichst präzise, damit wir dir schneller helfen können.</p>
