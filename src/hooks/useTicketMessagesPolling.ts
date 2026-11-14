@@ -16,6 +16,7 @@ export function useTicketMessagesPolling(
 ) {
   const { intervalMs = 5000, onUpdate, getCurrentMessages } = options;
   const timerRef = useRef<number | null>(null);
+  const kickoffRef = useRef<number | null>(null);
   const runningRef = useRef(false);
 
   useEffect(() => {
@@ -35,19 +36,27 @@ export function useTicketMessagesPolling(
         if (updated.messages.length !== current.length || lastUpdatedId !== lastCurrentId) {
           onUpdate(updated);
         }
-      } catch (_e) {
-        // ignore errors silently; next tick will retry
+      } catch (e) {
+        // Fehler protokollieren, aber Polling nicht stoppen
+        if (import.meta.env.DEV) {
+          console.warn('[messages-polling] Update fehlgeschlagen:', e);
+        }
       } finally {
         runningRef.current = false;
       }
     }
 
-    // initial delayed start to not clash with immediate loads
+    // Sofort initial ticken, danach Intervall
+    tick();
     timerRef.current = window.setInterval(tick, intervalMs);
     return () => {
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
         timerRef.current = null;
+      }
+      if (kickoffRef.current) {
+        window.clearTimeout(kickoffRef.current);
+        kickoffRef.current = null;
       }
     };
   }, [ticketId, intervalMs, onUpdate, getCurrentMessages]);

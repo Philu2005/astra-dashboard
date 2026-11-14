@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supportApi } from '@/services/support-api';
 import type { TicketSummary, TicketCreate, TicketDetail } from '@/types/support';
 import { SUPPORT_CATEGORIES } from '@/types/support';
@@ -8,6 +8,7 @@ import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { cn } from '@/lib/utils';
 import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
+import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
 export const SupportPage: React.FC = () => {
   const { authenticated, loading } = useAuth();
@@ -23,6 +24,15 @@ export const SupportPage: React.FC = () => {
 
   const [form, setForm] = useState<TicketCreate>({ subject: '', category: SUPPORT_CATEGORIES[0], description: '' });
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Polling neuer Nachrichten, solange in dieser Seite ein Ticket offen ist
+  const getCurrentMessages = useCallback(() => detail?.messages ?? [], [detail]);
+  const handleUpdate = useCallback((updated: TicketDetail) => {
+    setDetail(updated);
+    // Liste (updated_at, status) synchron halten
+    setTickets((prev) => prev ? prev.map((t) => (t.id === updated.id ? { ...t, updated_at: updated.updated_at, status: updated.status } : t)) : prev);
+  }, []);
+  useTicketMessagesPolling(detail?.id ?? null, { intervalMs: 4500, onUpdate: handleUpdate, getCurrentMessages });
 
   useEffect(() => {
     if (!authenticated) return;
