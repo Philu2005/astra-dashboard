@@ -17,6 +17,7 @@ import {
   MessageCircleQuestion,
   LucideIcon,
 } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 
 export type LandingNavItem = {
   label: string;
@@ -142,7 +143,7 @@ export const footerSocialLinks = [
 ];
 
 export const ctaLinks = {
-  login: '/login',
+  login: apiClient.getLoginUrl(),
   invite: '/support',
   dashboard: '/dashboard',
   docs: '/docs',

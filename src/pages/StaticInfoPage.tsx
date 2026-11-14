@@ -1,4 +1,5 @@
 import { AstraLogo } from '@/components/AstraLogo';
+import { apiClient } from '@/lib/api-client';
 
 type StaticInfoPageProps = {
   title: string;
@@ -29,7 +30,7 @@ export const StaticInfoPage = ({ title, description, showHomeActions = false }: 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             {showHomeActions ? (
               <>
-                <a href="/login" className="inline-flex items-center justify-center rounded-xl border border-[#6861e1] bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] px-5 py-2.5 text-sm font-semibold tracking-wide hover:scale-[1.01] transition-transform">
+                <a href={apiClient.getLoginUrl()} className="inline-flex items-center justify-center rounded-xl border border-[#6861e1] bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] px-5 py-2.5 text-sm font-semibold tracking-wide hover:scale-[1.01] transition-transform">
                   Anmelden
                 </a>
                 <a href="/" className="inline-flex items-center justify-center rounded-xl border border-layout-divider bg-layout-hover px-5 py-2.5 text-sm font-semibold tracking-wide hover:border-[#5e66a0] transition-colors">
