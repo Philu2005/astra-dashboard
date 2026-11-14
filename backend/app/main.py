@@ -1,3 +1,4 @@
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager
@@ -5,11 +6,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
+
 from app.config import settings
 from app.auth.router import router as auth_router
 from app.servers.router import router as servers_router
 from app.database import init_pool, close_pool, init_tables
 from app.auth.sessions import session_manager
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("astra")
@@ -32,32 +35,50 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_pool()
     await init_tables()
+
     cleanup_task = asyncio.create_task(_cleanup_loop())
+
     logger.info("Astra Dashboard Backend gestartet")
+
     yield
+
     # Shutdown
     cleanup_task.cancel()
+
     try:
         await cleanup_task
     except asyncio.CancelledError:
         pass
+
     await close_pool()
+
     logger.info("Astra Dashboard Backend heruntergefahren")
 
 
 # Validate configuration at startup (before lifespan)
 settings.validate()
 
-app = FastAPI(title="Astra Dashboard Backend", lifespan=lifespan, docs_url=None)
+
+# FastAPI application
+# Automatic Swagger documentation is disabled because we provide
+# our own Swagger UI route with the correct OpenAPI URL.
+app = FastAPI(
+    title="Astra Dashboard Backend",
+    lifespan=lifespan,
+    docs_url=None,
+)
 
 
+# Custom Swagger UI
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui():
     return get_swagger_ui_html(
         openapi_url="/api/openapi.json",
-        title=app.title + " – Swagger UI",
+        title=f"{app.title} – Swagger UI",
     )
 
+
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -66,15 +87,25 @@ app.add_middleware(
     allow_headers=["Content-Type", "Accept"],
 )
 
+
+# API routers
 app.include_router(auth_router)
 app.include_router(servers_router)
 
 
+# Health check
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
 
+# Local development
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
+    )
