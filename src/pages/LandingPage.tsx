@@ -17,6 +17,7 @@ import {
   landingNavItems,
   landingStats,
 } from '@/lib/landing-content';
+import { apiClient } from '@/lib/api-client';
 
 const buttonPrimary =
   'inline-flex items-center justify-center gap-2.5 rounded-xl border border-[#7770f5] bg-[linear-gradient(138deg,#6662e8_0%,#4b46c8_52%,#b14fff_100%)] px-5 py-2.5 text-sm font-semibold text-white tracking-wide transition-all duration-300 hover:-translate-y-0.5 hover:border-[#9f95ff] hover:shadow-[0_14px_28px_-16px_rgba(168,85,247,0.9)]';
@@ -296,15 +297,50 @@ const StatisticCard = ({ label, value, suffix, decimals = 0, display, icon: Icon
   );
 };
 
-const StatisticsSection = () => (
-  <section className="grid grid-cols-1 gap-4 py-8 sm:grid-cols-2 xl:grid-cols-4">
-    {landingStats.map((item, index) => (
-      <ScrollReveal key={item.label} delay={index * 70}>
-        <StatisticCard {...item} />
-      </ScrollReveal>
-    ))}
-  </section>
-);
+const StatisticsSection = () => {
+  const [liveStats, setLiveStats] = useState<{ users: number; guilds: number; commands: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchStats = async () => {
+      try {
+        const res = await apiClient.get('/api/dashboard/stats');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json?.stats) setLiveStats(json.stats);
+      } catch { /* ignore */ }
+    };
+    fetchStats();
+    const id = setInterval(fetchStats, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  const stats = useMemo(() => {
+    if (!liveStats) return landingStats;
+    return landingStats.map((item) => {
+      if (item.label === 'Nutzer') return { ...item, value: liveStats.users, suffix: '', decimals: 0, display: liveStats.users.toLocaleString('de-DE') };
+      if (item.label === 'Server') return { ...item, value: liveStats.guilds, suffix: '', decimals: 0, display: liveStats.guilds.toLocaleString('de-DE') };
+      if (item.label === 'Befehle') {
+        const millions = liveStats.commands / 1_000_000;
+        if (millions >= 1) return { ...item, value: parseFloat(millions.toFixed(1)), suffix: 'M+', decimals: 1, display: `${millions.toFixed(1).replace('.', ',')}M+` };
+        const thousands = liveStats.commands / 1_000;
+        if (thousands >= 1) return { ...item, value: parseFloat(thousands.toFixed(1)), suffix: 'K+', decimals: 1, display: `${thousands.toFixed(1).replace('.', ',')}K+` };
+        return { ...item, value: liveStats.commands, suffix: '', decimals: 0, display: liveStats.commands.toLocaleString('de-DE') };
+      }
+      return item;
+    });
+  }, [liveStats]);
+
+  return (
+    <section className="grid grid-cols-1 gap-4 py-8 sm:grid-cols-2 xl:grid-cols-4">
+      {stats.map((item, index) => (
+        <ScrollReveal key={item.label} delay={index * 70}>
+          <StatisticCard {...item} />
+        </ScrollReveal>
+      ))}
+    </section>
+  );
+};
 
 const CallToAction = ({ authenticated }: { authenticated: boolean }) => (
   <section className="rounded-[1.35rem] border border-[#6d45cf] bg-[linear-gradient(90deg,rgba(103,68,208,0.46)_0%,rgba(138,67,211,0.5)_35%,rgba(41,25,76,0.85)_100%)] p-5 shadow-[0_30px_65px_-46px_rgba(135,80,255,0.9)] sm:p-7">
