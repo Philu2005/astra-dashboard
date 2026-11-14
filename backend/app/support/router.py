@@ -148,13 +148,14 @@ async def admin_list_tickets(
     category: Optional[str] = Query(None),
     priority: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    exclude_status: Optional[str] = Query(None),
     offset: int = 0,
     limit: int = 50,
 ):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
-    rows = await service.list_all_tickets(status=status, category=category, search=search, offset=offset, limit=limit, priority=priority)
+    rows = await service.list_all_tickets(status=status, category=category, search=search, offset=offset, limit=limit, priority=priority, exclude_status=exclude_status)
     return [
         TicketSummary(
             id=r[0], ticket_number=r[1], user_id=r[2], user_name=r[3], subject=r[4], category=r[5], status=r[6], priority=r[7], created_at=r[8], updated_at=r[9]

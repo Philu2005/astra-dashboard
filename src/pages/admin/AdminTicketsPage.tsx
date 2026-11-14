@@ -48,7 +48,7 @@ export const AdminTicketsPage: React.FC = () => {
       if (!silent) setLoadingList(true);
       const [c, list] = await Promise.all([
         supportApi.counters(),
-        supportApi.listAll({ status: status || undefined, category: category || undefined, priority: priorityFilter || undefined, search: search || undefined, limit: 100 }),
+        supportApi.listAll({ status: status || undefined, category: category || undefined, priority: priorityFilter || undefined, search: search || undefined, exclude_status: (!status) ? 'resolved' : undefined, limit: 100 }),
       ]);
       setCounters(c);
       setTickets(list);
@@ -100,7 +100,14 @@ export const AdminTicketsPage: React.FC = () => {
     try {
       const updated = await supportApi.setStatus(ticketId, newStatus);
       setDetail(updated);
-      setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: updated.status, updated_at: updated.updated_at } : t)));
+      if (updated.status === 'resolved' && !status) {
+        // Remove resolved ticket from active list when no specific status filter is set
+        setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+        setSelected(null);
+        setDetail(null);
+      } else {
+        setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: updated.status, updated_at: updated.updated_at } : t)));
+      }
       setCounters(await supportApi.counters());
     } catch (e: any) {
       setError(e.message || 'Status konnte nicht gesetzt werden');

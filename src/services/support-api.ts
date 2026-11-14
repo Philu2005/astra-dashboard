@@ -63,12 +63,13 @@ export const supportApi = {
     return ensureJson(res);
   },
 
-  async listAll(params?: { status?: TicketStatus; category?: string; priority?: TicketPriority; search?: string; offset?: number; limit?: number }): Promise<TicketSummary[]> {
+  async listAll(params?: { status?: TicketStatus; category?: string; priority?: TicketPriority; search?: string; exclude_status?: string; offset?: number; limit?: number }): Promise<TicketSummary[]> {
     const q = new URLSearchParams();
     if (params?.status) q.set('status', params.status);
     if (params?.category) q.set('category', params.category);
     if (params?.priority) q.set('priority', params.priority);
     if (params?.search) q.set('search', params.search);
+    if (params?.exclude_status) q.set('exclude_status', params.exclude_status);
     if (params?.offset != null) q.set('offset', String(params.offset));
     if (params?.limit != null) q.set('limit', String(params.limit));
     const res = await apiClient.get(`/support/admin/tickets${q.toString() ? `?${q.toString()}` : ''}`);

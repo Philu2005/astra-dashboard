@@ -10,6 +10,7 @@ import { CharCounter } from '@/components/support/CharCounter';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 import { MessageList } from '@/components/support/MessageList';
+import { ArrowLeft } from 'lucide-react';
 
 export const SupportPage: React.FC = () => {
   const { authenticated, loading, user } = useAuth();
@@ -332,9 +333,15 @@ export const SupportPage: React.FC = () => {
               </div>
             ) : (
               <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col flex-1 min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
-                <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-2 shrink-0">
+                <div className="px-5 pt-5 pb-2 shrink-0 space-y-3">
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#2a2f45] bg-[#171a2b] px-4 py-2 text-[0.9rem] font-semibold text-[#c4b5fd] transition-all duration-200 hover:border-astra-purple/40 hover:bg-astra-purple/10 hover:text-white active:scale-[0.97]"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Zurück zur Übersicht
+                  </button>
                   <h2 className="text-white font-semibold">Ticketdetails</h2>
-                  <button onClick={() => setSelected(null)} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">Zur Übersicht</button>
                 </div>
                 {detailLoading && <div className="text-[#8a90ad] px-5">Laden…</div>}
                 {!detailLoading && !detail && <div className="text-[#9ca2bd] px-5">Ticket konnte nicht geladen werden.</div>}

@@ -152,6 +152,7 @@ async def list_all_tickets(
     offset: int = 0,
     limit: int = 50,
     priority: Optional[str] = None,
+    exclude_status: Optional[str] = None,
 ) -> Sequence[tuple]:
     pool = get_pool()
     async with pool.acquire() as conn:
@@ -161,6 +162,9 @@ async def list_all_tickets(
             if status:
                 where.append("status=%s")
                 params.append(status)
+            if exclude_status:
+                where.append("status!=%s")
+                params.append(exclude_status)
             if category:
                 where.append("category=%s")
                 params.append(category)
