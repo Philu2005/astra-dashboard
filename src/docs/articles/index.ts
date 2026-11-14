@@ -12,6 +12,8 @@ import { architecture } from './architecture';
 import { apiReference } from './api-reference';
 import { frontendStack } from './frontend-stack';
 import { backendStack } from './backend-stack';
+import { supportOverview } from './support-overview';
+import { supportAdmin } from './support-admin';
 import { troubleshooting } from './troubleshooting';
 import { faq } from './faq';
 
@@ -29,6 +31,8 @@ export const allArticles: DocArticle[] = [
   apiReference,
   frontendStack,
   backendStack,
+  supportOverview,
+  supportAdmin,
   troubleshooting,
   faq,
 ];

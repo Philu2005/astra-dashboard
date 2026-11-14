@@ -87,8 +87,9 @@ Das Diagramm passt sich responsiv an verschiedene Bildschirmgrößen an.`,
 
 **Allgemein:**
 - Meine Server – Serverübersicht
-- Support *(geplant)*
+- Support – Support-Tickets erstellen und verwalten (für Benutzer)
 - Dokumentation – Diese Dokumentation
+- Tickets – Administrative Ticketverwaltung (nur für Administratoren)
 
 **Footer:**
 - Astra einladen – Bot-Einladungslink

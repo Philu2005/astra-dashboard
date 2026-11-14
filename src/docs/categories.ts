@@ -30,6 +30,13 @@ export const categories: DocCategory[] = [
     articles: ['architecture', 'api-reference', 'frontend-stack', 'backend-stack'],
   },
   {
+    slug: 'support',
+    title: 'Support',
+    description: 'Support-Tickets erstellen, verwalten und bearbeiten.',
+    icon: 'Headset',
+    articles: ['support-overview', 'support-admin'],
+  },
+  {
     slug: 'hilfe',
     title: 'Hilfe & Fehlerbehebung',
     description: 'Häufige Probleme und deren Lösungen.',

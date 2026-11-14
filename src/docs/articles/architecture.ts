@@ -65,7 +65,9 @@ React-Frontend  →  FastAPI-Backend  →  Astra Bot API
       id: 'datenbank',
       title: 'Datenbankarchitektur',
       level: 2,
-      content: `MySQL-Datenbank mit drei Tabellen:
+      content: `MySQL-Datenbank mit folgenden Tabellen:
+
+**Authentifizierung:**
 
 **\`dashboard_sessions\`** – Aktive Benutzersessions
 - Session-Token-Hash, User-ID, Benutzerdaten, Zeitstempel
@@ -76,6 +78,18 @@ React-Frontend  →  FastAPI-Backend  →  Astra Bot API
 
 **\`oauth_exchange_tokens\`** – Einmalige Exchange-Tokens (60s gültig)
 - Token-Hash, zugehöriger Session-Hash, Ablaufzeit
+
+**Support-Ticketsystem:**
+
+**\`support_tickets\`** – Support-Tickets
+- Ticket-ID, Ticketnummer, User-ID, Benutzername, Betreff, Kategorie, Beschreibung
+- Status (\`open\`, \`in_progress\`, \`resolved\`), Priorität (\`low\`, \`normal\`, \`high\`, \`critical\`)
+- Erstellungs- und Aktualisierungszeitstempel
+
+**\`support_messages\`** – Nachrichten im Ticketverlauf
+- Nachrichten-ID, Ticket-ID (Fremdschlüssel), Autor-ID, Autorname
+- Nachrichtentext, Nachrichtentyp (\`user\`, \`admin\`, \`system\`)
+- Zeitstempel
 
 Der Connection-Pool verwendet 1–10 Verbindungen mit Autocommit und utf8mb4-Charset.`,
     },
@@ -89,6 +103,7 @@ astra-dashboard/
 │   ├── app/
 │   │   ├── auth/            # Authentifizierung (Router, Service, Sessions)
 │   │   ├── servers/         # Server-API (Router)
+│   │   ├── support/          # Support-Ticketsystem (Router, Service, Schemas)
 │   │   ├── services/        # Astra Bot API-Client
 │   │   ├── config.py        # Konfiguration
 │   │   ├── database.py      # MySQL Connection-Pool

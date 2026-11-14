@@ -32,7 +32,7 @@ Ja, das Dashboard ist kostenlos nutzbar.`,
 Das Dashboard zeigt nur Server, auf denen Astra installiert ist und du Mitglied bist. Installiere Astra über den „Astra einladen"-Button.
 
 **Kann ich Servereinstellungen über das Dashboard ändern?**
-Aktuell zeigt das Dashboard Serverinformationen an. Konfigurationsmöglichkeiten wie Modlog, Automod und Ticketsystem sind als zukünftige Funktionen geplant.
+Aktuell zeigt das Dashboard Serverinformationen an. Konfigurationsmöglichkeiten wie Modlog und Automod sind als zukünftige Funktionen geplant.
 
 **Was bedeuten die Berechtigungen „administrator" und „manage_guild"?**
 Diese spiegeln deine Discord-Berechtigungen auf dem jeweiligen Server wider. Sie werden von der Astra Bot API ermittelt.`,
@@ -52,6 +52,22 @@ Ja, jederzeit über den „Cookie-Einstellungen"-Link auf der Homepage oder im D
 
 **Werden meine Daten an Dritte weitergegeben?**
 Nein. Daten werden nur zwischen dem Dashboard-Frontend, dem Backend und der internen Astra Bot API ausgetauscht.`,
+    },
+    {
+      id: 'support',
+      title: 'Support und Tickets',
+      level: 2,
+      content: `**Wie erstelle ich ein Support-Ticket?**
+Navigiere über die Sidebar zum Menüpunkt „Support". Das Erstellungsformular wird automatisch angezeigt. Fülle Betreff, Kategorie und Beschreibung aus und sende das Formular ab.
+
+**Kann ich ein gelöstes Ticket wieder öffnen?**
+Ja. Öffne das gelöste Ticket und klicke auf „Ticket wieder öffnen". Der Status wird auf „Offen" zurückgesetzt und der gesamte Nachrichtenverlauf bleibt erhalten.
+
+**Wer kann meine Tickets sehen?**
+Nur du selbst und das Astra-Support-Team (Administratoren) können deine Tickets und Nachrichten einsehen.
+
+**Was ist der Unterschied zwischen dem Website-Support und dem Discord-Ticketsystem?**
+Das Website-Supportsystem im Dashboard ist vollständig unabhängig vom Discord-Ticketsystem des Bots. Beide Systeme arbeiten getrennt voneinander.`,
     },
     {
       id: 'technisch',

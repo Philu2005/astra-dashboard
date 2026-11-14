@@ -25,7 +25,19 @@ export const apiReference: DocArticle = {
 | \`/api/servers/{guild_id}/roles\` | GET | Session | Serverrollen |
 | \`/api/dashboard/stats\` | GET | Session | Dashboard-Statistiken |
 | \`/api/status\` | GET | – | Bot-Status |
-| \`/health\` | GET | – | Health-Check |`,
+| \`/health\` | GET | – | Health-Check |
+| \`/support/tickets\` | GET | Session | Eigene Tickets auflisten |
+| \`/support/tickets\` | POST | Session | Neues Ticket erstellen |
+| \`/support/tickets/{id}\` | GET | Session | Ticketdetails abrufen |
+| \`/support/tickets/{id}/reply\` | POST | Session | Auf Ticket antworten |
+| \`/support/tickets/{id}/reopen\` | POST | Session | Gelöstes Ticket wieder öffnen |
+| \`/support/admin/counters\` | GET | Admin | Ticketzähler abrufen |
+| \`/support/admin/tickets\` | GET | Admin | Alle Tickets auflisten (mit Filtern) |
+| \`/support/admin/tickets/{id}/status\` | POST | Admin | Ticketstatus ändern |
+| \`/support/admin/tickets/{id}/priority\` | POST | Admin | Ticketpriorität ändern |
+| \`/support/admin/tickets/{id}\` | DELETE | Admin | Ticket löschen |
+| \`/support/admin/tickets/{id}/user-info\` | GET | Admin | Benutzerprofil zum Ticket |
+| \`/support/admin/tickets/{id}/user-history\` | GET | Admin | Tickethistorie des Benutzers |`,
     },
     {
       id: 'auth-me',
@@ -245,6 +257,81 @@ Mögliche Status-Werte: \`online\`, \`offline\`, \`connecting\`, \`unknown\``,
 | Connect-Error | 503 | Bot nicht erreichbar |
 
 Interne Details werden nie an den Client weitergegeben.`,
+    },
+    {
+      id: 'support-tickets',
+      title: 'Support-Endpunkte (Benutzer)',
+      level: 2,
+      content: `**GET /support/tickets** – Eigene Tickets auflisten
+
+Query-Parameter: \`offset\` (int), \`limit\` (int, Standard: 50)
+
+**POST /support/tickets** – Neues Ticket erstellen
+
+Request-Body:
+\`\`\`json
+{
+  "subject": "Betreff",
+  "category": "Fehler melden",
+  "description": "Beschreibung des Anliegens"
+}
+\`\`\`
+
+Erlaubte Kategorien: \`Fehler melden\`, \`Problem mit einem Befehl\`, \`Problem mit einer Funktion\`, \`Verbesserungsvorschlag\`, \`Allgemeine Frage\`, \`Sonstiges\`
+
+**GET /support/tickets/{id}** – Ticketdetails inkl. Nachrichtenverlauf
+
+Zugriff nur für den Ticket-Ersteller oder Administratoren.
+
+**POST /support/tickets/{id}/reply** – Nachricht senden
+
+Request-Body: \`{ "message": "Nachrichtentext" }\`
+
+Fehler: \`400\` wenn Ticket gelöst ist.
+
+**POST /support/tickets/{id}/reopen** – Gelöstes Ticket wieder öffnen
+
+Nur der Ticket-Ersteller kann ein gelöstes Ticket wieder öffnen. Fehler: \`400\` wenn Ticket nicht gelöst ist, \`403\` wenn nicht der Ersteller.`,
+    },
+    {
+      id: 'support-admin',
+      title: 'Support-Endpunkte (Administration)',
+      level: 2,
+      content: `Alle Admin-Endpunkte erfordern Administrator-Berechtigung (\`403\` bei fehlendem Zugriff).
+
+**GET /support/admin/counters** – Ticketzähler
+
+Response: \`{ "open": 5, "in_progress": 2, "resolved": 10, "total": 17 }\`
+
+**GET /support/admin/tickets** – Alle Tickets auflisten
+
+| Parameter | Typ | Beschreibung |
+|---|---|---|
+| \`status\` | string | Filtern nach Status (\`open\`, \`in_progress\`, \`resolved\`) |
+| \`category\` | string | Filtern nach Kategorie |
+| \`priority\` | string | Filtern nach Priorität |
+| \`search\` | string | Suche in Ticketnummer, Betreff, Benutzername |
+| \`exclude_status\` | string | Status ausschließen (z. B. \`resolved\`) |
+| \`offset\` | int | Pagination-Offset |
+| \`limit\` | int | Maximale Anzahl (Standard: 50) |
+
+**POST /support/admin/tickets/{id}/status** – Status ändern
+
+Request-Body: \`{ "status": "in_progress" }\`
+
+Erlaubte Werte: \`open\`, \`in_progress\`, \`resolved\`
+
+**POST /support/admin/tickets/{id}/priority** – Priorität ändern
+
+Request-Body: \`{ "priority": "high" }\`
+
+Erlaubte Werte: \`low\`, \`normal\`, \`high\`, \`critical\`
+
+**DELETE /support/admin/tickets/{id}** – Ticket dauerhaft löschen
+
+**GET /support/admin/tickets/{id}/user-info** – Benutzerprofil und Ticketstatistiken
+
+**GET /support/admin/tickets/{id}/user-history** – Alle anderen Tickets des Benutzers`,
     },
   ],
 };
