@@ -3,6 +3,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Servers } from '@/pages/Servers';
 import { LandingPage } from '@/pages/LandingPage';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
+import { DocsPage } from '@/docs/DocsPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { ServerProvider } from '@/contexts/ServerContext';
 import { CookieConsentBanner } from '@/components/consent/CookieConsentBanner';
@@ -152,13 +153,8 @@ function App() {
       );
     }
 
-    if (pathname === '/docs') {
-      return (
-        <StaticInfoPage
-          title="Dokumentation"
-          description="Die öffentliche Dokumentation wird hier bereitgestellt. Bis zur Anbindung findest du alle Informationen im Dashboard-Designstil."
-        />
-      );
+    if (pathname === '/docs' || pathname.startsWith('/docs/')) {
+      return <DocsPage />;
     }
 
     if (pathname === '/support') {

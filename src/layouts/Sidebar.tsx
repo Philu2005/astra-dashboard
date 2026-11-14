@@ -275,7 +275,7 @@ export const Sidebar = () => {
             <div className="space-y-1">
               <NavItem icon={Server} label="Meine Server" active={pathname === '/servers'} href="/servers" onClick={() => setIsOpen(false)} />
               <NavItem icon={Headset} label="Support" onClick={() => setIsOpen(false)} />
-              <NavItem icon={BookOpen} label="Dokumentation" external onClick={() => setIsOpen(false)} />
+              <NavItem icon={BookOpen} label="Dokumentation" href="/docs" onClick={() => setIsOpen(false)} />
             </div>
           </div>
         </div>
