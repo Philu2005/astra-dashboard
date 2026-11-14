@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.auth.router import router as auth_router
+from app.servers.router import router as servers_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("astra")
@@ -22,6 +23,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(servers_router)
 
 
 @app.get("/health")

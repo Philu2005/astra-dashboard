@@ -62,7 +62,7 @@ export const Sidebar = () => {
   const [serverSearch, setServerSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') || '/' : '/';
-  const { adminServers, selectedServer, selectServer } = useServerContext();
+  const { servers, selectedServer, selectServer } = useServerContext();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -151,14 +151,14 @@ export const Sidebar = () => {
               >
                 <div className={cn(
                   "w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.5)] ring-1 ring-white/10",
-                  selectedServer ? iconColors[adminServers.indexOf(selectedServer) % iconColors.length] : 'bg-astra-purple'
+                  selectedServer ? iconColors[servers.indexOf(selectedServer) % iconColors.length] : 'bg-astra-purple'
                 )}>
                   {selectedServer?.initials ?? '??'}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <span className="block font-semibold text-[0.92rem] truncate leading-tight">{selectedServer?.name ?? 'Server wählen'}</span>
                   <span className="block text-[0.7rem] text-[#6b7194] leading-tight mt-0.5">
-                    {selectedServer?.astraStatus === 'installed' ? 'Astra aktiv' : 'Server auswählen'}
+                    {selectedServer ? 'Astra aktiv' : 'Server auswählen'}
                   </span>
                 </div>
                 <ChevronDown className={cn("w-4 h-4 text-[#6b7194] transition-transform duration-300", dropdownOpen && "rotate-180")} />
@@ -181,11 +181,11 @@ export const Sidebar = () => {
                   </div>
                   {/* Server list */}
                   <div className="py-1.5 max-h-[260px] overflow-y-auto scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {adminServers
+                    {servers
                       .filter((s) => s.name.toLowerCase().includes(serverSearch.toLowerCase()))
                       .map((server, idx) => {
                         const isSelected = server.id === selectedServer?.id;
-                        const originalIdx = adminServers.indexOf(server);
+                        const originalIdx = servers.indexOf(server);
                         return (
                           <button
                             key={server.id}
@@ -224,7 +224,7 @@ export const Sidebar = () => {
                           </button>
                         );
                       })}
-                    {adminServers.filter((s) => s.name.toLowerCase().includes(serverSearch.toLowerCase())).length === 0 && (
+                    {servers.filter((s) => s.name.toLowerCase().includes(serverSearch.toLowerCase())).length === 0 && (
                       <p className="text-[#555b78] text-[0.82rem] text-center py-4">Kein Server gefunden.</p>
                     )}
                   </div>

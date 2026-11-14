@@ -1,39 +1,18 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import { serverApi, ServerApiError } from '@/services/server-api';
+import type { AstraServer, ServerLoadingState } from '@/types/server';
 
-// --- Types ---
+// --- Display types used by UI components ---
 
-export type AstraStatus = 'installed' | 'not_installed';
-export type ServerRole = 'admin' | 'member';
-
-export interface DiscordServer {
+export interface DisplayServer {
   id: string;
   name: string;
   icon: string | null;
   initials: string;
   memberCount: number;
-  astraStatus: AstraStatus;
-  role: ServerRole;
+  astraInstalled: boolean;
+  owner: boolean;
 }
-
-// --- Dummy Data ---
-
-export const DUMMY_USERNAME = 'Philipp';
-
-export const dummyServers: DiscordServer[] = [
-  // Admin servers (8)
-  { id: '1', name: 'Astra Community', icon: null, initials: 'AC', memberCount: 4821, astraStatus: 'installed', role: 'admin' },
-  { id: '2', name: 'Gaming Lounge', icon: null, initials: 'GL', memberCount: 1253, astraStatus: 'installed', role: 'admin' },
-  { id: '3', name: 'Creator Hub', icon: null, initials: 'CH', memberCount: 892, astraStatus: 'installed', role: 'admin' },
-  { id: '4', name: 'Entwickler Treff', icon: null, initials: 'ET', memberCount: 347, astraStatus: 'not_installed', role: 'admin' },
-  { id: '5', name: 'Musik & Chill', icon: null, initials: 'MC', memberCount: 2105, astraStatus: 'installed', role: 'admin' },
-  { id: '6', name: 'Anime World', icon: null, initials: 'AW', memberCount: 568, astraStatus: 'not_installed', role: 'admin' },
-  { id: '7', name: 'Studenten Café', icon: null, initials: 'SC', memberCount: 214, astraStatus: 'not_installed', role: 'admin' },
-  { id: '8', name: 'Pixel Art Studio', icon: null, initials: 'PA', memberCount: 731, astraStatus: 'installed', role: 'admin' },
-  // Member-only servers (3)
-  { id: '9', name: 'Tech Talk DE', icon: null, initials: 'TT', memberCount: 1489, astraStatus: 'not_installed', role: 'member' },
-  { id: '10', name: 'Roleplay Kingdom', icon: null, initials: 'RK', memberCount: 3042, astraStatus: 'installed', role: 'member' },
-  { id: '11', name: 'Meme Factory', icon: null, initials: 'MF', memberCount: 8712, astraStatus: 'not_installed', role: 'member' },
-];
 
 export const iconColors = [
   'bg-[#4b46c8]',
@@ -49,45 +28,107 @@ export const iconColors = [
   'bg-[#4338ca]',
 ];
 
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
+}
+
+function getDiscordIconUrl(guildId: string, iconHash: string): string {
+  const ext = iconHash.startsWith('a_') ? 'gif' : 'png';
+  return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.${ext}`;
+}
+
+function toDisplayServer(server: AstraServer): DisplayServer {
+  return {
+    id: server.id,
+    name: server.name,
+    icon: server.icon ? getDiscordIconUrl(server.id, server.icon) : null,
+    initials: getInitials(server.name),
+    memberCount: server.memberCount,
+    astraInstalled: true, // Alle Server von /api/servers haben Astra installiert
+    owner: server.owner,
+  };
+}
+
 // --- Context ---
 
 interface ServerContextValue {
-  servers: DiscordServer[];
-  adminServers: DiscordServer[];
-  memberServers: DiscordServer[];
+  servers: DisplayServer[];
   selectedServerId: string | null;
-  selectedServer: DiscordServer | null;
+  selectedServer: DisplayServer | null;
   selectServer: (id: string) => void;
+  loadingState: ServerLoadingState;
+  refresh: () => void;
 }
 
 const ServerContext = createContext<ServerContextValue | null>(null);
 
 export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedServerId, setSelectedServerId] = useState<string | null>(dummyServers[0].id);
+  const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
+  const [loadingState, setLoadingState] = useState<ServerLoadingState>({ status: 'idle' });
 
-  const adminServers = useMemo(() => dummyServers.filter((s) => s.role === 'admin'), []);
-  const memberServers = useMemo(() => dummyServers.filter((s) => s.role === 'member'), []);
+  const fetchServers = useCallback(async () => {
+    setLoadingState({ status: 'loading' });
+    try {
+      const response = await serverApi.getServers();
+      if (response.success && Array.isArray(response.servers)) {
+        setLoadingState({ status: 'success', data: response.servers });
+      } else {
+        setLoadingState({ status: 'error', error: 'Ungültige Antwort vom Server.' });
+      }
+    } catch (err) {
+      if (err instanceof ServerApiError) {
+        if (err.statusCode === 503) {
+          setLoadingState({ status: 'unavailable' });
+        } else {
+          setLoadingState({ status: 'error', error: err.message, errorCode: err.statusCode });
+        }
+      } else {
+        setLoadingState({ status: 'error', error: 'Verbindungsfehler beim Laden der Server.' });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchServers();
+  }, [fetchServers]);
+
+  const servers = useMemo<DisplayServer[]>(() => {
+    if (loadingState.status === 'success') {
+      return loadingState.data.map(toDisplayServer);
+    }
+    return [];
+  }, [loadingState]);
+
+  // Auto-select first server when loaded
+  useEffect(() => {
+    if (servers.length > 0 && !selectedServerId) {
+      setSelectedServerId(servers[0].id);
+    }
+  }, [servers, selectedServerId]);
 
   const selectedServer = useMemo(
-    () => adminServers.find((s) => s.id === selectedServerId) ?? null,
-    [selectedServerId, adminServers]
+    () => servers.find((s) => s.id === selectedServerId) ?? null,
+    [selectedServerId, servers]
   );
 
   const selectServer = useCallback((id: string) => {
-    // Only allow selecting admin servers
-    if (adminServers.some((s) => s.id === id)) {
+    if (servers.some((s) => s.id === id)) {
       setSelectedServerId(id);
     }
-  }, [adminServers]);
+  }, [servers]);
 
   const value = useMemo<ServerContextValue>(() => ({
-    servers: dummyServers,
-    adminServers,
-    memberServers,
+    servers,
     selectedServerId,
     selectedServer,
     selectServer,
-  }), [adminServers, memberServers, selectedServerId, selectedServer, selectServer]);
+    loadingState,
+    refresh: fetchServers,
+  }), [servers, selectedServerId, selectedServer, selectServer, loadingState, fetchServers]);
 
   return (
     <ServerContext.Provider value={value}>

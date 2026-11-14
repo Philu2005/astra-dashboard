@@ -21,6 +21,10 @@ class Config:
 
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
 
+    # Interne Astra Bot API
+    ASTRA_INTERNAL_API_URL: str = os.getenv("ASTRA_INTERNAL_API_URL", "http://127.0.0.1:5000")
+    ASTRA_INTERNAL_API_KEY: str = os.getenv("ASTRA_INTERNAL_API_KEY", "")
+
     DISCORD_API_BASE_URL: str = "https://discord.com/api/v10"
     DISCORD_AUTHORIZE_URL: str = "https://discord.com/api/oauth2/authorize"
     DISCORD_TOKEN_URL: str = "https://discord.com/api/oauth2/token"

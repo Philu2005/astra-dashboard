@@ -3,7 +3,6 @@ import {
   Server,
   Search,
   CheckCircle2,
-  XCircle,
   ExternalLink,
   Settings,
   Filter,
@@ -11,14 +10,17 @@ import {
   Users,
   Info,
   Loader2,
+  AlertTriangle,
+  WifiOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { appConfig } from '@/lib/app-config';
-import { useServerContext, iconColors, DUMMY_USERNAME, type DiscordServer } from '@/contexts/ServerContext';
+import { useServerContext, iconColors, type DisplayServer } from '@/contexts/ServerContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // --- Helpers ---
 
-type FilterType = 'all' | 'installed' | 'not_installed';
+type FilterType = 'all' | 'owner' | 'admin';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -31,27 +33,32 @@ function getGreeting(): string {
 // --- Server Card Component ---
 
 interface ServerCardProps {
-  server: DiscordServer;
+  server: DisplayServer;
   colorClass: string;
   onManage?: () => void;
-  memberOnly?: boolean;
 }
 
-const ServerCard: React.FC<ServerCardProps> = ({ server, colorClass, onManage, memberOnly }) => {
-  const isInstalled = server.astraStatus === 'installed';
-
+const ServerCard: React.FC<ServerCardProps> = ({ server, colorClass, onManage }) => {
   return (
     <div className="bg-[linear-gradient(180deg,#151828_0%,#121524_100%)] border border-[#2e334a] p-5 rounded-[1.05rem] hover:border-astra-purple/50 transition-all duration-300 group relative overflow-hidden shadow-astra">
       <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0)_42%)] pointer-events-none" />
       <div className="relative z-10 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3.5">
-          <div className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center text-white text-[0.85rem] font-bold shrink-0 border border-white/10 shadow-[0_12px_26px_-20px_rgba(75,70,200,0.95)]",
-            colorClass
-          )}>
-            {server.initials}
-          </div>
+          {server.icon ? (
+            <img
+              src={server.icon}
+              alt={server.name}
+              className="w-12 h-12 rounded-xl shrink-0 border border-white/10 shadow-[0_12px_26px_-20px_rgba(75,70,200,0.95)] object-cover"
+            />
+          ) : (
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center text-white text-[0.85rem] font-bold shrink-0 border border-white/10 shadow-[0_12px_26px_-20px_rgba(75,70,200,0.95)]",
+              colorClass
+            )}>
+              {server.initials}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <h4 className="text-white font-semibold text-[1.15rem] leading-snug truncate group-hover:text-astra-cyan transition-colors duration-300">
               {server.name}
@@ -65,46 +72,18 @@ const ServerCard: React.FC<ServerCardProps> = ({ server, colorClass, onManage, m
 
         {/* Status */}
         <div className="flex items-center gap-1.5">
-          {memberOnly ? (
-            <>
-              <Users className="w-3.5 h-3.5 text-[#8288a5]" />
-              <span className="text-[#8288a5] text-[0.82rem] font-medium">Mitglied</span>
-            </>
-          ) : isInstalled ? (
-            <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300 text-[0.82rem] font-medium">Astra ist hier</span>
-            </>
-          ) : (
-            <>
-              <XCircle className="w-3.5 h-3.5 text-[#8288a5]" />
-              <span className="text-[#8288a5] text-[0.82rem] font-medium">Astra nicht installiert</span>
-            </>
-          )}
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-emerald-300 text-[0.82rem] font-medium">Astra ist hier</span>
         </div>
 
         {/* Action */}
-        {!memberOnly && (
-          isInstalled ? (
-            <button
-              onClick={onManage}
-              className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300"
-            >
-              <Settings className="w-4 h-4" />
-              Verwalten
-            </button>
-          ) : (
-            <a
-              href={appConfig.botInviteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-[#2d3246] bg-[#1a1e33] text-[#acb3cf] text-[0.88rem] font-semibold hover:text-white hover:border-[#5f58d8] hover:bg-[linear-gradient(90deg,rgba(83,76,205,0.4)_0%,rgba(83,76,205,0.2)_100%)] transition-all duration-300"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Astra einladen
-            </a>
-          )
-        )}
+        <button
+          onClick={onManage}
+          className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300"
+        >
+          <Settings className="w-4 h-4" />
+          Verwalten
+        </button>
       </div>
     </div>
   );
@@ -113,52 +92,113 @@ const ServerCard: React.FC<ServerCardProps> = ({ server, colorClass, onManage, m
 // --- Main Component ---
 
 export const Servers = () => {
-  const { adminServers, memberServers, servers, selectServer, selectedServer } = useServerContext();
+  const { servers, selectServer, selectedServer, loadingState, refresh } = useServerContext();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [managingServerId, setManagingServerId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Sync management view when server is selected via sidebar dropdown
   useEffect(() => {
-    if (selectedServer && selectedServer.astraStatus === 'installed') {
+    if (selectedServer) {
       setManagingServerId(selectedServer.id);
     }
   }, [selectedServer]);
 
-  // Computed stats
-  const totalAdminServers = adminServers.length;
-  const installedCount = useMemo(() => adminServers.filter((s) => s.astraStatus === 'installed').length, [adminServers]);
+  const displayName = user?.display_name || user?.username || 'Benutzer';
 
-  // Filtered admin servers
-  const filteredAdminServers = useMemo(() => {
-    return adminServers.filter((server) => {
+  // Filtered servers
+  const filteredServers = useMemo(() => {
+    return servers.filter((server) => {
       const matchesSearch = server.name.toLowerCase().includes(search.toLowerCase());
       const matchesFilter =
         filter === 'all' ||
-        (filter === 'installed' && server.astraStatus === 'installed') ||
-        (filter === 'not_installed' && server.astraStatus === 'not_installed');
+        (filter === 'owner' && server.owner) ||
+        (filter === 'admin' && !server.owner);
       return matchesSearch && matchesFilter;
     });
-  }, [search, filter, adminServers]);
-
-  // Filtered member servers (search only, no status filter)
-  const filteredMemberServers = useMemo(() => {
-    return memberServers.filter((server) =>
-      server.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, memberServers]);
+  }, [search, filter, servers]);
 
   const filterButtons: { label: string; value: FilterType }[] = [
     { label: 'Alle Server', value: 'all' },
-    { label: 'Mit Astra', value: 'installed' },
-    { label: 'Ohne Astra', value: 'not_installed' },
+    { label: 'Eigene Server', value: 'owner' },
+    { label: 'Admin-Zugriff', value: 'admin' },
   ];
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
-  };
+  // --- Loading State ---
+  if (loadingState.status === 'idle' || loadingState.status === 'loading') {
+    return (
+      <div className="space-y-5 lg:space-y-6 w-full">
+        <section className="pt-2 lg:pt-3 space-y-2">
+          <h2 className="text-[2.65rem] xl:text-[2.95rem] font-semibold text-white tracking-[-0.02em] leading-[1.1]">
+            {getGreeting()}, {displayName}
+          </h2>
+          <p className="text-[#c1c7de] text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
+            Server werden geladen…
+          </p>
+        </section>
+        <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-10 shadow-astra text-center">
+          <Loader2 className="w-10 h-10 text-[#9d94ff] mx-auto mb-3 animate-spin" />
+          <p className="text-[#9ca2be] text-[1.1rem] font-medium">Serverliste wird geladen…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Unavailable State ---
+  if (loadingState.status === 'unavailable') {
+    return (
+      <div className="space-y-5 lg:space-y-6 w-full">
+        <section className="pt-2 lg:pt-3 space-y-2">
+          <h2 className="text-[2.65rem] xl:text-[2.95rem] font-semibold text-white tracking-[-0.02em] leading-[1.1]">
+            {getGreeting()}, {displayName}
+          </h2>
+          <p className="text-[#c1c7de] text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
+            Astra ist derzeit nicht erreichbar.
+          </p>
+        </section>
+        <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-10 shadow-astra text-center space-y-3">
+          <WifiOff className="w-10 h-10 text-[#8288a5] mx-auto" />
+          <p className="text-[#9ca2be] text-[1.1rem] font-medium">Astra ist derzeit nicht erreichbar.</p>
+          <p className="text-[#6b7194] text-[0.9rem]">Bitte versuche es später erneut.</p>
+          <button
+            onClick={refresh}
+            className="mt-2 flex items-center gap-2 px-4 h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300 mx-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Erneut versuchen
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Error State ---
+  if (loadingState.status === 'error') {
+    return (
+      <div className="space-y-5 lg:space-y-6 w-full">
+        <section className="pt-2 lg:pt-3 space-y-2">
+          <h2 className="text-[2.65rem] xl:text-[2.95rem] font-semibold text-white tracking-[-0.02em] leading-[1.1]">
+            {getGreeting()}, {displayName}
+          </h2>
+          <p className="text-[#c1c7de] text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
+            Fehler beim Laden der Server.
+          </p>
+        </section>
+        <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-10 shadow-astra text-center space-y-3">
+          <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto" />
+          <p className="text-[#9ca2be] text-[1.1rem] font-medium">{loadingState.error}</p>
+          <button
+            onClick={refresh}
+            className="mt-2 flex items-center gap-2 px-4 h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300 mx-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Erneut versuchen
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // --- Server Management View ---
   const managingServer = managingServerId
@@ -201,7 +241,7 @@ export const Servers = () => {
             </div>
             <div className="bg-[#1a1e33] border border-[#2d3246] rounded-xl p-4 space-y-2">
               <p className="text-[#8288a5] text-[0.73rem] font-medium uppercase tracking-[0.08em]">Rolle</p>
-              <p className="text-white text-[1.1rem] font-semibold">Administrator</p>
+              <p className="text-white text-[1.1rem] font-semibold">{managingServer.owner ? 'Eigentümer' : 'Administrator'}</p>
             </div>
           </div>
           <div className="mt-4 p-6 rounded-xl border border-[#2d3246] bg-[#12152480] text-center">
@@ -222,22 +262,18 @@ export const Servers = () => {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="space-y-2">
             <h2 className="text-[2.65rem] xl:text-[2.95rem] font-semibold text-white tracking-[-0.02em] leading-[1.1]">
-              {getGreeting()}, {DUMMY_USERNAME}
+              {getGreeting()}, {displayName}
             </h2>
             <p className="text-[#c1c7de] text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
-              Du verwaltest {totalAdminServers} Server – auf {installedCount} davon ist Astra installiert.
+              Du verwaltest {servers.length} Server mit Astra.
             </p>
           </div>
           <button
-            onClick={handleRefresh}
-            disabled={refreshing}
+            onClick={refresh}
+            disabled={false}
             className="flex items-center gap-2 px-4 h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300 shrink-0 disabled:opacity-60"
           >
-            {refreshing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
+            <RefreshCw className="w-4 h-4" />
             Aktualisieren
           </button>
         </div>
@@ -276,16 +312,33 @@ export const Servers = () => {
         </div>
       </div>
 
-      {/* Admin Server Grid */}
-      {filteredAdminServers.length === 0 ? (
+      {/* Server Grid */}
+      {filteredServers.length === 0 ? (
         <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-10 shadow-astra text-center">
           <Server className="w-10 h-10 text-[#8288a5] mx-auto mb-3" />
-          <p className="text-[#9ca2be] text-[1.1rem] font-medium">Keine Server gefunden.</p>
-          <p className="text-[#6b7194] text-[0.9rem] mt-1">Passe deine Suche oder Filter an.</p>
+          <p className="text-[#9ca2be] text-[1.1rem] font-medium">
+            {servers.length === 0 ? 'Keine verwaltbaren Server gefunden.' : 'Keine Server gefunden.'}
+          </p>
+          <p className="text-[#6b7194] text-[0.9rem] mt-1">
+            {servers.length === 0
+              ? 'Lade Astra auf einen Server ein, auf dem du Verwaltungsrechte besitzt.'
+              : 'Passe deine Suche oder Filter an.'}
+          </p>
+          {servers.length === 0 && (
+            <a
+              href={appConfig.botInviteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-[#2d3246] bg-[#1a1e33] text-[#acb3cf] text-[0.88rem] font-semibold hover:text-white hover:border-[#5f58d8] hover:bg-[linear-gradient(90deg,rgba(83,76,205,0.4)_0%,rgba(83,76,205,0.2)_100%)] transition-all duration-300"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Astra einladen
+            </a>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-          {filteredAdminServers.map((server, idx) => (
+          {filteredServers.map((server, idx) => (
             <ServerCard
               key={server.id}
               server={server}
@@ -303,26 +356,6 @@ export const Servers = () => {
           Ein Server fehlt? Du brauchst dort das Recht „Server verwalten". Nach dem Einladen von Astra kannst du auf „Aktualisieren" klicken.
         </span>
       </div>
-
-      {/* Member-Only Servers */}
-      {filteredMemberServers.length > 0 && (
-        <section className="space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-white font-semibold text-[1.35rem] tracking-tight">Deine anderen Server</h3>
-            <p className="text-[#8288a5] text-[0.9rem]">Hier bist du Mitglied, kannst diese Server aber nicht verwalten.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {filteredMemberServers.map((server, idx) => (
-              <ServerCard
-                key={server.id}
-                server={server}
-                colorClass={iconColors[(idx + adminServers.length) % iconColors.length]}
-                memberOnly
-              />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 };
