@@ -63,9 +63,9 @@ async def get_ticket_detail(ticket_id: int) -> Optional[dict[str, Any]]:
             await cur.execute(
                 """
                 SELECT id, ticket_number, user_id, user_name, subject, category, status,
-                       DATE_FORMAT(created_at,'%Y-%m-%dT%H:%i:%sZ'),
-                       DATE_FORMAT(updated_at,'%Y-%m-%dT%H:%i:%sZ'),
-                       IFNULL(DATE_FORMAT(closed_at,'%Y-%m-%dT%H:%i:%sZ'), NULL)
+                       DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                       DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                       IFNULL(DATE_FORMAT(closed_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'), NULL)
                 FROM support_tickets WHERE id=%s
                 """,
                 (ticket_id,),
@@ -77,7 +77,7 @@ async def get_ticket_detail(ticket_id: int) -> Optional[dict[str, Any]]:
             await cur.execute(
                 """
                 SELECT id, author_id, author_name, is_admin, message,
-                       DATE_FORMAT(created_at,'%Y-%m-%dT%H:%i:%sZ')
+                       DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
                 FROM support_ticket_messages WHERE ticket_id=%s ORDER BY created_at ASC
                 """,
                 (ticket_id,),
@@ -115,8 +115,8 @@ async def list_user_tickets(user_id: str, offset: int = 0, limit: int = 50) -> S
             await cur.execute(
                 """
                 SELECT id, ticket_number, user_id, user_name, subject, category, status,
-                       DATE_FORMAT(created_at,'%Y-%m-%dT%H:%i:%sZ'),
-                       DATE_FORMAT(updated_at,'%Y-%m-%dT%H:%i:%sZ')
+                       DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                       DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
                 FROM support_tickets
                 WHERE user_id=%s
                 ORDER BY updated_at DESC
@@ -152,8 +152,8 @@ async def list_all_tickets(
             where_sql = (" WHERE " + " AND ".join(where)) if where else ""
             sql = f"""
                 SELECT id, ticket_number, user_id, user_name, subject, category, status,
-                       DATE_FORMAT(created_at,'%Y-%m-%dT%H:%i:%sZ'),
-                       DATE_FORMAT(updated_at,'%Y-%m-%dT%H:%i:%sZ')
+                       DATE_FORMAT(created_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ'),
+                       DATE_FORMAT(updated_at,'%%Y-%%m-%%dT%%H:%%i:%%sZ')
                 FROM support_tickets
                 {where_sql}
                 ORDER BY updated_at DESC

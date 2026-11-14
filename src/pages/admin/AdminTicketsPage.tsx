@@ -109,8 +109,12 @@ export const AdminTicketsPage: React.FC = () => {
                 <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3"><div className="text-[#8a90ad]">Gelöst</div><div className="text-white text-xl font-bold">{counters.resolved}</div></div>
                 <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 col-span-2"><div className="text-[#8a90ad]">Geschlossen</div><div className="text-white text-xl font-bold">{counters.closed}</div></div>
               </div>
-            ) : (
+            ) : error ? (
+              <div className="text-red-400 text-[0.9rem]">{error}</div>
+            ) : loadingList ? (
               <div className="text-[#8a90ad]">Laden…</div>
+            ) : (
+              <div className="text-[#8a90ad]">Keine Daten verfügbar.</div>
             )}
           </div>
 
