@@ -98,7 +98,7 @@ function StatusBar({ day }: { day: DayHistory }) {
   return (
     <div className="relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div
-        className="w-[6px] sm:w-[7px] h-[32px] rounded-[2px] transition-all duration-150 cursor-pointer"
+        className="h-[32px] rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
           backgroundColor: color,
           opacity: hover ? 1 : 0.85,
@@ -161,7 +161,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       )}
 
       {/* Historische Balken */}
-      <div className="flex gap-[3px] items-end">
+      <div className="w-full" style={{ display: 'grid', gridTemplateColumns: 'repeat(90, minmax(0, 1fr))', gap: '2px' }}>
         {service.daily_history.map((day) => (
           <StatusBar key={day.date} day={day} />
         ))}
