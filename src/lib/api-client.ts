@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN || 'https://test.astra-bot.de';
+const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN || '';
 
 export const apiClient = {
   async get(endpoint: string) {
@@ -27,9 +27,12 @@ export const apiClient = {
   },
 
   getLoginUrl() {
-    // Login must go directly to the backend (not via Vite proxy) so that
-    // the oauth_state cookie is set on 127.0.0.1 – the same origin that
-    // Discord will call back to.
+    // In production/test the frontend and backend share the same origin
+    // (Apache reverse-proxies /auth/* to the backend), so a relative path
+    // works and keeps the cookie on the correct domain.
+    // In local dev VITE_BACKEND_ORIGIN must point to the backend directly
+    // (e.g. http://127.0.0.1:8000) because the Vite dev-server would
+    // otherwise treat the path as an SPA route.
     return `${BACKEND_ORIGIN}/auth/discord/login`;
   },
 
