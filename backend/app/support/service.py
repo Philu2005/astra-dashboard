@@ -203,10 +203,16 @@ async def add_message(ticket_id: int, author_id: str, author_name: str, is_admin
 
 
 async def set_status(ticket_id: int, status: str, actor_name: str = "System") -> None:
-    """Setzt den Ticketstatus und erzeugt eine Systemnachricht."""
+    """Setzt den Ticketstatus und erzeugt eine Systemnachricht (keine Duplikate)."""
     pool = get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
+            # Aktuellen Status prüfen, um Duplikate zu vermeiden
+            await cur.execute("SELECT status FROM support_tickets WHERE id=%s", (ticket_id,))
+            row = await cur.fetchone()
+            if row and row[0] == status:
+                return  # Status ist bereits gesetzt, keine Aktion nötig
+
             if status == "resolved":
                 await cur.execute(
                     "UPDATE support_tickets SET status=%s, closed_at=NOW(), updated_at=NOW() WHERE id=%s",
@@ -224,6 +230,15 @@ async def set_status(ticket_id: int, status: str, actor_name: str = "System") ->
                 await _add_system_message(
                     cur, ticket_id, "ticket_reopened",
                     f"Dieses Ticket wurde von {actor_name} erneut geöffnet.",
+                )
+            elif status == "in_progress":
+                await cur.execute(
+                    "UPDATE support_tickets SET status=%s, updated_at=NOW() WHERE id=%s",
+                    (status, ticket_id),
+                )
+                await _add_system_message(
+                    cur, ticket_id, "ticket_in_progress",
+                    f"Dieses Ticket wird nun von {actor_name} bearbeitet.",
                 )
             else:
                 await cur.execute(

@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import type { TicketMessage } from '@/types/support';
-import type { TicketDetail } from '@/types/support';
+import type { TicketMessage, TicketDetail } from '@/types/support';
 import MessageBubble from '@/components/support/MessageBubble';
-import { STATUS_LABELS } from '@/types/support';
 
 interface MessageListProps {
   messages: TicketMessage[];
@@ -21,6 +19,7 @@ const SystemMessage: React.FC<{ message: TicketMessage }> = ({ message }) => {
     ticket_created: '🎫',
     ticket_resolved: '✅',
     ticket_reopened: '🔄',
+    ticket_in_progress: '🔧',
   };
   const icon = iconMap[message.event_type ?? ''] ?? 'ℹ️';
 
@@ -110,8 +109,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
         const isOwn = currentUserId ? String(m.author_id) === String(currentUserId) : false;
         const align = isOwn ? 'right' : 'left';
         const highlight = adminView ? m.is_admin : isOwn;
-        const badgeText = adminView && m.is_admin ? 'Astra Support' : undefined;
-        const displayName = adminView ? m.author_name : (m.is_admin ? 'Support' : m.author_name);
+        const badgeText = m.message_type === 'support' || m.is_admin ? 'Astra Support' : undefined;
+        const displayName = m.author_name;
         return (
           <MessageBubble
             key={m.id}

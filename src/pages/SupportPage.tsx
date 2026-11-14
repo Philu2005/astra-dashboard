@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supportApi } from '@/services/support-api';
 import type { TicketSummary, TicketCreate, TicketDetail } from '@/types/support';
-import { SUPPORT_CATEGORIES, STATUS_LABELS, PRIORITY_LABELS } from '@/types/support';
+import { SUPPORT_CATEGORIES, STATUS_LABELS } from '@/types/support';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
