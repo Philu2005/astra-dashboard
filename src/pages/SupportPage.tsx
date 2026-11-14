@@ -336,7 +336,7 @@ export const SupportPage: React.FC = () => {
                 <div className="px-5 pt-5 pb-2 shrink-0 space-y-3">
                   <button
                     onClick={() => setSelected(null)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#2a2f45] bg-[#171a2b] px-4 py-2 text-[0.9rem] font-semibold text-[#c4b5fd] transition-all duration-200 hover:border-astra-purple/40 hover:bg-astra-purple/10 hover:text-white active:scale-[0.97]"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-transparent px-4 py-2 text-[0.85rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97]"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Zurück zur Übersicht

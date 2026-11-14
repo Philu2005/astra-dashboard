@@ -10,6 +10,7 @@ import { CharCounter } from '@/components/support/CharCounter';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
 import { MessageList } from '@/components/support/MessageList';
+import { ArrowLeft } from 'lucide-react';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
 const ADMIN_ID = '789555434201677824';
@@ -48,7 +49,7 @@ export const AdminTicketsPage: React.FC = () => {
       if (!silent) setLoadingList(true);
       const [c, list] = await Promise.all([
         supportApi.counters(),
-        supportApi.listAll({ status: status || undefined, category: category || undefined, priority: priorityFilter || undefined, search: search || undefined, exclude_status: (!status) ? 'resolved' : undefined, limit: 100 }),
+        supportApi.listAll({ status: status || undefined, category: category || undefined, priority: priorityFilter || undefined, search: search?.replace(/^#/, '').trim() || undefined, exclude_status: (!status) ? 'resolved' : undefined, limit: 100 }),
       ]);
       setCounters(c);
       setTickets(list);
@@ -198,9 +199,9 @@ export const AdminTicketsPage: React.FC = () => {
                   value={status}
                   onChange={(v) => setStatus(v as TicketStatus | '')}
                   items={[
-                    { value: '', label: 'Alle' },
+                    { value: '', label: 'Auswählen' },
                     { value: 'open', label: 'Offen' },
-                    { value: 'in_progress', label: 'In Bearbeitung' },
+                    { value: 'in_progress', label: 'Wird bearbeitet' },
                     { value: 'resolved', label: 'Gelöst' },
                   ]}
                   aria-label="Status filtern"
@@ -284,7 +285,14 @@ export const AdminTicketsPage: React.FC = () => {
         {/* Rechte Spalte: Detail/Antwort/Status */}
         <div className="lg:h-full lg:min-h-0 flex flex-col">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col lg:h-full lg:min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
-            <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
+            <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0 space-y-3">
+              <button
+                onClick={() => { setSelected(null); setDetail(null); }}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-transparent px-4 py-2 text-[0.85rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97]"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Zurück zur Übersicht
+              </button>
               <h2 className="text-white font-semibold">Details</h2>
             </div>
             {!selected ? (

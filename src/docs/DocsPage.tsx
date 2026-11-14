@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Rocket, Server, Shield, Code, LifeBuoy,
   BookOpen, ChevronRight, ArrowLeft, ArrowRight,
-  Clock, ChevronLeft, ThumbsUp, ThumbsDown, Menu, X,
+  Clock, ChevronLeft, ThumbsUp, ThumbsDown, Menu, X, LayoutDashboard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { categories } from './categories';
@@ -233,8 +233,12 @@ export const DocsPage: React.FC = () => {
             <span className="text-[0.85rem] font-semibold text-white tracking-tight">Astra Docs</span>
           </div>
           <div className="flex-1" />
-          <button onClick={() => window.location.href = '/'} className="text-[0.8rem] text-[#8a90ad] hover:text-[#d6dbf0] transition-colors">
-            ← Zurück zur Homepage
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#2a2f45] bg-[#131625] px-3.5 py-1.5 text-[0.82rem] font-medium text-[#c4b5fd] transition-all duration-200 hover:border-[#4b46c8]/40 hover:bg-[#4b46c8]/10 hover:text-white active:scale-[0.97]"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
           </button>
         </div>
       </header>

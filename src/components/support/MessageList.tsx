@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { TicketMessage, TicketDetail } from '@/types/support';
 import MessageBubble from '@/components/support/MessageBubble';
+import { Ticket, Wrench, CheckCircle2, RefreshCw, Info } from 'lucide-react';
 
 interface MessageListProps {
   messages: TicketMessage[];
@@ -15,20 +16,20 @@ function isAtBottom(el: HTMLElement, tolerance = 24) {
 
 /** Systemnachricht – zentrierte Timeline-Card */
 const SystemMessage: React.FC<{ message: TicketMessage }> = ({ message }) => {
-  const iconMap: Record<string, string> = {
-    ticket_created: '🎫',
-    ticket_resolved: '✅',
-    ticket_reopened: '🔄',
-    ticket_in_progress: '🔧',
+  const iconMap: Record<string, React.ElementType> = {
+    ticket_created: Ticket,
+    ticket_resolved: CheckCircle2,
+    ticket_reopened: RefreshCw,
+    ticket_in_progress: Wrench,
   };
-  const icon = iconMap[message.event_type ?? ''] ?? 'ℹ️';
+  const Icon = iconMap[message.event_type ?? ''] ?? Info;
 
   return (
     <div className="flex justify-center my-2">
-      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2f45] bg-[#0f1220]/80 shadow-[0_0_0_1px_rgba(104,97,225,0.06)]">
-        <span className="text-base">{icon}</span>
-        <span className="text-[0.82rem] text-[#9ca2bd]">{message.message}</span>
-        <span className="text-[0.72rem] text-[#6b7094] ml-1">
+      <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#1e2235] bg-[#0d0f1a]/90 shadow-[0_0_0_1px_rgba(104,97,225,0.04)]">
+        <Icon className="w-3.5 h-3.5 text-[#7c78c9] shrink-0" />
+        <span className="text-[0.82rem] text-[#8a90ad]">{message.message}</span>
+        <span className="text-[0.72rem] text-[#5a6080] ml-1">
           {new Date(message.created_at).toLocaleString('de-DE')}
         </span>
       </div>
