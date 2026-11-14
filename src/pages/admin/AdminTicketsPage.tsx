@@ -8,6 +8,8 @@ import { SUPPORT_CATEGORIES } from '@/types/support';
 import { cn } from '@/lib/utils';
 import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
+import { MessageList } from '@/components/support/MessageList';
+import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
 const ADMIN_ID = '789555434201677824';
 
@@ -70,6 +72,13 @@ export const AdminTicketsPage: React.FC = () => {
     supportApi.getUserHistoryForTicket(selected.id).then((hist) => { if (mounted) setUserHistory(hist); }).catch(() => {});
     return () => { mounted = false };
   }, [selected]);
+
+  // Polling neuer Nachrichten für ausgewähltes Ticket
+  useTicketMessagesPolling(detail?.id ?? null, {
+    intervalMs: 4000,
+    onUpdate: (updated) => setDetail(updated),
+    getCurrentMessages: () => detail?.messages ?? [],
+  });
 
   const handleApplyFilters = (e: React.FormEvent) => { e.preventDefault(); load(); };
 
@@ -352,17 +361,7 @@ export const AdminTicketsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 max-h-[48vh] overflow-y-auto pr-1">
-                  {detail.messages.map((m) => (
-                    <div key={m.id} className={cn('rounded-xl border p-3', m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]')}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}{m.is_admin && ' • Support'}</span>
-                        <span className="text-[0.76rem] text-[#8a90ad]">{new Date(m.created_at).toLocaleString('de-DE')}</span>
-                      </div>
-                      <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed">{m.message}</p>
-                    </div>
-                  ))}
-                </div>
+                <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} />
 
                 {detail.status === 'closed' ? (
                   <div className="text-[#8a90ad] text-[0.9rem]">Ticket ist geschlossen.</div>

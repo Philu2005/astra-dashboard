@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supportApi } from '@/services/support-api';
 import type { TicketDetail } from '@/types/support';
 import { cn } from '@/lib/utils';
+import { MessageList } from '@/components/support/MessageList';
+import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
 export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) => {
   const { authenticated, loading, user } = useAuth();
@@ -13,6 +15,8 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+
+  const currentUserId = user?.id ?? null;
 
   useEffect(() => {
     if (!authenticated) return;
@@ -40,6 +44,15 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
       setSending(false);
     }
   };
+
+  // Polling neuer Nachrichten, solange das Ticket geöffnet ist
+  useTicketMessagesPolling(ticket?.id ?? null, {
+    intervalMs: 4500,
+    onUpdate: (updated) => {
+      setTicket(updated);
+    },
+    getCurrentMessages: () => ticket?.messages ?? [],
+  });
 
   if (loading) {
     return <StaticInfoPage title="Wird geladen..." description="Deine Sitzung wird überprüft." />
@@ -81,22 +94,7 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
 
           {/* Verlauf */}
           {ticket && (
-            <div className="p-5 space-y-3">
-              {ticket.messages.map((m) => (
-                <div key={m.id} className={cn('flex', m.is_admin ? 'justify-end' : 'justify-start')}>
-                  <div className={cn(
-                    'max-w-[82%] rounded-2xl border p-3',
-                    m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]'
-                  )}>
-                    <div className="flex items-center justify-between mb-1.5 gap-3">
-                      <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}</span>
-                      <span className="text-[0.76rem] text-[#8a90ad] whitespace-nowrap">{new Date(m.created_at).toLocaleString('de-DE')}</span>
-                    </div>
-                    <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed">{m.message}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <MessageList messages={ticket.messages} currentUserId={currentUserId} adminView={false} />
           )}
 
           {/* Antwortfeld */}
