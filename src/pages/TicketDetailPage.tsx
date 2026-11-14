@@ -54,10 +54,8 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
     getCurrentMessages: () => ticket?.messages ?? [],
   });
 
-  if (loading) {
-    return <StaticInfoPage title="Wird geladen..." description="Deine Sitzung wird überprüft." />
-  }
-  if (!authenticated) {
+  // Behalte das Dashboard-Layout auch während Auth-Laden bei (kein globaler Loader)
+  if (!authenticated && !loading) {
     return <StaticInfoPage title="Nicht angemeldet" description="Bitte melde dich an, um Tickets zu sehen." showHomeActions />
   }
 
@@ -67,8 +65,8 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
         <div className="flex items-center justify-between gap-3">
           <button onClick={() => window.history.back()} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">← Zurück</button>
         </div>
-        <div className="mt-3 rounded-2xl border border-[#2a2f45] bg-[#131625]">
-          <div className="px-5 py-4 border-b border-[#212131]">
+        <div className="mt-3 rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+          <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
             {loadingDetail ? (
               <div className="text-[#8a90ad]">Laden…</div>
             ) : ticket ? (

@@ -7,6 +7,7 @@ import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary, TicketP
 import { SUPPORT_CATEGORIES } from '@/types/support';
 import { cn } from '@/lib/utils';
 import { AstraSelect } from '@/components/ui/AstraSelect';
+import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
 import { MessageList } from '@/components/support/MessageList';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
@@ -137,10 +138,8 @@ export const AdminTicketsPage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <StaticInfoPage title="Wird geladen..." description="Deine Sitzung wird überprüft." />
-  }
-  if (!isAdmin) {
+  // Kein globaler Side Loader in der Admin-Ansicht: Layout bleibt bestehen
+  if ((!authenticated && !loading) || (!isAdmin && !loading)) {
     return <StaticInfoPage title="Kein Zugriff" description="Diese Seite ist nur für den Administrator verfügbar." showHomeActions />
   }
 
@@ -149,15 +148,15 @@ export const AdminTicketsPage: React.FC = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] grid grid-cols-1 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr] gap-6 items-start">
         {/* Linke Spalte: Kennzahlen + Filter */}
         <div className="space-y-5">
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5">
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
             <h2 className="text-white font-semibold mb-3">Übersicht</h2>
             {counters ? (
               <div className="grid grid-cols-2 gap-3 text-[0.95rem]">
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3"><div className="text-[#8a90ad]">Gesamt</div><div className="text-white text-xl font-bold">{counters.total}</div></div>
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3"><div className="text-[#8a90ad]">Offen</div><div className="text-white text-xl font-bold">{counters.open}</div></div>
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3"><div className="text-[#8a90ad]">In Bearbeitung</div><div className="text-white text-xl font-bold">{counters.in_progress}</div></div>
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3"><div className="text-[#8a90ad]">Gelöst</div><div className="text-white text-xl font-bold">{counters.resolved}</div></div>
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 col-span-2"><div className="text-[#8a90ad]">Geschlossen</div><div className="text-white text-xl font-bold">{counters.closed}</div></div>
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Gesamt</div><div className="text-white text-xl font-bold">{counters.total}</div></div>
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Offen</div><div className="text-white text-xl font-bold">{counters.open}</div></div>
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">In Bearbeitung</div><div className="text-white text-xl font-bold">{counters.in_progress}</div></div>
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Gelöst</div><div className="text-white text-xl font-bold">{counters.resolved}</div></div>
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 col-span-2 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Geschlossen</div><div className="text-white text-xl font-bold">{counters.closed}</div></div>
               </div>
             ) : error ? (
               <div className="text-red-400 text-[0.9rem]">{error}</div>
@@ -168,7 +167,7 @@ export const AdminTicketsPage: React.FC = () => {
             )}
           </div>
 
-          <form onSubmit={handleApplyFilters} className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 space-y-3">
+          <form onSubmit={handleApplyFilters} className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 space-y-3 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
             <h2 className="text-white font-semibold">Filter</h2>
             <div>
               <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Suche</label>
@@ -177,30 +176,42 @@ export const AdminTicketsPage: React.FC = () => {
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Status</label>
-                <AstraSelect value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | '')} aria-label="Status filtern">
-                  <option value="">Alle</option>
-                  <option value="open">open</option>
-                  <option value="in_progress">in_progress</option>
-                  <option value="resolved">resolved</option>
-                  <option value="closed">closed</option>
-                </AstraSelect>
+                <AstraSelectMenu
+                  value={status}
+                  onChange={(v) => setStatus(v as TicketStatus | '')}
+                  items={[
+                    { value: '', label: 'Alle' },
+                    { value: 'open', label: 'open' },
+                    { value: 'in_progress', label: 'in_progress' },
+                    { value: 'resolved', label: 'resolved' },
+                    { value: 'closed', label: 'closed' },
+                  ]}
+                  aria-label="Status filtern"
+                />
               </div>
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Kategorie</label>
-                <AstraSelect value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Kategorie filtern">
-                  <option value="">Alle</option>
-                  {SUPPORT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </AstraSelect>
+                <AstraSelectMenu
+                  value={category}
+                  onChange={(v) => setCategory(v)}
+                  items={[{ value: '', label: 'Alle' }, ...SUPPORT_CATEGORIES.map((c) => ({ value: c, label: c }))]}
+                  aria-label="Kategorie filtern"
+                />
               </div>
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Priorität</label>
-                <AstraSelect value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | '')} aria-label="Priorität filtern">
-                  <option value="">Alle</option>
-                  <option value="low">low</option>
-                  <option value="normal">normal</option>
-                  <option value="high">high</option>
-                  <option value="critical">critical</option>
-                </AstraSelect>
+                <AstraSelectMenu
+                  value={priorityFilter}
+                  onChange={(v) => setPriorityFilter(v as TicketPriority | '')}
+                  items={[
+                    { value: '', label: 'Alle' },
+                    { value: 'low', label: 'low' },
+                    { value: 'normal', label: 'normal' },
+                    { value: 'high', label: 'high' },
+                    { value: 'critical', label: 'critical' },
+                  ]}
+                  aria-label="Priorität filtern"
+                />
               </div>
             </div>
             <div className="flex items-center gap-3 pt-1">
@@ -212,19 +223,19 @@ export const AdminTicketsPage: React.FC = () => {
 
         {/* Mittlere Spalte: Liste */}
         <div>
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625]">
-            <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between">
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+            <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
               <h2 className="text-white font-semibold">Tickets</h2>
               {loadingList && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
             </div>
             <div className="p-3 space-y-2 max-h-[72vh] overflow-y-auto">
               {tickets.map((t) => (
-                <button key={t.id} onClick={() => setSelected(t)} className={cn('w-full text-left p-3 rounded-xl border transition-colors', selected?.id === t.id ? 'border-astra-purple/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40')}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[#d6dbf0] font-medium truncate">{t.subject}</p>
-                      <p className="text-[#9ca2bd] text-[0.78rem] truncate">{t.user_name} • {t.category}</p>
-                    </div>
+                <button key={t.id} onClick={() => setSelected(t)} className={cn('w-full text-left p-3 rounded-xl border transition-colors', selected?.id === t.id ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]' : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]')}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[#d6dbf0] font-medium truncate">{t.subject}</p>
+                    <p className="text-[#9ca2bd] text-[0.78rem] truncate">{t.user_name} • {t.category}</p>
+                  </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border',
                       t.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
@@ -256,8 +267,8 @@ export const AdminTicketsPage: React.FC = () => {
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
         <div>
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] min-h-[72vh]">
-            <div className="px-5 py-4 border-b border-[#212131]">
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] min-h-[72vh] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+            <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
               <h2 className="text-white font-semibold">Details</h2>
             </div>
             {!selected ? (
@@ -272,18 +283,30 @@ export const AdminTicketsPage: React.FC = () => {
                     <p className="text-[#9ca2bd] text-[0.85rem] truncate">#{detail.ticket_number} • {detail.user_name} • {detail.category}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AstraSelect value={detail.priority} onChange={(e) => handleSetPriority(detail.id, e.target.value as TicketPriority)} aria-label="Priorität setzen" className="h-9">
-                      <option value="low">low</option>
-                      <option value="normal">normal</option>
-                      <option value="high">high</option>
-                      <option value="critical">critical</option>
-                    </AstraSelect>
-                    <AstraSelect value={detail.status} onChange={(e) => handleSetStatus(detail.id, e.target.value as TicketStatus)} aria-label="Status setzen" className="h-9">
-                      <option value="open">open</option>
-                      <option value="in_progress">in_progress</option>
-                      <option value="resolved">resolved</option>
-                      <option value="closed">closed</option>
-                    </AstraSelect>
+                    <AstraSelectMenu
+                      value={detail.priority}
+                      onChange={(v) => handleSetPriority(detail.id, v as TicketPriority)}
+                      items={[
+                        { value: 'low', label: 'low' },
+                        { value: 'normal', label: 'normal' },
+                        { value: 'high', label: 'high' },
+                        { value: 'critical', label: 'critical' },
+                      ]}
+                      aria-label="Priorität setzen"
+                      className="h-9"
+                    />
+                    <AstraSelectMenu
+                      value={detail.status}
+                      onChange={(v) => handleSetStatus(detail.id, v as TicketStatus)}
+                      items={[
+                        { value: 'open', label: 'open' },
+                        { value: 'in_progress', label: 'in_progress' },
+                        { value: 'resolved', label: 'resolved' },
+                        { value: 'closed', label: 'closed' },
+                      ]}
+                      aria-label="Status setzen"
+                      className="h-9"
+                    />
                     <button onClick={() => { setDeleteError(null); setDeleteDialogOpen(true); }} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem]', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
                   </div>
                 </div>

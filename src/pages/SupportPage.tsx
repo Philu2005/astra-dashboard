@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { cn } from '@/lib/utils';
 import { AstraSelect } from '@/components/ui/AstraSelect';
+import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 
 export const SupportPage: React.FC = () => {
   const { authenticated, loading } = useAuth();
@@ -122,12 +123,8 @@ export const SupportPage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <StaticInfoPage title="Wird geladen..." description="Deine Sitzung wird überprüft." />
-    );
-  }
-  if (!authenticated) {
+  // WICHTIG: Kein globaler Side Loader mehr – wir behalten das Layout bei und zeigen lokale Ladeinfos
+  if (!authenticated && !loading) {
     return (
       <StaticInfoPage title="Nicht angemeldet" description="Bitte melde dich an, um den Support zu nutzen." showHomeActions />
     );
@@ -144,10 +141,10 @@ export const SupportPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1.4fr] gap-6 items-start">
           {/* Linke Spalte: eigene Tickets */}
           <div>
-            <div className="rounded-2xl border border-[#2a2f45] bg-[#131625]">
-              <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between">
+            <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+              <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
                 <h2 className="text-white font-semibold">Deine Tickets</h2>
-                {loadingList && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
+                {(loading || loadingList) && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
               </div>
               <div className="p-3">
                 {error && (
@@ -164,8 +161,8 @@ export const SupportPage: React.FC = () => {
                       className={cn(
                         "w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200",
                         selected?.id === t.id
-                          ? 'border-astra-purple/40 bg-astra-purple/10'
-                          : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40'
+                          ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]'
+                          : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]'
                       )}
                     >
                       <div className="w-10 h-10 rounded-lg bg-[#171a2b] flex items-center justify-center text-[#8a90ad] text-[0.76rem] font-mono">
@@ -194,7 +191,7 @@ export const SupportPage: React.FC = () => {
           {/* Rechte Spalte: Detail oder Formular */}
           <div className="min-w-[360px] sm:min-w-0">
             {!selected ? (
-              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5">
+              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
                 <h2 className="text-white font-semibold mb-1">Neues Ticket</h2>
                 <p className="text-[#9ca2bd] text-[0.9rem] mb-4">Beschreibe dein Anliegen möglichst präzise, damit wir dir schneller helfen können.</p>
                 {formError && (
@@ -212,15 +209,12 @@ export const SupportPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Kategorie</label>
-                    <AstraSelect
+                    <AstraSelectMenu
                       value={form.category}
-                      onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                      onChange={(v) => setForm((p) => ({ ...p, category: v }))}
+                      items={SUPPORT_CATEGORIES.map((c) => ({ value: c, label: c }))}
                       aria-label="Kategorie auswählen"
-                    >
-                      {SUPPORT_CATEGORIES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </AstraSelect>
+                    />
                   </div>
                   <div>
                     <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Beschreibung</label>
@@ -245,7 +239,7 @@ export const SupportPage: React.FC = () => {
                 </form>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 min-h-[40vh]">
+              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 min-h-[40vh] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h2 className="text-white font-semibold">Ticketdetails</h2>
                   <button onClick={() => setSelected(null)} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">Zur Übersicht</button>
