@@ -1,5 +1,6 @@
 import { ArrowRight, Check, Menu, Monitor, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import dashboardPreviewImage from '../../docs/design/astra-dashboard-preview-rounded.png';
 import { AstraLogo } from '@/components/AstraLogo';
 import { AstraHeroProductDemo } from '@/components/landing/AstraHeroProductDemo';
@@ -95,7 +96,7 @@ const ScrollReveal = ({ children, className, delay = 0 }: { children: ReactNode;
   );
 };
 
-const LandingNavbar = () => {
+const LandingNavbar = ({ authenticated, authLoading }: { authenticated: boolean; authLoading: boolean }) => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -136,7 +137,11 @@ const LandingNavbar = () => {
 
         <div className="hidden items-center gap-3 lg:flex">
           <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
-          <a href={ctaLinks.login} className={buttonPrimary}>Mit Discord anmelden</a>
+          {!authLoading && (
+            authenticated
+              ? <a href={ctaLinks.dashboard} className={buttonPrimary}>Dashboard</a>
+              : <a href={ctaLinks.login} className={buttonPrimary}>Login</a>
+          )}
         </div>
 
         <button className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-layout-divider bg-layout-topbar text-[#cfd4ec] lg:hidden" onClick={() => setOpen((value) => !value)} aria-label="Navigation öffnen">
@@ -152,7 +157,11 @@ const LandingNavbar = () => {
                 {item.label}
               </a>
             ))}
-            <a href={ctaLinks.login} className={cn(buttonPrimary, 'mt-2')}>Mit Discord anmelden</a>
+            {!authLoading && (
+              authenticated
+                ? <a href={ctaLinks.dashboard} className={cn(buttonPrimary, 'mt-2')}>Dashboard</a>
+                : <a href={ctaLinks.login} className={cn(buttonPrimary, 'mt-2')}>Login</a>
+            )}
             <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
           </div>
         </div>
@@ -161,7 +170,7 @@ const LandingNavbar = () => {
   );
 };
 
-const HeroSection = () => {
+const HeroSection = ({ authenticated }: { authenticated: boolean }) => {
   const BadgeIcon = heroBadge.icon;
 
   return (
@@ -179,7 +188,9 @@ const HeroSection = () => {
           Verwalte deine Discord-Community mit Astra – zentral, übersichtlich und leistungsstark.
         </p>
         <div className="flex flex-wrap gap-3">
-          <a href={ctaLinks.login} className={buttonPrimary}>Mit Discord anmelden <ArrowRight className="h-4 w-4" /></a>
+          {authenticated
+            ? <a href={ctaLinks.dashboard} className={buttonPrimary}>Dashboard öffnen <ArrowRight className="h-4 w-4" /></a>
+            : <a href={ctaLinks.login} className={buttonPrimary}>Mit Discord anmelden <ArrowRight className="h-4 w-4" /></a>}
           <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
         </div>
         <div className="grid grid-cols-2 gap-3 text-sm text-[#d1d7ef] sm:grid-cols-4">
@@ -295,7 +306,7 @@ const StatisticsSection = () => (
   </section>
 );
 
-const CallToAction = () => (
+const CallToAction = ({ authenticated }: { authenticated: boolean }) => (
   <section className="rounded-[1.35rem] border border-[#6d45cf] bg-[linear-gradient(90deg,rgba(103,68,208,0.46)_0%,rgba(138,67,211,0.5)_35%,rgba(41,25,76,0.85)_100%)] p-5 shadow-[0_30px_65px_-46px_rgba(135,80,255,0.9)] sm:p-7">
     <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
       <div>
@@ -303,7 +314,9 @@ const CallToAction = () => (
         <p className="mt-1 text-[#d8dcf1]">Melde dich mit Discord an, verwalte deine Server und entdecke alle Funktionen von Astra.</p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <a href={ctaLinks.login} className={buttonPrimary}>Mit Discord anmelden</a>
+        {authenticated
+          ? <a href={ctaLinks.dashboard} className={buttonPrimary}>Dashboard öffnen</a>
+          : <a href={ctaLinks.login} className={buttonPrimary}>Mit Discord anmelden</a>}
         <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
       </div>
     </div>
@@ -374,6 +387,7 @@ const LandingLoader = ({ visible }: { visible: boolean }) => (
 );
 
 export const LandingPage = () => {
+  const { authenticated, loading: authLoading } = useAuth();
   const [loaderVisible, setLoaderVisible] = useState(true);
 
   useEffect(() => {
@@ -390,14 +404,14 @@ export const LandingPage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_85%,rgba(168,85,247,0.16)_0%,rgba(168,85,247,0)_40%)]" />
       </div>
       <div className="relative z-10">
-        <LandingNavbar />
+        <LandingNavbar authenticated={authenticated} authLoading={authLoading} />
         <main className="mx-auto w-full max-w-[1520px] px-4 pb-8 sm:px-5 lg:px-7">
-          <HeroSection />
+          <HeroSection authenticated={authenticated} />
           <FeatureSection />
           <DashboardPreview />
           <StatisticsSection />
           <ScrollReveal>
-            <CallToAction />
+            <CallToAction authenticated={authenticated} />
           </ScrollReveal>
           <ScrollReveal>
             <LandingFooter />
