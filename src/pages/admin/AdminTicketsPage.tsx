@@ -10,7 +10,7 @@ import { CharCounter } from '@/components/support/CharCounter';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
 import { MessageList } from '@/components/support/MessageList';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Ticket } from 'lucide-react';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
 const ADMIN_ID = '789555434201677824';
@@ -165,7 +165,7 @@ export const AdminTicketsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className={cn("mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] h-full grid grid-cols-1 gap-6 lg:grid-rows-[1fr] lg:min-h-0", selected ? "lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr]" : "lg:grid-cols-[320px_1fr] xl:grid-cols-[340px_1fr] 2xl:grid-cols-[360px_1fr]")}>
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] h-full grid grid-cols-1 gap-6 lg:grid-rows-[1fr] lg:min-h-0 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr]">
         {/* Linke Spalte: Kennzahlen + Filter */}
         <div className="space-y-5 lg:overflow-y-auto lg:h-full scrollbar-hide">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
@@ -283,9 +283,16 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
-        {selected && (
         <div className="lg:h-full lg:min-h-0 flex flex-col">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col lg:h-full lg:min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+            {!selected ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <Ticket className="h-10 w-10 text-[#3a3f5c] mb-4" />
+                <h3 className="text-[#d6dbf0] font-semibold text-[1.05rem] mb-2">Wähle ein Ticket aus</h3>
+                <p className="text-[#6b7194] text-[0.85rem] max-w-[280px] leading-relaxed">Klicke auf ein Ticket in der Liste, um die Details und den Nachrichtenverlauf anzuzeigen.</p>
+              </div>
+            ) : (
+            <>
             <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0 space-y-3">
               <button
                 onClick={() => { setSelected(null); setDetail(null); }}
@@ -433,9 +440,10 @@ export const AdminTicketsPage: React.FC = () => {
                 </div>
               </div>
             )}
+            </>
+            )}
           </div>
         </div>
-        )}
       </div>
       <AstraConfirmDialog
         open={deleteDialogOpen}

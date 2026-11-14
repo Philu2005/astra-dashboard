@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Rocket, Server, Shield, Code, LifeBuoy,
   BookOpen, ChevronRight, ArrowLeft, ArrowRight,
-  Clock, ChevronLeft, ThumbsUp, ThumbsDown, Menu, X, LayoutDashboard,
+  Clock, ChevronLeft, ThumbsUp, ThumbsDown, Menu, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { categories } from './categories';
@@ -228,17 +228,22 @@ export const DocsPage: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#131522]/80 backdrop-blur-xl border-b border-[#212131]">
         <div className="max-w-6xl mx-auto flex items-center gap-4 px-4 sm:px-6 h-14">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <BookOpen className="w-4.5 h-4.5 text-astra-cyan" />
             <span className="text-[0.85rem] font-semibold text-white tracking-tight">Astra Docs</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-1 ml-4">
+            <span className="text-[0.75rem] text-[#5a6080]">|</span>
+            <span className="text-[0.78rem] text-[#6b7094] ml-2">Dokumentation & Hilfe</span>
           </div>
           <div className="flex-1" />
           <button
             onClick={() => window.location.href = '/dashboard'}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#2a2f45] bg-[#131625] px-3.5 py-1.5 text-[0.82rem] font-medium text-[#c4b5fd] transition-all duration-200 hover:border-[#4b46c8]/40 hover:bg-[#4b46c8]/10 hover:text-white active:scale-[0.97]"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-[#171a2b] px-4 py-2 text-[0.84rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97]"
           >
-            <LayoutDashboard className="w-4 h-4" />
-            Dashboard
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Zurück zum Dashboard</span>
+            <span className="sm:hidden">Dashboard</span>
           </button>
         </div>
       </header>
