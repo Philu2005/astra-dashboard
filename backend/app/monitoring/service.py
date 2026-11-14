@@ -148,7 +148,7 @@ async def init_monitoring_tables() -> None:
                     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                     service_id BIGINT UNSIGNED NOT NULL,
                     title VARCHAR(255) NOT NULL,
-                    description TEXT NOT NULL DEFAULT '',
+                    description VARCHAR(1000) NOT NULL DEFAULT '',
                     status VARCHAR(30) NOT NULL DEFAULT 'investigating',
                     started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     resolved_at DATETIME NULL,
