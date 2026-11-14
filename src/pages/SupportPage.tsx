@@ -27,6 +27,12 @@ export const SupportPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
 
+  // Zeichenlimits (Backend: schemas.py)
+  const SUBJECT_MAX = 200;
+  const DESCRIPTION_MAX = 8000;
+  const SUBJECT_WARN = 20; // verbleibende Zeichen ab denen gewarnt wird
+  const DESCRIPTION_WARN = 200;
+
   // Polling neuer Nachrichten, solange in dieser Seite ein Ticket offen ist
   const getCurrentMessages = useCallback(() => detail?.messages ?? [], [detail]);
   const handleUpdate = useCallback((updated: TicketDetail) => {
@@ -255,10 +261,19 @@ export const SupportPage: React.FC = () => {
                     <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Betreff</label>
                     <input
                       value={form.subject}
-                      onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
+                      onChange={(e) => { if (e.target.value.length <= SUBJECT_MAX) setForm((p) => ({ ...p, subject: e.target.value })); }}
+                      maxLength={SUBJECT_MAX}
                       className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
                       placeholder="Kurze Zusammenfassung"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) {
+                          e.preventDefault();
+                          const btn = formRef.current?.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+                          btn?.click();
+                        }
+                      }}
                     />
+                    <CharCounter current={form.subject.length} max={SUBJECT_MAX} warn={SUBJECT_WARN} />
                   </div>
                   <div>
                     <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Kategorie</label>
@@ -273,12 +288,22 @@ export const SupportPage: React.FC = () => {
                     <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Beschreibung</label>
                     <textarea
                       value={form.description}
-                      onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                      onChange={(e) => { if (e.target.value.length <= DESCRIPTION_MAX) setForm((p) => ({ ...p, description: e.target.value })); }}
+                      maxLength={DESCRIPTION_MAX}
                       className="w-full min-h-32 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
                       placeholder="Was ist passiert? Wie können wir es reproduzieren?"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) {
+                          e.preventDefault();
+                          const btn = formRef.current?.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+                          btn?.click();
+                        }
+                      }}
                     />
+                    <CharCounter current={form.description.length} max={DESCRIPTION_MAX} warn={DESCRIPTION_WARN} />
                   </div>
                   <button
+                    type="submit"
                     disabled={creating}
                     className={cn(
                       "inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200",
@@ -339,6 +364,20 @@ export const SupportPage: React.FC = () => {
 export default SupportPage;
 
 // Kleine UI-Hilfskomponenten innerhalb dieser Datei, um Abhängigkeiten gering zu halten
+
+const CharCounter: React.FC<{ current: number; max: number; warn: number }> = ({ current, max, warn }) => {
+  const remaining = max - current;
+  const isWarning = remaining <= warn && remaining > 0;
+  const isLimit = remaining <= 0;
+  return (
+    <div className={cn(
+      'mt-1 text-[0.75rem] text-right tabular-nums transition-colors',
+      isLimit ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-[#596189]'
+    )}>
+      {remaining} / {max} Zeichen verbleibend
+    </div>
+  );
+};
 const StatCard: React.FC<{ label: string; value: number; accent?: 'cyan' | 'purple' | 'indigo' | 'slate'; loading?: boolean }> = ({ label, value, accent = 'slate', loading }) => {
   const accentStyles = {
     cyan: 'bg-[linear-gradient(180deg,rgba(125,227,255,0.12)_0%,rgba(125,227,255,0)_100%)] border-cyan-400/20',
