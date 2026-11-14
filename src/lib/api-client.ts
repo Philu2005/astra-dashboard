@@ -1,5 +1,13 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN || '';
+// Resolve API base URL with safe fallbacks:
+// - Prefer explicit VITE_API_BASE_URL when provided
+// - Otherwise use VITE_BACKEND_ORIGIN (local dev direct-to-backend)
+// - Finally fall back to '/api' which is expected to be reverse-proxied to FastAPI in production
+const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+  (import.meta.env.VITE_BACKEND_ORIGIN as string | undefined) ||
+  '/api';
+
+const BACKEND_ORIGIN = (import.meta.env.VITE_BACKEND_ORIGIN as string | undefined) || '';
 
 export const apiClient = {
   async get(endpoint: string) {
