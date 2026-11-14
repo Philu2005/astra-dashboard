@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
+import { MessageList } from '@/components/support/MessageList';
 
 export const SupportPage: React.FC = () => {
-  const { authenticated, loading } = useAuth();
+  const { authenticated, loading, user } = useAuth();
   const [tickets, setTickets] = useState<TicketSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(false);
@@ -291,16 +292,16 @@ export const SupportPage: React.FC = () => {
                 </form>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 min-h-[40vh] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
-                <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col h-[calc(100vh-12rem)] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+                <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-2 shrink-0">
                   <h2 className="text-white font-semibold">Ticketdetails</h2>
                   <button onClick={() => setSelected(null)} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">Zur Übersicht</button>
                 </div>
-                {detailLoading && <div className="text-[#8a90ad]">Laden…</div>}
-                {!detailLoading && !detail && <div className="text-[#9ca2bd]">Ticket konnte nicht geladen werden.</div>}
+                {detailLoading && <div className="text-[#8a90ad] px-5">Laden…</div>}
+                {!detailLoading && !detail && <div className="text-[#9ca2bd] px-5">Ticket konnte nicht geladen werden.</div>}
                 {detail && (
                   <>
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4 px-5 pb-2 shrink-0">
                       <div className="min-w-0">
                         <p className="text-white font-semibold truncate">{detail.subject}</p>
                         <p className="text-[#9ca2bd] text-[0.85rem] truncate">#{detail.ticket_number} • {detail.category}</p>
@@ -312,28 +313,18 @@ export const SupportPage: React.FC = () => {
                         detail.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
                       )}>{detail.status}</span>
                     </div>
-                    <div className="mt-3 space-y-3 max-h-[42vh] overflow-y-auto pr-1">
-                      {detail.messages.map((m) => (
-                        <div key={m.id} className={cn('flex', m.is_admin ? 'justify-end' : 'justify-start')}>
-                          <div className={cn('max-w-[88%] rounded-2xl border p-3', m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]')}>
-                            <div className="flex items-center justify-between mb-1.5 gap-3">
-                              <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}{m.is_admin && ' • Support'}</span>
-                              <span className="text-[0.76rem] text-[#8a90ad] whitespace-nowrap">{new Date(m.created_at).toLocaleString('de-DE')}</span>
-                            </div>
-                            <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed">{m.message}</p>
-                          </div>
-                        </div>
-                      ))}
+                    <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={false} />
+                    <div className="px-5 pb-5 pt-2 shrink-0">
+                      {detail.status === 'closed' ? (
+                        <div className="text-[#8a90ad] text-[0.9rem]">Ticket ist geschlossen.</div>
+                      ) : (
+                        <form onSubmit={handleReply} className="space-y-2">
+                          <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
+                          <textarea value={reply} onChange={(e) => setReply(e.target.value)} className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" />
+                          <button disabled={sending || !reply.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200', sending || !reply.trim() ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-not-allowed' : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]')}>{sending ? 'Sende…' : 'Antwort senden'}</button>
+                        </form>
+                      )}
                     </div>
-                    {detail.status === 'closed' ? (
-                      <div className="text-[#8a90ad] text-[0.9rem] mt-3">Ticket ist geschlossen.</div>
-                    ) : (
-                      <form onSubmit={handleReply} className="space-y-2 mt-3">
-                        <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
-                        <textarea value={reply} onChange={(e) => setReply(e.target.value)} className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" />
-                        <button disabled={sending || !reply.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200', sending || !reply.trim() ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-not-allowed' : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]')}>{sending ? 'Sende…' : 'Antwort senden'}</button>
-                      </form>
-                    )}
                   </>
                 )}
               </div>

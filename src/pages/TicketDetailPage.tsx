@@ -65,8 +65,8 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
         <div className="flex items-center justify-between gap-3">
           <button onClick={() => window.history.back()} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">← Zurück</button>
         </div>
-        <div className="mt-3 rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
-          <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
+        <div className="mt-3 rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col h-[calc(100vh-10rem)] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+          <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
             {loadingDetail ? (
               <div className="text-[#8a90ad]">Laden…</div>
             ) : ticket ? (
@@ -97,7 +97,7 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
 
           {/* Antwortfeld */}
           {ticket && (
-            <div className="px-5 pb-5">
+            <div className="px-5 pb-5 pt-2 shrink-0">
               {ticket.status === 'closed' ? (
                 <div className="text-[#8a90ad] text-[0.9rem]">Dieses Ticket ist geschlossen und kann nicht mehr beantwortet werden.</div>
               ) : (

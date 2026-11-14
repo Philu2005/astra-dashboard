@@ -42,9 +42,9 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
   }, [lastMessageKey]);
 
   return (
-    <div ref={containerRef} className="p-5 space-y-3 max-h-[68vh] overflow-y-auto">
+    <div ref={containerRef} className="flex-1 min-h-0 p-5 space-y-3 overflow-y-auto scrollbar-hide">
       {messages.map((m) => {
-        const isOwn = currentUserId ? m.author_id === currentUserId : false;
+        const isOwn = currentUserId ? String(m.author_id) === String(currentUserId) : false;
         const align = isOwn ? 'right' : 'left';
         const highlight = adminView ? m.is_admin : isOwn; // in user view: own msgs may appear slightly emphasized via theme of bubble
         const badgeText = adminView && m.is_admin ? 'Astra Support' : undefined;

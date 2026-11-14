@@ -228,7 +228,7 @@ export const AdminTicketsPage: React.FC = () => {
               <h2 className="text-white font-semibold">Tickets</h2>
               {loadingList && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
             </div>
-            <div className="p-3 space-y-2 max-h-[72vh] overflow-y-auto">
+            <div className="p-3 space-y-2 max-h-[72vh] overflow-y-auto scrollbar-hide">
               {tickets.map((t) => (
                 <button key={t.id} onClick={() => setSelected(t)} className={cn('w-full text-left p-3 rounded-xl border transition-colors', selected?.id === t.id ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]' : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]')}>
                 <div className="flex items-center justify-between gap-3">
@@ -267,8 +267,8 @@ export const AdminTicketsPage: React.FC = () => {
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
         <div>
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] min-h-[72vh] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
-            <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col h-[calc(100vh-6rem)] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+            <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
               <h2 className="text-white font-semibold">Details</h2>
             </div>
             {!selected ? (
@@ -276,7 +276,8 @@ export const AdminTicketsPage: React.FC = () => {
             ) : !detail ? (
               <div className="p-5 text-[#8a90ad]">Laden…</div>
             ) : (
-              <div className="p-5 space-y-4">
+              <div className="flex flex-col flex-1 min-h-0">
+                <div className="p-5 space-y-4 shrink-0">
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-white font-semibold truncate">{detail.subject}</p>
@@ -384,17 +385,19 @@ export const AdminTicketsPage: React.FC = () => {
                   </div>
                 </div>
 
+                </div>
                 <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} />
-
-                {detail.status === 'closed' ? (
-                  <div className="text-[#8a90ad] text-[0.9rem]">Ticket ist geschlossen.</div>
-                ) : (
-                  <form onSubmit={handleReply} className="space-y-2">
-                    <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
-                    <textarea value={reply} onChange={(e) => setReply(e.target.value)} className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" />
-                    <button disabled={sending || !reply.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200', sending || !reply.trim() ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-not-allowed' : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]')}>{sending ? 'Sende…' : 'Antwort senden'}</button>
-                  </form>
-                )}
+                <div className="px-5 pb-5 pt-2 shrink-0">
+                  {detail.status === 'closed' ? (
+                    <div className="text-[#8a90ad] text-[0.9rem]">Ticket ist geschlossen.</div>
+                  ) : (
+                    <form onSubmit={handleReply} className="space-y-2">
+                      <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
+                      <textarea value={reply} onChange={(e) => setReply(e.target.value)} className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" />
+                      <button disabled={sending || !reply.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200', sending || !reply.trim() ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-not-allowed' : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]')}>{sending ? 'Sende…' : 'Antwort senden'}</button>
+                    </form>
+                  )}
+                </div>
               </div>
             )}
           </div>

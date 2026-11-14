@@ -56,6 +56,15 @@
   }
 }
 
+/* Hidden scrollbar utility – scrollable but no visible scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes astra-float {
   0% {
     transform: translate3d(0, 0, 0);
