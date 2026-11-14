@@ -12,6 +12,7 @@ from app.auth.router import router as auth_router
 from app.servers.router import router as servers_router
 from app.database import init_pool, close_pool, init_tables
 from app.auth.sessions import session_manager
+from app.support.router import router as support_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -91,6 +92,7 @@ app.add_middleware(
 # API routers
 app.include_router(auth_router)
 app.include_router(servers_router)
+app.include_router(support_router)
 
 
 # Health check

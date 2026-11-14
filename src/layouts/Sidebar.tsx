@@ -20,6 +20,7 @@ import { appConfig } from '@/lib/app-config';
 import { AstraLogo } from '@/components/AstraLogo';
 import { useServerContext, iconColors } from '@/contexts/ServerContext';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
+import { useAuth } from '@/contexts/AuthContext';
 
 const inviteUrl = appConfig.botInviteUrl;
 
@@ -92,6 +93,8 @@ export const Sidebar = () => {
   const { servers, selectedServer, selectServer } = useServerContext();
   const botStatus = useBotStatus();
   const sidebarStatusConfig = botStatusConfig[botStatus];
+  const { user } = useAuth();
+  const isAdmin = user?.id === '789555434201677824';
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -274,8 +277,11 @@ export const Sidebar = () => {
             </p>
             <div className="space-y-1">
               <NavItem icon={Server} label="Meine Server" active={pathname === '/servers'} href="/servers" onClick={() => setIsOpen(false)} />
-              <NavItem icon={Headset} label="Support" onClick={() => setIsOpen(false)} />
+              <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={() => setIsOpen(false)} />
               <NavItem icon={BookOpen} label="Dokumentation" href="/docs" onClick={() => setIsOpen(false)} />
+              {isAdmin && (
+                <NavItem icon={FileText} label="Support-Tickets" active={pathname === '/dashboard/tickets'} href="/dashboard/tickets" onClick={() => setIsOpen(false)} />
+              )}
             </div>
           </div>
         </div>

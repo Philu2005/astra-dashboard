@@ -32,6 +32,9 @@ class Config:
     DB_USER: str = os.getenv("DB_USER", "astra_dashboard")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
 
+    # Admin-Discord-ID für Ticketverwaltung
+    ADMIN_DISCORD_ID: str = os.getenv("ADMIN_DISCORD_ID", "789555434201677824")
+
     DISCORD_API_BASE_URL: str = "https://discord.com/api/v10"
     DISCORD_AUTHORIZE_URL: str = "https://discord.com/api/oauth2/authorize"
     DISCORD_TOKEN_URL: str = "https://discord.com/api/oauth2/token"

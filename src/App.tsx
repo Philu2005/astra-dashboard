@@ -4,6 +4,9 @@ import { Servers } from '@/pages/Servers';
 import { LandingPage } from '@/pages/LandingPage';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { DocsPage } from '@/docs/DocsPage';
+import SupportPage from '@/pages/SupportPage';
+import TicketDetailPage from '@/pages/TicketDetailPage';
+import AdminTicketsPage from '@/pages/admin/AdminTicketsPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { ServerProvider } from '@/contexts/ServerContext';
 import { CookieConsentBanner } from '@/components/consent/CookieConsentBanner';
@@ -158,12 +161,26 @@ function App() {
     }
 
     if (pathname === '/support') {
-      return (
-        <StaticInfoPage
-          title="Support"
-          description="Support-Kanäle und Kontaktmöglichkeiten werden hier zentral gebündelt."
-        />
-      );
+      return <SupportPage />;
+    }
+
+    if (pathname.startsWith('/support/ticket/')) {
+      const idPart = pathname.replace('/support/ticket/', '').split('/')[0];
+      const id = Number(idPart);
+      if (!Number.isFinite(id)) {
+        return (
+          <StaticInfoPage
+            title="Ungültige Ticket-ID"
+            description="Die angeforderte Ticket-ID ist ungültig."
+            showHomeActions
+          />
+        );
+      }
+      return <TicketDetailPage ticketId={id} />;
+    }
+
+    if (pathname === '/dashboard/tickets') {
+      return <AdminTicketsPage />;
     }
 
     if (pathname === '/status') {
@@ -198,7 +215,7 @@ function App() {
     );
   };
 
-  const isDashboardPage = pathname === '/dashboard' || pathname === '/servers';
+  const isDashboardPage = pathname === '/dashboard' || pathname === '/servers' || pathname === '/support' || pathname.startsWith('/support/ticket/') || pathname === '/dashboard/tickets';
   const page = renderPage();
 
   return (

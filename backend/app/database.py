@@ -98,4 +98,40 @@ async def init_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
+            # Support-Tickets
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS support_tickets (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    ticket_number VARCHAR(20) NOT NULL UNIQUE,
+                    user_id VARCHAR(20) NOT NULL,
+                    user_name VARCHAR(100) NOT NULL,
+                    subject VARCHAR(200) NOT NULL,
+                    category VARCHAR(50) NOT NULL,
+                    status ENUM('open','in_progress','resolved','closed') NOT NULL DEFAULT 'open',
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    closed_at DATETIME NULL,
+                    INDEX idx_user (user_id),
+                    INDEX idx_status (status),
+                    INDEX idx_updated (updated_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS support_ticket_messages (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    ticket_id BIGINT UNSIGNED NOT NULL,
+                    author_id VARCHAR(20) NOT NULL,
+                    author_name VARCHAR(100) NOT NULL,
+                    is_admin TINYINT(1) NOT NULL DEFAULT 0,
+                    message TEXT NOT NULL,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT fk_support_ticket_messages_ticket
+                        FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+                        ON DELETE CASCADE,
+                    INDEX idx_ticket (ticket_id),
+                    INDEX idx_created (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
     logger.info("Datenbanktabellen initialisiert")

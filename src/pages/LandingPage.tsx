@@ -100,6 +100,9 @@ const ScrollReveal = ({ children, className, delay = 0 }: { children: ReactNode;
 const LandingNavbar = ({ authenticated, authLoading }: { authenticated: boolean; authLoading: boolean }) => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  // Für Admin-spezifische Sichtbarkeit des Support-Buttons
+  const { user } = useAuth();
+  const isAdmin = user?.id === '789555434201677824';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 14);
@@ -137,6 +140,10 @@ const LandingNavbar = ({ authenticated, authLoading }: { authenticated: boolean;
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          {/* Support-Link in der Navbar – für alle außer Admin sichtbar */}
+          {!isAdmin && (
+            <a href="/support" className={buttonSecondary}>Support</a>
+          )}
           <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
           {!authLoading && (
             authenticated
@@ -158,6 +165,10 @@ const LandingNavbar = ({ authenticated, authLoading }: { authenticated: boolean;
                 {item.label}
               </a>
             ))}
+            {/* Support-Link im Mobile-Menü – für alle außer Admin sichtbar */}
+            {!isAdmin && (
+              <a href="/support" onClick={() => setOpen(false)} className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]">Support</a>
+            )}
             {!authLoading && (
               authenticated
                 ? <a href={ctaLinks.dashboard} className={cn(buttonPrimary, 'mt-2')}>Dashboard</a>
