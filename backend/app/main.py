@@ -1,18 +1,53 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.auth.router import router as auth_router
 from app.servers.router import router as servers_router
+from app.database import init_pool, close_pool, init_tables
+from app.auth.sessions import session_manager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("astra")
 
-app = FastAPI(title="Astra Dashboard Backend")
 
-# Validate configuration at startup
+async def _cleanup_loop():
+    """Periodische Bereinigung abgelaufener Sessions, States und Exchange-Tokens."""
+    while True:
+        try:
+            await asyncio.sleep(3600)  # Jede Stunde
+            await session_manager.cleanup()
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            logger.exception("Fehler bei der periodischen Bereinigung")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_pool()
+    await init_tables()
+    cleanup_task = asyncio.create_task(_cleanup_loop())
+    logger.info("Astra Dashboard Backend gestartet")
+    yield
+    # Shutdown
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
+    await close_pool()
+    logger.info("Astra Dashboard Backend heruntergefahren")
+
+
+# Validate configuration at startup (before lifespan)
 settings.validate()
+
+app = FastAPI(title="Astra Dashboard Backend", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

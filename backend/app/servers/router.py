@@ -9,13 +9,13 @@ router = APIRouter(prefix="/api")
 logger = logging.getLogger("astra.servers")
 
 
-def _get_user_id_from_session(request: Request) -> str:
+async def _get_user_id_from_session(request: Request) -> str:
     """Ermittelt die Discord-User-ID aus der validierten Session."""
     session_id = request.cookies.get("session_id")
     if not session_id:
         raise HTTPException(status_code=401, detail="Nicht angemeldet.")
 
-    session = session_manager.get_session(
+    session = await session_manager.get_session(
         session_id,
         inactivity_timeout=settings.SESSION_INACTIVITY_TIMEOUT,
     )
@@ -40,7 +40,7 @@ def _handle_astra_error(exc: AstraApiError) -> HTTPException:
 
 @router.get("/servers")
 async def get_servers(request: Request):
-    user_id = _get_user_id_from_session(request)
+    user_id = await _get_user_id_from_session(request)
 
     try:
         data = await astra_client.get_servers(user_id)
@@ -53,7 +53,7 @@ async def get_servers(request: Request):
 
 @router.get("/servers/{guild_id}")
 async def get_server(guild_id: str, request: Request):
-    user_id = _get_user_id_from_session(request)
+    user_id = await _get_user_id_from_session(request)
     logger.info("Serverlisten-Anfrage für Discord-User-ID: %s", user_id)
 
     try:
@@ -67,7 +67,7 @@ async def get_server(guild_id: str, request: Request):
 
 @router.get("/servers/{guild_id}/roles")
 async def get_server_roles(guild_id: str, request: Request):
-    user_id = _get_user_id_from_session(request)
+    user_id = await _get_user_id_from_session(request)
 
     try:
         data = await astra_client.get_server_roles(guild_id, user_id)

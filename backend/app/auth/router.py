@@ -18,7 +18,7 @@ def _build_login_error_redirect(error_code: str) -> RedirectResponse:
 
 @router.get("/discord/login")
 async def login(response: Response):
-    state = session_manager.create_state()
+    state = await session_manager.create_state()
     logger.info("OAuth2-Login gestartet")
 
     params = {
@@ -65,7 +65,7 @@ async def callback(
         logger.warning("OAuth2-State-Validierung fehlgeschlagen")
         return _build_login_error_redirect("invalid_state")
 
-    if not session_manager.verify_state(state):
+    if not await session_manager.verify_state(state):
         logger.warning("OAuth2-State ungültig oder abgelaufen")
         return _build_login_error_redirect("expired_state")
 
@@ -88,11 +88,11 @@ async def callback(
     logger.info("Discord-Benutzerprofil geladen für User-ID: %s", user_data.get("id"))
 
     # Create session
-    session_id = session_manager.create_session(user_data, settings.SESSION_MAX_AGE)
+    session_token = await session_manager.create_session(user_data, settings.SESSION_MAX_AGE)
     logger.info("Session erstellt")
 
     # Create exchange token for cross-origin cookie setting
-    exchange_token = session_manager.create_exchange_token(session_id)
+    exchange_token = await session_manager.create_exchange_token(session_token)
     logger.info("Exchange-Token erstellt, leite zum Frontend weiter")
 
     redirect_response = RedirectResponse(url=f"{settings.FRONTEND_URL}/auth/callback?token={exchange_token}")
@@ -113,18 +113,18 @@ async def exchange(request: Request, response: Response):
     if not token:
         raise HTTPException(status_code=400, detail="Missing token")
 
-    session_id = session_manager.exchange_token(token)
-    if not session_id:
+    session_token = await session_manager.exchange_token(token)
+    if not session_token:
         logger.warning("Exchange-Token ungültig oder abgelaufen")
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    session = session_manager.get_session(session_id)
+    session = await session_manager.get_session(session_token)
     if not session:
         raise HTTPException(status_code=401, detail="Session not found")
 
     response.set_cookie(
         key="session_id",
-        value=session_id,
+        value=session_token,
         httponly=True,
         secure=settings.SESSION_COOKIE_SECURE,
         samesite="lax",
@@ -150,7 +150,7 @@ async def me(request: Request):
     if not session_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    session = session_manager.get_session(
+    session = await session_manager.get_session(
         session_id,
         inactivity_timeout=settings.SESSION_INACTIVITY_TIMEOUT,
     )
@@ -177,7 +177,7 @@ async def logout(request: Request, response: Response):
 
     session_id = request.cookies.get("session_id")
     if session_id:
-        session_manager.delete_session(session_id)
+        await session_manager.delete_session(session_id)
         logger.info("Logout: Session invalidiert")
     else:
         logger.info("Logout ohne bestehende Session")
