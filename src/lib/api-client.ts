@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN || 'http://127.0.0.1:8000';
+const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN || 'https://test.astra-bot.de';
 
 export const apiClient = {
   async get(endpoint: string) {
