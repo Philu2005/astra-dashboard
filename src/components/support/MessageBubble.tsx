@@ -6,8 +6,8 @@ interface MessageBubbleProps {
   createdAt: string;
   message: string;
   align: 'left' | 'right';
-  highlight?: boolean; // used for admin highlight in admin view
-  badgeText?: string; // e.g., "Astra Support" (admin view only)
+  highlight?: boolean;
+  badgeText?: string;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({

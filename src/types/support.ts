@@ -1,5 +1,6 @@
-export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type TicketStatus = 'open' | 'in_progress' | 'resolved';
 export type TicketPriority = 'low' | 'normal' | 'high' | 'critical';
+export type MessageType = 'user' | 'support' | 'system';
 
 export interface TicketSummary {
   id: number;
@@ -20,6 +21,8 @@ export interface TicketMessage {
   author_name: string;
   is_admin: boolean;
   message: string;
+  message_type: MessageType;
+  event_type?: string | null;
   created_at: string;
 }
 
@@ -42,7 +45,6 @@ export interface TicketCounters {
   open: number;
   in_progress: number;
   resolved: number;
-  closed: number;
 }
 
 export interface UserInfo {
@@ -54,7 +56,7 @@ export interface UserInfo {
   total_tickets: number;
   open_tickets: number;
   resolved_tickets: number;
-  closed_tickets: number;
+  in_progress_tickets: number;
   last_support_activity?: string | null;
 }
 
@@ -68,6 +70,21 @@ export interface UserHistoryItem {
   created_at: string;
   updated_at: string;
 }
+
+// Deutsche Statusbezeichnungen
+export const STATUS_LABELS: Record<TicketStatus, string> = {
+  open: 'Offen',
+  in_progress: 'In Bearbeitung',
+  resolved: 'Gelöst',
+};
+
+// Deutsche Prioritätsbezeichnungen
+export const PRIORITY_LABELS: Record<TicketPriority, string> = {
+  low: 'Niedrig',
+  normal: 'Normal',
+  high: 'Hoch',
+  critical: 'Kritisch',
+};
 
 // Zentrale, vorgegebene Kategorien
 export const SUPPORT_CATEGORIES: readonly string[] = [

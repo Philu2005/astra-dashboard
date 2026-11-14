@@ -98,7 +98,7 @@ async def init_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
-            # Support-Tickets
+            # Support-Tickets – Status ohne 'closed'
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS support_tickets (
                     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -107,7 +107,7 @@ async def init_tables() -> None:
                     user_name VARCHAR(100) NOT NULL,
                     subject VARCHAR(200) NOT NULL,
                     category VARCHAR(50) NOT NULL,
-                    status ENUM('open','in_progress','resolved','closed') NOT NULL DEFAULT 'open',
+                    status ENUM('open','in_progress','resolved') NOT NULL DEFAULT 'open',
                     priority ENUM('low','normal','high','critical') NOT NULL DEFAULT 'normal',
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -119,8 +119,7 @@ async def init_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
-            # Für bestehende Installationen: Spalte/Index 'priority' idempotent ergänzen (kompatibel mit MySQL < 8)
-            # 1) Prüfen, ob Spalte bereits existiert
+            # Für bestehende Installationen: Spalte/Index 'priority' idempotent ergänzen
             await cur.execute(
                 """
                 SELECT COUNT(*)
@@ -135,7 +134,6 @@ async def init_tables() -> None:
             priority_col_exists = bool(row and row[0] and int(row[0]) > 0)
 
             if not priority_col_exists:
-                # Spalte hinzufügen (ohne IF NOT EXISTS, damit MySQL 5.7 kompatibel)
                 await cur.execute(
                     """
                     ALTER TABLE support_tickets
@@ -143,7 +141,6 @@ async def init_tables() -> None:
                     """
                 )
 
-            # 2) Prüfen, ob Index bereits existiert
             await cur.execute(
                 """
                 SELECT COUNT(*)
@@ -160,6 +157,7 @@ async def init_tables() -> None:
             if not priority_idx_exists:
                 await cur.execute("CREATE INDEX idx_priority ON support_tickets(priority)")
 
+            # Support-Nachrichten mit message_type und event_type
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS support_ticket_messages (
                     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -168,6 +166,8 @@ async def init_tables() -> None:
                     author_name VARCHAR(100) NOT NULL,
                     is_admin TINYINT(1) NOT NULL DEFAULT 0,
                     message TEXT NOT NULL,
+                    message_type ENUM('user','support','system') NOT NULL DEFAULT 'user',
+                    event_type VARCHAR(30) NULL,
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     CONSTRAINT fk_support_ticket_messages_ticket
                         FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
@@ -176,5 +176,92 @@ async def init_tables() -> None:
                     INDEX idx_created (created_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+
+            # --- Migrationen für bestehende Installationen ---
+
+            # 1) message_type Spalte idempotent ergänzen
+            await cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = %s
+                  AND COLUMN_NAME = %s
+                """,
+                (settings.DB_NAME, "support_ticket_messages", "message_type"),
+            )
+            row = await cur.fetchone()
+            if not (row and row[0] and int(row[0]) > 0):
+                await cur.execute(
+                    """
+                    ALTER TABLE support_ticket_messages
+                    ADD COLUMN message_type ENUM('user','support','system') NOT NULL DEFAULT 'user'
+                    """
+                )
+                # Bestehende Admin-Nachrichten als 'support' markieren
+                await cur.execute(
+                    "UPDATE support_ticket_messages SET message_type='support' WHERE is_admin=1"
+                )
+
+            # 2) event_type Spalte idempotent ergänzen
+            await cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = %s
+                  AND COLUMN_NAME = %s
+                """,
+                (settings.DB_NAME, "support_ticket_messages", "event_type"),
+            )
+            row = await cur.fetchone()
+            if not (row and row[0] and int(row[0]) > 0):
+                await cur.execute(
+                    """
+                    ALTER TABLE support_ticket_messages
+                    ADD COLUMN event_type VARCHAR(30) NULL
+                    """
+                )
+
+            # 3) Status-Migration: 'closed' → 'resolved'
+            # Zuerst prüfen ob ENUM noch 'closed' enthält
+            await cur.execute(
+                """
+                SELECT COLUMN_TYPE
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = %s
+                  AND COLUMN_NAME = 'status'
+                """,
+                (settings.DB_NAME, "support_tickets"),
+            )
+            row = await cur.fetchone()
+            if row and row[0] and 'closed' in str(row[0]):
+                # Migriere bestehende closed-Tickets zu resolved
+                await cur.execute(
+                    "UPDATE support_tickets SET status='resolved', closed_at=IFNULL(closed_at, NOW()) WHERE status='closed'"
+                )
+                # ENUM-Typ ändern: 'closed' entfernen
+                await cur.execute(
+                    """
+                    ALTER TABLE support_tickets
+                    MODIFY COLUMN status ENUM('open','in_progress','resolved') NOT NULL DEFAULT 'open'
+                    """
+                )
+
+            # 4) Erste Nachricht jedes Tickets als Opening-Post markieren (event_type='ticket_created')
+            # Nur für Nachrichten die noch keinen event_type haben
+            await cur.execute(
+                """
+                UPDATE support_ticket_messages m
+                INNER JOIN (
+                    SELECT MIN(id) AS first_id
+                    FROM support_ticket_messages
+                    GROUP BY ticket_id
+                ) sub ON m.id = sub.first_id
+                SET m.event_type = 'ticket_created', m.message_type = 'user'
+                WHERE m.event_type IS NULL
+                """
+            )
 
     logger.info("Datenbanktabellen initialisiert")

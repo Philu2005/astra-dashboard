@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supportApi } from '@/services/support-api';
 import type { TicketSummary, TicketCreate, TicketDetail } from '@/types/support';
-import { SUPPORT_CATEGORIES } from '@/types/support';
+import { SUPPORT_CATEGORIES, STATUS_LABELS, PRIORITY_LABELS } from '@/types/support';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { cn } from '@/lib/utils';
 import { CharCounter } from '@/components/support/CharCounter';
-import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 import { MessageList } from '@/components/support/MessageList';
@@ -23,22 +22,20 @@ export const SupportPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [reopening, setReopening] = useState(false);
 
   const [form, setForm] = useState<TicketCreate>({ subject: '', category: SUPPORT_CATEGORIES[0], description: '' });
   const [formError, setFormError] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
 
-  // Zeichenlimits (Backend: schemas.py)
   const SUBJECT_MAX = 200;
   const DESCRIPTION_MAX = 8000;
-  const SUBJECT_WARN = 20; // verbleibende Zeichen ab denen gewarnt wird
+  const SUBJECT_WARN = 20;
   const DESCRIPTION_WARN = 200;
 
-  // Polling neuer Nachrichten, solange in dieser Seite ein Ticket offen ist
   const getCurrentMessages = useCallback(() => detail?.messages ?? [], [detail]);
   const handleUpdate = useCallback((updated: TicketDetail) => {
     setDetail(updated);
-    // Liste (updated_at, status) synchron halten
     setTickets((prev) => prev ? prev.map((t) => (t.id === updated.id ? { ...t, updated_at: updated.updated_at, status: updated.status } : t)) : prev);
   }, []);
   useTicketMessagesPolling(detail?.id ?? null, { intervalMs: 4500, onUpdate: handleUpdate, getCurrentMessages });
@@ -73,20 +70,18 @@ export const SupportPage: React.FC = () => {
     return () => { mounted = false };
   }, [selected]);
 
-  // Abgeleitete Daten: Aufteilung und Kennzahlen
-  const { openTickets, closedTickets, counters } = useMemo(() => {
+  const { activeTickets, resolvedTickets, counters } = useMemo(() => {
     const list = tickets ?? [];
-    const open = list.filter((t) => t.status !== 'closed');
-    const closed = list.filter((t) => t.status === 'closed');
+    const active = list.filter((t) => t.status !== 'resolved');
+    const resolved = list.filter((t) => t.status === 'resolved');
     return {
-      openTickets: open,
-      closedTickets: closed,
+      activeTickets: active,
+      resolvedTickets: resolved,
       counters: {
         total: list.length,
-        open: open.length,
-        closed: closed.length,
+        open: list.filter((t) => t.status === 'open').length,
         in_progress: list.filter((t) => t.status === 'in_progress').length,
-        resolved: list.filter((t) => t.status === 'resolved').length,
+        resolved: resolved.length,
       },
     } as const;
   }, [tickets]);
@@ -105,7 +100,6 @@ export const SupportPage: React.FC = () => {
     try {
       setCreating(true);
       const created = await supportApi.createTicket(form);
-      // Prepend created ticket to list
       setTickets((prev) => prev ? [
         {
           id: created.id,
@@ -121,9 +115,7 @@ export const SupportPage: React.FC = () => {
         },
         ...prev,
       ] : prev);
-      // Reset form
       setForm({ subject: '', category: SUPPORT_CATEGORIES[0], description: '' });
-      // Direkt öffnen, ohne Seitenreload
       setSelected({
         id: created.id,
         ticket_number: created.ticket_number,
@@ -151,7 +143,6 @@ export const SupportPage: React.FC = () => {
       const updated = await supportApi.reply(detail.id, { message: reply });
       setDetail(updated);
       setReply('');
-      // aktualisiere Liste-Zeitstempel
       setTickets((prev) => prev ? prev.map((t) => (t.id === updated.id ? { ...t, updated_at: updated.updated_at, status: updated.status } : t)) : prev);
     } catch (e: any) {
       setError(e.message || 'Antwort konnte nicht gesendet werden');
@@ -160,7 +151,20 @@ export const SupportPage: React.FC = () => {
     }
   };
 
-  // WICHTIG: Kein globaler Side Loader mehr – wir behalten das Layout bei und zeigen lokale Ladeinfos
+  const handleReopen = async () => {
+    if (!detail) return;
+    try {
+      setReopening(true);
+      const updated = await supportApi.reopenTicket(detail.id);
+      setDetail(updated);
+      setTickets((prev) => prev ? prev.map((t) => (t.id === updated.id ? { ...t, status: updated.status, updated_at: updated.updated_at } : t)) : prev);
+    } catch (e: any) {
+      setError(e.message || 'Ticket konnte nicht wieder geöffnet werden');
+    } finally {
+      setReopening(false);
+    }
+  };
+
   if (!authenticated && !loading) {
     return (
       <StaticInfoPage title="Nicht angemeldet" description="Bitte melde dich an, um den Support zu nutzen." showHomeActions />
@@ -179,7 +183,6 @@ export const SupportPage: React.FC = () => {
                 <h1 className="text-white text-3xl font-bold tracking-tight">Wie können wir dir helfen?</h1>
                 <p className="text-[#9ca2bd] mt-1 max-w-3xl">
                   Unser Support antwortet in der Regel innerhalb weniger Minuten. Stelle ein Ticket ein oder verwalte deine laufenden Anfragen.
-                  Die Dokumentation findest du unter <a className="text-astra-cyan hover:underline" href="/docs">/docs</a>.
                 </p>
               </div>
               <div className="shrink-0">
@@ -199,51 +202,72 @@ export const SupportPage: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 md:px-8 pb-6">
             <StatCard label="Gesamt" value={counters.total} accent="cyan" loading={loading || loadingList} />
             <StatCard label="Offen" value={counters.open} accent="purple" loading={loading || loadingList} />
-            <StatCard label="In Arbeit" value={counters.in_progress} accent="indigo" loading={loading || loadingList} />
-            <StatCard label="Geschlossen" value={counters.closed} accent="slate" loading={loading || loadingList} />
+            <StatCard label="In Bearbeitung" value={counters.in_progress} accent="indigo" loading={loading || loadingList} />
+            <StatCard label="Gelöst" value={counters.resolved} accent="emerald" loading={loading || loadingList} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1.4fr] gap-6 flex-1 min-h-0 lg:grid-rows-[1fr]">
           {/* Linke Spalte: eigene Tickets */}
           <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto scrollbar-hide">
-            {/* Offen & in Arbeit */}
+            {/* Aktive Tickets */}
             <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
               <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
                 <h2 className="text-white font-semibold">Offene Tickets</h2>
                 <div className="flex items-center gap-3">
-                  <span className="text-[0.8rem] text-[#8a90ad]">{openTickets.length}</span>
+                  <span className="text-[0.8rem] text-[#8a90ad]">{activeTickets.length}</span>
                   {(loading || loadingList) && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
                 </div>
               </div>
               <div className="p-3">
                 {error && <div className="mb-3 text-[0.9rem] text-red-400">{error}</div>}
-                {!loadingList && openTickets.length === 0 && (
+                {!loadingList && activeTickets.length === 0 && (
                   <div className="p-6 text-center text-[#9ca2bd]">Keine offenen Tickets.</div>
                 )}
                 <div className="space-y-2">
-                  {openTickets.map((t) => (
+                  {activeTickets.map((t) => (
                     <TicketRow key={t.id} t={t} active={selected?.id === t.id} onClick={() => setSelected(t)} />
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Geschlossen */}
+            {/* Abgeschlossene Tickets */}
             <div className="mt-6 rounded-2xl border border-[#2a2f45] bg-[#0f1220] shadow-[0_0_0_1px_rgba(104,97,225,0.04),0_30px_60px_-30px_rgba(0,0,0,0.45)]">
               <div className="px-5 py-3 border-b border-[#212131] flex items-center justify-between">
-                <h3 className="text-white/90 font-semibold">Geschlossene Tickets</h3>
-                <span className="text-[0.8rem] text-[#8a90ad]">{closedTickets.length}</span>
+                <h3 className="text-white/90 font-semibold">Abgeschlossene Tickets</h3>
+                <span className="text-[0.8rem] text-[#8a90ad]">{resolvedTickets.length}</span>
               </div>
               <div className="p-3">
-                {!loadingList && closedTickets.length === 0 && (
-                  <div className="p-6 text-center text-[#9ca2bd]">Noch keine geschlossenen Tickets.</div>
+                {!loadingList && resolvedTickets.length === 0 && (
+                  <div className="p-6 text-center text-[#9ca2bd]">Noch keine abgeschlossenen Tickets.</div>
                 )}
                 <div className="space-y-2">
-                  {closedTickets.map((t) => (
+                  {resolvedTickets.map((t) => (
                     <TicketRow key={t.id} t={t} active={selected?.id === t.id} onClick={() => setSelected(t)} subtle />
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Discord-Hinweis */}
+            <div className="mt-6 rounded-2xl border border-[#5865F2]/30 bg-[linear-gradient(135deg,rgba(88,101,242,0.08)_0%,rgba(88,101,242,0.02)_100%)] shadow-[0_0_0_1px_rgba(88,101,242,0.1)] overflow-hidden">
+              <div className="px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#5865F2]/15 flex items-center justify-center shrink-0">
+                  <svg className="w-7 h-7 text-[#5865F2]" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-semibold text-[0.95rem]">Du brauchst schnelle Hilfe?</h3>
+                  <p className="text-[#9ca2bd] text-[0.85rem] mt-0.5">Besuche unseren Astra Discord-Supportserver und tausche dich direkt mit der Community und dem Support aus.</p>
+                </div>
+                <a
+                  href="https://discord.gg/DBpsrT2n5u"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200 bg-[#5865F2]/15 border-[#5865F2]/40 text-[#8b9aff] hover:bg-[#5865F2]/25 hover:translate-y-[-1px] shrink-0"
+                >
+                  Discord-Support öffnen
+                </a>
               </div>
             </div>
           </div>
@@ -332,17 +356,26 @@ export const SupportPage: React.FC = () => {
                         <p className="text-white font-semibold truncate">{detail.subject}</p>
                         <p className="text-[#9ca2bd] text-[0.85rem] truncate">#{detail.ticket_number} • {detail.category}</p>
                       </div>
-                      <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border',
-                        detail.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
-                        detail.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
-                        detail.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-                        detail.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
-                      )}>{detail.status}</span>
+                      <StatusBadge status={detail.status} />
                     </div>
-                    <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={false} />
+                    <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={false} ticket={detail} />
                     <div className="px-5 pb-5 pt-2 shrink-0">
-                      {detail.status === 'closed' ? (
-                        <div className="text-[#8a90ad] text-[0.9rem]">Ticket ist geschlossen.</div>
+                      {detail.status === 'resolved' ? (
+                        <div className="space-y-3">
+                          <div className="text-[#9ca2bd] text-[0.9rem]">Dieses Ticket wurde als gelöst markiert.</div>
+                          <button
+                            onClick={handleReopen}
+                            disabled={reopening}
+                            className={cn(
+                              'inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200',
+                              reopening
+                                ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-wait'
+                                : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]'
+                            )}
+                          >
+                            {reopening ? 'Öffne…' : 'Ticket wieder öffnen'}
+                          </button>
+                        </div>
                       ) : (
                         <form onSubmit={handleReply} className="space-y-2">
                           <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
@@ -377,15 +410,22 @@ export const SupportPage: React.FC = () => {
 
 export default SupportPage;
 
-// Kleine UI-Hilfskomponenten innerhalb dieser Datei, um Abhängigkeiten gering zu halten
+// --- Hilfskomponenten ---
 
-// CharCounter aus shared component importiert (oben)
-const StatCard: React.FC<{ label: string; value: number; accent?: 'cyan' | 'purple' | 'indigo' | 'slate'; loading?: boolean }> = ({ label, value, accent = 'slate', loading }) => {
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => (
+  <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border',
+    status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
+    status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
+    status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+  )}>{STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}</span>
+);
+
+const StatCard: React.FC<{ label: string; value: number; accent?: 'cyan' | 'purple' | 'indigo' | 'emerald'; loading?: boolean }> = ({ label, value, accent = 'cyan', loading }) => {
   const accentStyles = {
     cyan: 'bg-[linear-gradient(180deg,rgba(125,227,255,0.12)_0%,rgba(125,227,255,0)_100%)] border-cyan-400/20',
     purple: 'bg-[linear-gradient(180deg,rgba(75,70,200,0.12)_0%,rgba(75,70,200,0)_100%)] border-astra-purple/30',
     indigo: 'bg-[linear-gradient(180deg,rgba(99,102,241,0.12)_0%,rgba(99,102,241,0)_100%)] border-indigo-400/20',
-    slate: 'bg-[linear-gradient(180deg,rgba(148,163,184,0.10)_0%,rgba(148,163,184,0)_100%)] border-slate-400/20',
+    emerald: 'bg-[linear-gradient(180deg,rgba(16,185,129,0.12)_0%,rgba(16,185,129,0)_100%)] border-emerald-400/20',
   } as const;
   return (
     <div className={cn('rounded-xl border p-3', accentStyles[accent])}>
@@ -427,17 +467,7 @@ const TicketRow: React.FC<{
           {t.category} • Erstellt {new Date(t.created_at).toLocaleDateString('de-DE')} • Letzte Aktivität {new Date(t.updated_at).toLocaleString('de-DE')}
         </p>
       </div>
-      <span
-        className={cn(
-          'px-2 py-1 rounded-md text-[0.72rem] border shrink-0',
-          t.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
-          t.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
-          t.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-          t.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
-        )}
-      >
-        {t.status}
-      </span>
+      <StatusBadge status={t.status} />
     </button>
   );
 };

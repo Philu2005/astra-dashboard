@@ -4,8 +4,9 @@ from typing import Literal, Optional, List
 from pydantic import BaseModel, Field, constr
 
 
-TicketStatus = Literal["open", "in_progress", "resolved", "closed"]
+TicketStatus = Literal["open", "in_progress", "resolved"]
 TicketPriority = Literal["low", "normal", "high", "critical"]
+MessageType = Literal["user", "support", "system"]
 
 
 class TicketBase(BaseModel):
@@ -44,6 +45,8 @@ class Message(BaseModel):
     author_name: str
     is_admin: bool
     message: str
+    message_type: MessageType = Field(default="user")
+    event_type: Optional[str] = None
     created_at: str
 
 
@@ -75,7 +78,7 @@ class UserInfo(BaseModel):
     total_tickets: int
     open_tickets: int
     resolved_tickets: int
-    closed_tickets: int
+    in_progress_tickets: int
     last_support_activity: Optional[str] = None
 
 
@@ -95,4 +98,3 @@ class TicketCounters(BaseModel):
     open: int
     in_progress: int
     resolved: int
-    closed: int

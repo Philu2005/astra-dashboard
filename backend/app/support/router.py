@@ -22,7 +22,6 @@ from .schemas import (
 logger = logging.getLogger("astra.support")
 router = APIRouter(prefix="/support", tags=["support"])
 
-# Zentrale, erlaubte Kategorien (müssen mit dem Frontend übereinstimmen)
 ALLOWED_CATEGORIES = {
     "Fehler melden",
     "Problem mit einem Befehl",
@@ -82,7 +81,6 @@ async def get_ticket(request: Request, ticket_id: int):
     detail = await service.get_ticket_detail(ticket_id)
     if not detail:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    # owner or admin only
     owner_id = detail["user_id"]
     if session.user_id != owner_id and not _is_admin(session.user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -95,8 +93,8 @@ async def reply_ticket(request: Request, ticket_id: int, payload: MessageCreate)
     detail = await service.get_ticket_detail(ticket_id)
     if not detail:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    if detail["status"] == "closed":
-        raise HTTPException(status_code=400, detail="Ticket is closed")
+    if detail["status"] == "resolved":
+        raise HTTPException(status_code=400, detail="Ticket ist gelöst. Bitte öffne es erneut, um zu antworten.")
     owner_id = detail["user_id"]
     is_admin = _is_admin(session.user_id)
     if session.user_id != owner_id and not is_admin:
@@ -108,6 +106,25 @@ async def reply_ticket(request: Request, ticket_id: int, payload: MessageCreate)
         is_admin=is_admin,
         message=payload.message,
     )
+    new_detail = await service.get_ticket_detail(ticket_id)
+    assert new_detail is not None
+    return TicketDetail(**new_detail)
+
+
+@router.post("/tickets/{ticket_id}/reopen", response_model=TicketDetail)
+async def reopen_ticket(request: Request, ticket_id: int):
+    """Benutzer kann eigenes gelöstes Ticket wieder öffnen."""
+    session = await _require_session(request)
+    detail = await service.get_ticket_detail(ticket_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    owner_id = detail["user_id"]
+    if session.user_id != owner_id:
+        raise HTTPException(status_code=403, detail="Nur der Ticket-Ersteller kann dieses Ticket wieder öffnen.")
+    if detail["status"] != "resolved":
+        raise HTTPException(status_code=400, detail="Nur gelöste Tickets können wieder geöffnet werden.")
+    actor_name = session.display_name or session.username
+    await service.set_status(ticket_id, "open", actor_name=actor_name)
     new_detail = await service.get_ticket_detail(ticket_id)
     assert new_detail is not None
     return TicketDetail(**new_detail)
@@ -151,9 +168,10 @@ async def admin_set_status(request: Request, ticket_id: int, payload: TicketUpda
     session = await _require_session(request)
     if not _is_admin(session.user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
-    if payload.status not in ("open", "in_progress", "resolved", "closed"):
+    if payload.status not in ("open", "in_progress", "resolved"):
         raise HTTPException(status_code=400, detail="Invalid status")
-    await service.set_status(ticket_id, payload.status)
+    actor_name = "Astra Support"
+    await service.set_status(ticket_id, payload.status, actor_name=actor_name)
     detail = await service.get_ticket_detail(ticket_id)
     if not detail:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -206,7 +224,7 @@ async def admin_user_info(request: Request, ticket_id: int):
         total_tickets=stats["total"],
         open_tickets=stats["open"],
         resolved_tickets=stats["resolved"],
-        closed_tickets=stats["closed"],
+        in_progress_tickets=stats["in_progress"],
         last_support_activity=stats["last_support_activity"],
     )
 

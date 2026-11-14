@@ -1,19 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supportApi } from '@/services/support-api';
 import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary, TicketPriority, UserHistoryItem, UserInfo } from '@/types/support';
-import { SUPPORT_CATEGORIES } from '@/types/support';
+import { SUPPORT_CATEGORIES, STATUS_LABELS, PRIORITY_LABELS } from '@/types/support';
 import { cn } from '@/lib/utils';
 import { CharCounter } from '@/components/support/CharCounter';
-import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
 import { MessageList } from '@/components/support/MessageList';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
 const ADMIN_ID = '789555434201677824';
+
+// Polling-Intervall für Ticketliste und Counter
+const LIST_POLL_INTERVAL = 8000;
 
 export const AdminTicketsPage: React.FC = () => {
   const { authenticated, loading, user } = useAuth();
@@ -38,9 +40,12 @@ export const AdminTicketsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const load = async () => {
+  // Refs für Polling-Cleanup
+  const listPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const load = useCallback(async (silent = false) => {
     try {
-      setLoadingList(true);
+      if (!silent) setLoadingList(true);
       const [c, list] = await Promise.all([
         supportApi.counters(),
         supportApi.listAll({ status: status || undefined, category: category || undefined, priority: priorityFilter || undefined, search: search || undefined, limit: 100 }),
@@ -49,17 +54,21 @@ export const AdminTicketsPage: React.FC = () => {
       setTickets(list);
       setError(null);
     } catch (e: any) {
-      setError(e.message || 'Tickets konnten nicht geladen werden');
+      if (!silent) setError(e.message || 'Tickets konnten nicht geladen werden');
     } finally {
-      setLoadingList(false);
+      if (!silent) setLoadingList(false);
     }
-  };
+  }, [status, category, priorityFilter, search]);
 
+  // Initiales Laden + Polling der Ticketliste
   useEffect(() => {
     if (!isAdmin) return;
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin]);
+    listPollRef.current = setInterval(() => load(true), LIST_POLL_INTERVAL);
+    return () => {
+      if (listPollRef.current) clearInterval(listPollRef.current);
+    };
+  }, [isAdmin, load]);
 
   useEffect(() => {
     if (!selected) { setDetail(null); return; }
@@ -67,7 +76,6 @@ export const AdminTicketsPage: React.FC = () => {
     supportApi.getTicket(selected.id)
       .then((d) => { if (mounted) setDetail(d); })
       .catch(() => { if (mounted) setDetail(null); });
-    // Nutzerinfo & Historie laden
     setUserInfo(null);
     setUserHistory(null);
     supportApi.getUserInfoForTicket(selected.id).then((info) => { if (mounted) setUserInfo(info); }).catch(() => {});
@@ -78,7 +86,11 @@ export const AdminTicketsPage: React.FC = () => {
   // Polling neuer Nachrichten für ausgewähltes Ticket
   useTicketMessagesPolling(detail?.id ?? null, {
     intervalMs: 4000,
-    onUpdate: (updated) => setDetail(updated),
+    onUpdate: (updated) => {
+      setDetail(updated);
+      // Ticketliste synchron halten
+      setTickets((prev) => prev.map((t) => (t.id === updated.id ? { ...t, status: updated.status, updated_at: updated.updated_at } : t)));
+    },
     getCurrentMessages: () => detail?.messages ?? [],
   });
 
@@ -139,7 +151,6 @@ export const AdminTicketsPage: React.FC = () => {
     }
   };
 
-  // Kein globaler Side Loader in der Admin-Ansicht: Layout bleibt bestehen
   if ((!authenticated && !loading) || (!isAdmin && !loading)) {
     return <StaticInfoPage title="Kein Zugriff" description="Diese Seite ist nur für den Administrator verfügbar." showHomeActions />
   }
@@ -157,7 +168,6 @@ export const AdminTicketsPage: React.FC = () => {
                 <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Offen</div><div className="text-white text-xl font-bold">{counters.open}</div></div>
                 <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">In Bearbeitung</div><div className="text-white text-xl font-bold">{counters.in_progress}</div></div>
                 <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Gelöst</div><div className="text-white text-xl font-bold">{counters.resolved}</div></div>
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f1220] p-3 col-span-2 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.06)]"><div className="text-[#8a90ad]">Geschlossen</div><div className="text-white text-xl font-bold">{counters.closed}</div></div>
               </div>
             ) : error ? (
               <div className="text-red-400 text-[0.9rem]">{error}</div>
@@ -182,10 +192,9 @@ export const AdminTicketsPage: React.FC = () => {
                   onChange={(v) => setStatus(v as TicketStatus | '')}
                   items={[
                     { value: '', label: 'Alle' },
-                    { value: 'open', label: 'open' },
-                    { value: 'in_progress', label: 'in_progress' },
-                    { value: 'resolved', label: 'resolved' },
-                    { value: 'closed', label: 'closed' },
+                    { value: 'open', label: 'Offen' },
+                    { value: 'in_progress', label: 'In Bearbeitung' },
+                    { value: 'resolved', label: 'Gelöst' },
                   ]}
                   aria-label="Status filtern"
                 />
@@ -206,10 +215,10 @@ export const AdminTicketsPage: React.FC = () => {
                   onChange={(v) => setPriorityFilter(v as TicketPriority | '')}
                   items={[
                     { value: '', label: 'Alle' },
-                    { value: 'low', label: 'low' },
-                    { value: 'normal', label: 'normal' },
-                    { value: 'high', label: 'high' },
-                    { value: 'critical', label: 'critical' },
+                    { value: 'low', label: 'Niedrig' },
+                    { value: 'normal', label: 'Normal' },
+                    { value: 'high', label: 'Hoch' },
+                    { value: 'critical', label: 'Kritisch' },
                   ]}
                   aria-label="Priorität filtern"
                 />
@@ -242,14 +251,13 @@ export const AdminTicketsPage: React.FC = () => {
                       t.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
                       t.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
                       t.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-                      t.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
-                    )}>{t.status}</span>
+                    )}>{STATUS_LABELS[t.status] ?? t.status}</span>
                       <span className={cn('px-2 py-1 rounded-md text-[0.72rem] border',
                         t.priority === 'low' && 'border-[#2f3a55] bg-[#0f162a] text-[#8aa2ff]',
                         t.priority === 'normal' && 'border-[#2a2f45] bg-[#131625] text-[#cdd2ea]',
                         t.priority === 'high' && 'border-amber-500/30 bg-amber-500/10 text-amber-400',
                         t.priority === 'critical' && 'border-rose-500/30 bg-rose-500/10 text-rose-400'
-                      )}>{t.priority}</span>
+                      )}>{PRIORITY_LABELS[t.priority] ?? t.priority}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-[#8a90ad] text-[0.72rem] mt-1.5">
@@ -289,10 +297,10 @@ export const AdminTicketsPage: React.FC = () => {
                       value={detail.priority}
                       onChange={(v) => handleSetPriority(detail.id, v as TicketPriority)}
                       items={[
-                        { value: 'low', label: 'low' },
-                        { value: 'normal', label: 'normal' },
-                        { value: 'high', label: 'high' },
-                        { value: 'critical', label: 'critical' },
+                        { value: 'low', label: 'Niedrig' },
+                        { value: 'normal', label: 'Normal' },
+                        { value: 'high', label: 'Hoch' },
+                        { value: 'critical', label: 'Kritisch' },
                       ]}
                       aria-label="Priorität setzen"
                       className="h-9"
@@ -301,10 +309,9 @@ export const AdminTicketsPage: React.FC = () => {
                       value={detail.status}
                       onChange={(v) => handleSetStatus(detail.id, v as TicketStatus)}
                       items={[
-                        { value: 'open', label: 'open' },
-                        { value: 'in_progress', label: 'in_progress' },
-                        { value: 'resolved', label: 'resolved' },
-                        { value: 'closed', label: 'closed' },
+                        { value: 'open', label: 'Offen' },
+                        { value: 'in_progress', label: 'In Bearbeitung' },
+                        { value: 'resolved', label: 'Gelöst' },
                       ]}
                       aria-label="Status setzen"
                       className="h-9"
@@ -323,7 +330,6 @@ export const AdminTicketsPage: React.FC = () => {
                     <div className="mt-2 grid grid-cols-2 gap-2 text-[0.9rem]">
                       <div className="col-span-2 flex items-center gap-3">
                         {userInfo.avatar_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
                           <img src={userInfo.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-[#2a2f45]" />
                         ) : (
                           <div className="w-10 h-10 rounded-full border border-[#2a2f45] bg-[#131625]" />
@@ -342,12 +348,12 @@ export const AdminTicketsPage: React.FC = () => {
                         <div className="text-white">{userInfo.open_tickets}</div>
                       </div>
                       <div>
-                        <div className="text-[#8a90ad] text-[0.8rem]">Gelöst</div>
-                        <div className="text-white">{userInfo.resolved_tickets}</div>
+                        <div className="text-[#8a90ad] text-[0.8rem]">In Bearbeitung</div>
+                        <div className="text-white">{userInfo.in_progress_tickets}</div>
                       </div>
                       <div>
-                        <div className="text-[#8a90ad] text-[0.8rem]">Geschlossen</div>
-                        <div className="text-white">{userInfo.closed_tickets}</div>
+                        <div className="text-[#8a90ad] text-[0.8rem]">Gelöst</div>
+                        <div className="text-white">{userInfo.resolved_tickets}</div>
                       </div>
                       <div className="col-span-2">
                         <div className="text-[#8a90ad] text-[0.8rem]">Letzte Aktivität</div>
@@ -377,8 +383,7 @@ export const AdminTicketsPage: React.FC = () => {
                               h.status === 'open' && 'border-[#35406a] bg-[#171e33] text-[#a5c0ff]',
                               h.status === 'in_progress' && 'border-[#5b4cc8]/40 bg-astra-purple/10 text-[#c4b5fd]',
                               h.status === 'resolved' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-                              h.status === 'closed' && 'border-[#3a3f59] bg-[#161a2d] text-[#8a90ad]'
-                            )}>{h.status}</span>
+                            )}>{STATUS_LABELS[h.status] ?? h.status}</span>
                           </div>
                         </button>
                       ))
@@ -387,10 +392,10 @@ export const AdminTicketsPage: React.FC = () => {
                 </div>
 
                 </div>
-                <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} />
+                <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} ticket={detail} />
                 <div className="px-5 pb-5 pt-2 shrink-0">
-                  {detail.status === 'closed' ? (
-                    <div className="text-[#8a90ad] text-[0.9rem]">Ticket ist geschlossen.</div>
+                  {detail.status === 'resolved' ? (
+                    <div className="text-[#9ca2bd] text-[0.9rem]">Ticket ist als gelöst markiert. Status kann oben geändert werden.</div>
                   ) : (
                     <form onSubmit={handleReply} className="space-y-2">
                       <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
@@ -419,9 +424,9 @@ export const AdminTicketsPage: React.FC = () => {
       </div>
       <AstraConfirmDialog
         open={deleteDialogOpen}
-        title="Ticket wirklich löschen?"
+        title="Ticket endgültig löschen?"
         description={detail ? `Ticket #${detail.ticket_number} – ${detail.subject}` : undefined}
-        warning="Dieser Vorgang kann nicht rückgängig gemacht werden. Die Konversation wird dauerhaft entfernt."
+        warning="Möchtest du dieses Ticket wirklich endgültig löschen? Das Ticket und alle zugehörigen Nachrichten werden dauerhaft entfernt. Dieser Vorgang kann nicht rückgängig gemacht werden."
         confirmLabel="Endgültig löschen"
         cancelLabel="Abbrechen"
         loading={deleting}

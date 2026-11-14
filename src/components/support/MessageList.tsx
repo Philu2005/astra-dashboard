@@ -1,23 +1,78 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { TicketMessage } from '@/types/support';
+import type { TicketDetail } from '@/types/support';
 import MessageBubble from '@/components/support/MessageBubble';
+import { STATUS_LABELS } from '@/types/support';
 
 interface MessageListProps {
   messages: TicketMessage[];
   currentUserId?: string | null;
-  adminView?: boolean; // if true, show admin highlight/badge for is_admin messages
+  adminView?: boolean;
+  ticket?: TicketDetail | null;
 }
 
-// Helper to determine if scrolled to bottom (with tolerance)
 function isAtBottom(el: HTMLElement, tolerance = 24) {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= tolerance;
 }
 
-export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserId, adminView }) => {
+/** Systemnachricht – zentrierte Timeline-Card */
+const SystemMessage: React.FC<{ message: TicketMessage }> = ({ message }) => {
+  const iconMap: Record<string, string> = {
+    ticket_created: '🎫',
+    ticket_resolved: '✅',
+    ticket_reopened: '🔄',
+  };
+  const icon = iconMap[message.event_type ?? ''] ?? 'ℹ️';
+
+  return (
+    <div className="flex justify-center my-2">
+      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2f45] bg-[#0f1220]/80 shadow-[0_0_0_1px_rgba(104,97,225,0.06)]">
+        <span className="text-base">{icon}</span>
+        <span className="text-[0.82rem] text-[#9ca2bd]">{message.message}</span>
+        <span className="text-[0.72rem] text-[#6b7094] ml-1">
+          {new Date(message.created_at).toLocaleString('de-DE')}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/** Eröffnungsbeitrag – hervorgehobene Card */
+const OpeningPost: React.FC<{ message: TicketMessage; ticket?: TicketDetail | null }> = ({ message, ticket }) => {
+  return (
+    <div className="mb-3">
+      <div className="rounded-2xl border border-[#5b4cc8]/30 bg-[linear-gradient(135deg,rgba(75,70,200,0.08)_0%,rgba(125,227,255,0.04)_100%)] overflow-hidden shadow-[0_0_0_1px_rgba(104,97,225,0.1)]">
+        <div className="px-5 py-3 border-b border-[#5b4cc8]/20 bg-[linear-gradient(180deg,rgba(75,70,200,0.12)_0%,rgba(75,70,200,0)_100%)] flex items-center gap-3">
+          <span className="text-lg">📋</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[#c4b5fd] font-semibold text-[0.95rem]">Ursprüngliche Anfrage</h3>
+          </div>
+          <span className="text-[0.72rem] text-[#8a90ad]">
+            {new Date(message.created_at).toLocaleString('de-DE')}
+          </span>
+        </div>
+        <div className="px-5 py-4">
+          {ticket && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 text-[0.82rem] text-[#9ca2bd]">
+              <span className="font-medium text-[#d6dbf0]">{ticket.subject}</span>
+              <span>#{ticket.ticket_number}</span>
+              <span>{ticket.category}</span>
+              <span>{message.author_name}</span>
+            </div>
+          )}
+          <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed break-words">
+            {message.message}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserId, adminView, ticket }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wasAtBottomRef = useRef(true);
 
-  // Track whether user is at bottom before updates
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -25,18 +80,15 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
       wasAtBottomRef.current = isAtBottom(el);
     };
     el.addEventListener('scroll', onScroll);
-    // initialize
     wasAtBottomRef.current = isAtBottom(el);
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-scroll on new messages if previously at bottom
   const lastMessageKey = useMemo(() => messages.map((m) => m.id).join(','), [messages]);
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     if (wasAtBottomRef.current) {
-      // smooth scroll to bottom
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
   }, [lastMessageKey]);
@@ -44,9 +96,20 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
   return (
     <div ref={containerRef} className="flex-1 min-h-0 p-5 space-y-3 overflow-y-auto scrollbar-hide">
       {messages.map((m) => {
+        // Systemnachricht
+        if (m.message_type === 'system') {
+          return <SystemMessage key={m.id} message={m} />;
+        }
+
+        // Eröffnungsbeitrag
+        if (m.event_type === 'ticket_created' && m.message_type === 'user') {
+          return <OpeningPost key={m.id} message={m} ticket={ticket} />;
+        }
+
+        // Normale Nachricht
         const isOwn = currentUserId ? String(m.author_id) === String(currentUserId) : false;
         const align = isOwn ? 'right' : 'left';
-        const highlight = adminView ? m.is_admin : isOwn; // in user view: own msgs may appear slightly emphasized via theme of bubble
+        const highlight = adminView ? m.is_admin : isOwn;
         const badgeText = adminView && m.is_admin ? 'Astra Support' : undefined;
         const displayName = adminView ? m.author_name : (m.is_admin ? 'Support' : m.author_name);
         return (

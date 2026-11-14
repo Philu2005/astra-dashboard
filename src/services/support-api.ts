@@ -50,6 +50,12 @@ export const supportApi = {
     return ensureJson(res);
   },
 
+  async reopenTicket(ticketId: number): Promise<TicketDetail> {
+    const res = await apiClient.post(`/support/tickets/${ticketId}/reopen`, {});
+    if (!res.ok) throw new Error(`Ticket konnte nicht wieder geöffnet werden (${res.status})`);
+    return ensureJson(res);
+  },
+
   // Admin
   async counters(): Promise<TicketCounters> {
     const res = await apiClient.get('/support/admin/counters');
