@@ -162,9 +162,9 @@ export const SupportPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1680px]">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1680px] h-full flex flex-col min-h-0">
         {/* Hero / Header */}
-        <div className="mb-6 rounded-2xl border border-[#2a2f45] bg-[#0f1220] overflow-hidden shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+        <div className="mb-6 rounded-2xl border border-[#2a2f45] bg-[#0f1220] overflow-hidden shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)] shrink-0">
           <div className="relative px-6 py-6 md:px-8 md:py-7">
             <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(1200px_300px_at_10%_-20%,rgba(125,227,255,0.12)_0%,rgba(125,227,255,0)_60%),radial-gradient(900px_220px_at_80%_-30%,rgba(75,70,200,0.18)_0%,rgba(75,70,200,0)_55%)]" />
             <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -197,9 +197,9 @@ export const SupportPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1.4fr] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] xl:grid-cols-[3fr_1.4fr] gap-6 flex-1 min-h-0 lg:grid-rows-[1fr]">
           {/* Linke Spalte: eigene Tickets */}
-          <div>
+          <div className="lg:h-full lg:min-h-0 lg:overflow-y-auto scrollbar-hide">
             {/* Offen & in Arbeit */}
             <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
               <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
@@ -242,7 +242,7 @@ export const SupportPage: React.FC = () => {
           </div>
 
           {/* Rechte Spalte: Detail oder Formular */}
-          <div className="min-w-[360px] sm:min-w-0">
+          <div className="min-w-[360px] sm:min-w-0 lg:h-full lg:min-h-0 flex flex-col">
             {!selected ? (
               <div ref={formRef} className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
                 <h2 className="text-white font-semibold mb-1">Neues Ticket</h2>
@@ -292,7 +292,7 @@ export const SupportPage: React.FC = () => {
                 </form>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col h-[calc(100vh-12rem)] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+              <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col flex-1 min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
                 <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-2 shrink-0">
                   <h2 className="text-white font-semibold">Ticketdetails</h2>
                   <button onClick={() => setSelected(null)} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">Zur Übersicht</button>

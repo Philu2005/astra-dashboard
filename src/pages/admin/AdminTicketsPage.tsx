@@ -145,9 +145,9 @@ export const AdminTicketsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] grid grid-cols-1 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr] gap-6 items-start">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] h-full grid grid-cols-1 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr] gap-6 lg:grid-rows-[1fr] lg:min-h-0">
         {/* Linke Spalte: Kennzahlen + Filter */}
-        <div className="space-y-5">
+        <div className="space-y-5 lg:overflow-y-auto lg:h-full scrollbar-hide">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
             <h2 className="text-white font-semibold mb-3">Übersicht</h2>
             {counters ? (
@@ -222,13 +222,13 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Mittlere Spalte: Liste */}
-        <div>
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
-            <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)]">
+        <div className="lg:h-full lg:min-h-0 flex flex-col">
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)] flex flex-col lg:h-full lg:min-h-0">
+            <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
               <h2 className="text-white font-semibold">Tickets</h2>
               {loadingList && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
             </div>
-            <div className="p-3 space-y-2 max-h-[72vh] overflow-y-auto scrollbar-hide">
+            <div className="p-3 space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
               {tickets.map((t) => (
                 <button key={t.id} onClick={() => setSelected(t)} className={cn('w-full text-left p-3 rounded-xl border transition-colors', selected?.id === t.id ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]' : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]')}>
                 <div className="flex items-center justify-between gap-3">
@@ -266,8 +266,8 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
-        <div>
-          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col h-[calc(100vh-6rem)] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
+        <div className="lg:h-full lg:min-h-0 flex flex-col">
+          <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col lg:h-full lg:min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
             <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
               <h2 className="text-white font-semibold">Details</h2>
             </div>

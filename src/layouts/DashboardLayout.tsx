@@ -44,7 +44,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#070912] text-white overflow-x-hidden relative">
+    <div className="h-dvh bg-[#070912] text-white overflow-hidden relative flex flex-col">
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_8%,rgba(75,70,200,0.34)_0%,rgba(75,70,200,0.14)_18%,rgba(75,70,200,0)_44%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_86%_20%,rgba(125,227,255,0.2)_0%,rgba(125,227,255,0.08)_14%,rgba(125,227,255,0)_36%)]" />
@@ -55,13 +55,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       <Sidebar />
       
-      <div className="flex flex-col min-h-screen w-full relative z-10">
-        <div className="lg:ml-[278px]">
+      <div className="flex flex-col h-full w-full relative z-10 min-h-0">
+        <div className="lg:ml-[278px] shrink-0">
           <Topbar />
         </div>
         
-        <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 xl:px-10 lg:pt-6 lg:pb-8 lg:ml-[278px]">
-          <div className="w-full">
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10 lg:pt-6 lg:pb-8 lg:ml-[278px]">
+          <div className="w-full h-full">
             {children}
           </div>
         </main>
