@@ -61,7 +61,21 @@
 - [x] TypeScript-Prüfung bestanden
 - [x] Vite-Build erfolgreich
 
+## Phase 6: Status & Monitoring (Abgeschlossen)
+- [x] Monitoring-Service mit periodischem Scheduler (120s Intervall)
+- [x] 6 Dienste überwacht: Landing Page, Dashboard, Astra API, Astra Bot, MySQL, Discord
+- [x] DB-Tabellen: status_services, status_checks, status_incidents, status_heartbeats
+- [x] Automatische Störungserkennung und -behebung
+- [x] Öffentliche Status Page unter /status mit 90-Tage-Historienbalken
+- [x] Öffentliche API-Endpunkte: GET /api/status/, /api/status/services, /api/status/incidents
+- [x] Authentifizierter Heartbeat-Endpunkt: POST /api/status/heartbeat
+- [x] Gewichtete Gesamtstatusberechnung und zeitbasierte Uptime-Berechnung
+- [x] Navigation: Landing Page Navbar + Dashboard Sidebar
+- [x] TypeScript-Prüfung bestanden
+- [x] Vite-Build erfolgreich
+
 ## Fortschrittsprotokoll
+- **2026-11-15:** Vollständiges Status- und Monitoring-System implementiert: Backend-Monitoring-Service mit 6 Prüfungen (HTTP, Astra API, Heartbeat, MySQL, Discord), periodischem Scheduler, Störungsverwaltung und gewichteter Statusberechnung. 4 neue DB-Tabellen. Öffentliche Status Page unter /status mit Dienstkarten, 90-Tage-Historienbalken, Störungshistorie und automatischer Aktualisierung. Navigation in Landing Page Navbar und Dashboard Sidebar ergänzt.
 - **2026-11-14:** Support-System Bugfix: HTTP-500-Fehler beim Laden von Tickets behoben (Ursache: `%s` in `DATE_FORMAT`-SQL-Strings kollidierte mit aiomysql-Parameterplatzhaltern – durch `%%s`-Escaping gelöst). Admin-Kennzahlen-Übersicht zeigt nun Fehlerzustand statt endlosem „Laden…" an (`AdminTicketsPage.tsx`). TypeScript-Prüfung und Build erfolgreich.
 - **2026-11-14:** Kritischen API-Routing-Fehler behoben (doppeltes `/api/api/`-Prefix): Frontend-Services (`server-api.ts`, `useDashboardStats.ts`, `LandingPage.tsx`) korrigiert – Endpoints übergeben nun relative Pfade ohne `/api`-Prefix, da `apiClient` diesen bereits als Basis verwendet. `/api/health`-Route im Backend ergänzt. Dev-Guard `assertNoDoubleApiPrefix()` in `api-client.ts` hinzugefügt. TypeScript-Prüfung und Build erfolgreich.
 - **2026-11-14:** Migration auf persistente MySQL-Sessions abgeschlossen: In-Memory SessionManager durch async MySQL-basierten SessionManager ersetzt (aiomysql Connection-Pool). Drei Tabellen (dashboard_sessions, oauth_states, oauth_exchange_tokens) mit SHA-256 Token-Hashing, atomarer State/Exchange-Token-Konsumierung und idempotenter Tabellenerstellung. Session-Laufzeit auf 30 Tage (SESSION_MAX_AGE + SESSION_INACTIVITY_TIMEOUT). FastAPI-Lifespan für Pool-Init/Shutdown und stündliche Bereinigung. Alle Aufrufer (auth/router.py, servers/router.py) auf async/await umgestellt. Umfassende async Integrationstests erstellt. Keine Frontend-Änderungen.

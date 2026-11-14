@@ -14,6 +14,7 @@ import {
   Menu,
   Check,
   Search,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { appConfig } from '@/lib/app-config';
@@ -281,6 +282,7 @@ export const Sidebar = () => {
                 <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={() => setIsOpen(false)} />
               )}
               <NavItem icon={BookOpen} label="Dokumentation" href="/docs" onClick={() => setIsOpen(false)} />
+              <NavItem icon={Activity} label="Status" href="/status" onClick={() => setIsOpen(false)} />
               {isAdmin && (
                 <NavItem icon={FileText} label="Support-Tickets" active={pathname === '/dashboard/tickets'} href="/dashboard/tickets" onClick={() => setIsOpen(false)} />
               )}

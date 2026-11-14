@@ -7,6 +7,7 @@ import { DocsPage } from '@/docs/DocsPage';
 import SupportPage from '@/pages/SupportPage';
 import TicketDetailPage from '@/pages/TicketDetailPage';
 import AdminTicketsPage from '@/pages/admin/AdminTicketsPage';
+import StatusPage from '@/pages/StatusPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { ServerProvider } from '@/contexts/ServerContext';
 import { CookieConsentBanner } from '@/components/consent/CookieConsentBanner';
@@ -184,12 +185,7 @@ function App() {
     }
 
     if (pathname === '/status') {
-      return (
-        <StaticInfoPage
-          title="Systemstatus"
-          description="Der öffentliche Statusbereich wird hier bereitgestellt. Aktuell läuft Astra stabil."
-        />
-      );
+      return <StatusPage />;
     }
 
     if (pathname === '/invite') {

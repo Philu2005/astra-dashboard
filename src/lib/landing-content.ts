@@ -48,6 +48,7 @@ export const landingNavItems: LandingNavItem[] = [
   { label: 'Features', href: '#features' },
   { label: 'Dashboard-Einblick', href: '#insights' },
   { label: 'Dokumentation', href: '/docs' },
+  { label: 'Status', href: '/status' },
   { label: 'Support', href: '/support' },
 ];
 
