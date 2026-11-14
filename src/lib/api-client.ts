@@ -9,9 +9,21 @@ const API_BASE_URL =
 
 const BACKEND_ORIGIN = (import.meta.env.VITE_BACKEND_ORIGIN as string | undefined) || '';
 
+// Auth endpoints (/auth/*) must remain on /auth in production (reverse-proxied)
+// and point to the backend origin in local development.
+const AUTH_BASE_URL = BACKEND_ORIGIN || '';
+
+function resolveBase(endpoint: string): string {
+  // Route auth calls explicitly to AUTH base
+  if (endpoint.startsWith('/auth/')) return AUTH_BASE_URL;
+  // Everything else goes to API base (e.g. /api/support/*)
+  return API_BASE_URL;
+}
+
 export const apiClient = {
   async get(endpoint: string) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const base = resolveBase(endpoint);
+    const response = await fetch(`${base}${endpoint}`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -22,7 +34,8 @@ export const apiClient = {
   },
 
   async post(endpoint: string, data?: unknown) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const base = resolveBase(endpoint);
+    const response = await fetch(`${base}${endpoint}`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -41,7 +54,8 @@ export const apiClient = {
     // In local dev VITE_BACKEND_ORIGIN must point to the backend directly
     // (e.g. http://127.0.0.1:8000) because the Vite dev-server would
     // otherwise treat the path as an SPA route.
-    return `${BACKEND_ORIGIN}/auth/discord/login`;
+    // Use AUTH_BASE_URL to respect local dev vs prod behavior
+    return `${AUTH_BASE_URL}/auth/discord/login`;
   },
 
   getBaseUrl() {
