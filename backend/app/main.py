@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from app.config import settings
 from app.auth.router import router as auth_router
 from app.servers.router import router as servers_router
@@ -47,7 +48,15 @@ async def lifespan(app: FastAPI):
 # Validate configuration at startup (before lifespan)
 settings.validate()
 
-app = FastAPI(title="Astra Dashboard Backend", lifespan=lifespan)
+app = FastAPI(title="Astra Dashboard Backend", lifespan=lifespan, docs_url=None)
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui():
+    return get_swagger_ui_html(
+        openapi_url="/api/openapi.json",
+        title=app.title + " – Swagger UI",
+    )
 
 app.add_middleware(
     CORSMiddleware,
