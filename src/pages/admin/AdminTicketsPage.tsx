@@ -7,6 +7,7 @@ import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary, TicketP
 import { SUPPORT_CATEGORIES } from '@/types/support';
 import { cn } from '@/lib/utils';
 import { AstraSelect } from '@/components/ui/AstraSelect';
+import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
 
 const ADMIN_ID = '789555434201677824';
 
@@ -30,6 +31,8 @@ export const AdminTicketsPage: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userHistory, setUserHistory] = useState<UserHistoryItem[] | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = async () => {
     try {
@@ -91,17 +94,19 @@ export const AdminTicketsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (ticketId: number) => {
-    if (!confirm('Ticket wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+  const confirmDelete = async () => {
+    if (!detail) return;
+    setDeleteError(null);
     try {
       setDeleting(true);
-      await supportApi.deleteTicket(ticketId);
-      setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+      await supportApi.deleteTicket(detail.id);
+      setTickets((prev) => prev.filter((t) => t.id !== detail.id));
       setDetail(null);
       setSelected(null);
       setCounters(await supportApi.counters());
+      setDeleteDialogOpen(false);
     } catch (e: any) {
-      setError(e.message || 'Ticket konnte nicht gelöscht werden');
+      setDeleteError(e.message || 'Ticket konnte nicht gelöscht werden');
     } finally {
       setDeleting(false);
     }
@@ -270,7 +275,7 @@ export const AdminTicketsPage: React.FC = () => {
                       <option value="resolved">resolved</option>
                       <option value="closed">closed</option>
                     </AstraSelect>
-                    <button onClick={() => handleDelete(detail.id)} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem]', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
+                    <button onClick={() => { setDeleteError(null); setDeleteDialogOpen(true); }} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem]', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
                   </div>
                 </div>
 
@@ -351,7 +356,7 @@ export const AdminTicketsPage: React.FC = () => {
                   {detail.messages.map((m) => (
                     <div key={m.id} className={cn('rounded-xl border p-3', m.is_admin ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]')}>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}</span>
+                        <span className={cn('text-[0.86rem] font-medium', m.is_admin ? 'text-[#c4b5fd]' : 'text-[#d6dbf0]')}>{m.author_name}{m.is_admin && ' • Support'}</span>
                         <span className="text-[0.76rem] text-[#8a90ad]">{new Date(m.created_at).toLocaleString('de-DE')}</span>
                       </div>
                       <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed">{m.message}</p>
@@ -373,6 +378,18 @@ export const AdminTicketsPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <AstraConfirmDialog
+        open={deleteDialogOpen}
+        title="Ticket wirklich löschen?"
+        description={detail ? `Ticket #${detail.ticket_number} – ${detail.subject}` : undefined}
+        warning="Dieser Vorgang kann nicht rückgängig gemacht werden. Die Konversation wird dauerhaft entfernt."
+        confirmLabel="Endgültig löschen"
+        cancelLabel="Abbrechen"
+        loading={deleting}
+        error={deleteError}
+        onCancel={() => { if (!deleting) setDeleteDialogOpen(false); }}
+        onConfirm={confirmDelete}
+      />
     </DashboardLayout>
   );
 };
