@@ -30,7 +30,7 @@ export const apiClient = {
     // Login must go directly to the backend (not via Vite proxy) so that
     // the oauth_state cookie is set on 127.0.0.1 – the same origin that
     // Discord will call back to.
-    return `${API_BASE_URL}/auth/discord/login`;
+    return `${BACKEND_ORIGIN}/auth/discord/login`;
   },
 
   getBaseUrl() {
