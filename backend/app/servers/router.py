@@ -78,6 +78,19 @@ async def get_server_roles(guild_id: str, request: Request):
     return data
 
 
+@router.get("/dashboard/stats")
+async def get_dashboard_stats(request: Request):
+    await _get_user_id_from_session(request)
+
+    try:
+        data = await astra_client.get_dashboard_stats()
+    except AstraApiError as exc:
+        logger.warning("Dashboard-Statistiken konnten nicht geladen werden: %s", exc)
+        raise _handle_astra_error(exc)
+
+    return data
+
+
 @router.get("/status")
 async def get_astra_status():
     try:

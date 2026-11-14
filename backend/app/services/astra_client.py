@@ -95,5 +95,28 @@ class AstraClient:
         """GET /servers/{guild_id}/roles?user_id=<user_id>"""
         return await self._request("GET", f"/servers/{guild_id}/roles", params={"user_id": user_id})
 
+    async def get_dashboard_stats(self) -> dict[str, Any]:
+        """GET /dashboard/stats – Globale Statistiken von der Bot-API."""
+        data = await self._request("GET", "/dashboard/stats")
+
+        # Antwort validieren
+        if not isinstance(data, dict) or "stats" not in data:
+            logger.warning("Astra Bot API: Unerwartetes Antwortformat von /dashboard/stats")
+            raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
+
+        stats = data["stats"]
+        if not isinstance(stats, dict):
+            raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
+
+        return {
+            "stats": {
+                "users": stats.get("users", 0),
+                "guilds": stats.get("guilds", 0),
+                "commands": stats.get("commands", 0),
+            },
+            "last_successful_sync": data.get("last_successful_sync"),
+            "stale": data.get("stale", False),
+        }
+
 
 astra_client = AstraClient()
