@@ -37,7 +37,7 @@ export function useDashboardStats(intervalMs = 60_000): DashboardStatsState {
       if (pending) return;
       pending = true;
       try {
-        const response = await apiClient.get('/api/dashboard/stats');
+        const response = await apiClient.get('/dashboard/stats');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json: DashboardStatsResponse = await response.json();
         if (!cancelled) {

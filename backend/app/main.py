@@ -99,9 +99,14 @@ app.include_router(servers_router)
 app.include_router(support_router, prefix="/api")
 
 
-# Health check
+# Health check – available at both /health (direct) and /api/health (via reverse proxy)
 @app.get("/health")
 async def health_check():
+    return {"status": "healthy"}
+
+
+@app.get("/api/health")
+async def api_health_check():
     return {"status": "healthy"}
 
 

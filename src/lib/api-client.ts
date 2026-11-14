@@ -20,8 +20,23 @@ function resolveBase(endpoint: string): string {
   return API_BASE_URL;
 }
 
+/**
+ * Guard: endpoints passed to apiClient must NOT start with '/api/'
+ * because API_BASE_URL already contains the '/api' prefix.
+ * Auth endpoints ('/auth/...') are exempt as they use a different base.
+ */
+function assertNoDoubleApiPrefix(endpoint: string): void {
+  if (import.meta.env.DEV && endpoint.startsWith('/api/')) {
+    console.error(
+      `[apiClient] Double /api prefix detected: endpoint "${endpoint}" should not start with "/api/" – ` +
+      `the base URL already includes "/api". Remove the leading "/api" from the endpoint.`,
+    );
+  }
+}
+
 export const apiClient = {
   async get(endpoint: string) {
+    assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);
     const response = await fetch(`${base}${endpoint}`, {
       method: 'GET',
@@ -34,6 +49,7 @@ export const apiClient = {
   },
 
   async post(endpoint: string, data?: unknown) {
+    assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);
     const response = await fetch(`${base}${endpoint}`, {
       method: 'POST',

@@ -315,7 +315,7 @@ const StatisticsSection = () => {
     let cancelled = false;
     const fetchStats = async () => {
       try {
-        const res = await apiClient.get('/api/dashboard/stats');
+        const res = await apiClient.get('/dashboard/stats');
         if (!res.ok) return;
         const json = await res.json();
         if (!cancelled && json?.stats) setLiveStats(json.stats);
