@@ -6,6 +6,7 @@ import { supportApi } from '@/services/support-api';
 import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary, TicketPriority, UserHistoryItem, UserInfo } from '@/types/support';
 import { SUPPORT_CATEGORIES } from '@/types/support';
 import { cn } from '@/lib/utils';
+import { AstraSelect } from '@/components/ui/AstraSelect';
 
 const ADMIN_ID = '789555434201677824';
 
@@ -162,30 +163,30 @@ export const AdminTicketsPage: React.FC = () => {
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Status</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | '')} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                <AstraSelect value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | '')} aria-label="Status filtern">
                   <option value="">Alle</option>
                   <option value="open">open</option>
                   <option value="in_progress">in_progress</option>
                   <option value="resolved">resolved</option>
                   <option value="closed">closed</option>
-                </select>
+                </AstraSelect>
               </div>
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Kategorie</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                <AstraSelect value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Kategorie filtern">
                   <option value="">Alle</option>
                   {SUPPORT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                </AstraSelect>
               </div>
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Priorität</label>
-                <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | '')} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                <AstraSelect value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | '')} aria-label="Priorität filtern">
                   <option value="">Alle</option>
                   <option value="low">low</option>
                   <option value="normal">normal</option>
                   <option value="high">high</option>
                   <option value="critical">critical</option>
-                </select>
+                </AstraSelect>
               </div>
             </div>
             <div className="flex items-center gap-3 pt-1">
@@ -257,18 +258,18 @@ export const AdminTicketsPage: React.FC = () => {
                     <p className="text-[#9ca2bd] text-[0.85rem] truncate">#{detail.ticket_number} • {detail.user_name} • {detail.category}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <select value={detail.priority} onChange={(e) => handleSetPriority(detail.id, e.target.value as TicketPriority)} className="h-9 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                    <AstraSelect value={detail.priority} onChange={(e) => handleSetPriority(detail.id, e.target.value as TicketPriority)} aria-label="Priorität setzen" className="h-9">
                       <option value="low">low</option>
                       <option value="normal">normal</option>
                       <option value="high">high</option>
                       <option value="critical">critical</option>
-                    </select>
-                    <select value={detail.status} onChange={(e) => handleSetStatus(detail.id, e.target.value as TicketStatus)} className="h-9 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40">
+                    </AstraSelect>
+                    <AstraSelect value={detail.status} onChange={(e) => handleSetStatus(detail.id, e.target.value as TicketStatus)} aria-label="Status setzen" className="h-9">
                       <option value="open">open</option>
                       <option value="in_progress">in_progress</option>
                       <option value="resolved">resolved</option>
                       <option value="closed">closed</option>
-                    </select>
+                    </AstraSelect>
                     <button onClick={() => handleDelete(detail.id)} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem]', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
                   </div>
                 </div>

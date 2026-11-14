@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { cn } from '@/lib/utils';
+import { AstraSelect } from '@/components/ui/AstraSelect';
 
 export const SupportPage: React.FC = () => {
   const { authenticated, loading } = useAuth();
@@ -164,15 +165,15 @@ export const SupportPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Kategorie</label>
-                  <select
+                  <AstraSelect
                     value={form.category}
                     onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                    className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white focus:outline-none focus:border-astra-purple/40"
+                    aria-label="Kategorie auswählen"
                   >
                     {SUPPORT_CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
-                  </select>
+                  </AstraSelect>
                 </div>
                 <div>
                   <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Beschreibung</label>
