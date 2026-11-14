@@ -54,6 +54,7 @@ async def get_servers(request: Request):
 @router.get("/servers/{guild_id}")
 async def get_server(guild_id: str, request: Request):
     user_id = _get_user_id_from_session(request)
+    logger.info("Serverlisten-Anfrage für Discord-User-ID: %s", user_id)
 
     try:
         data = await astra_client.get_server(guild_id, user_id)
