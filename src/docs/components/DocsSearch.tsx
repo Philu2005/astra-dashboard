@@ -75,11 +75,11 @@ export const DocsSearch: React.FC<DocsSearchProps> = ({ onNavigate }) => {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-3 w-full max-w-xl mx-auto h-12 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/15 text-zinc-400 transition-all duration-200 group"
+        className="flex items-center gap-3 w-full max-w-xl mx-auto h-12 px-4 rounded-lg border border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 text-[#9ca2bd] transition-all duration-200 group"
       >
-        <Search className="w-4.5 h-4.5 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+        <Search className="w-4.5 h-4.5 text-[#8a90ad] group-hover:text-[#b7bed8] transition-colors" />
         <span className="flex-1 text-left text-[0.9rem]">Dokumentation durchsuchen…</span>
-        <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/8 text-[0.7rem] text-zinc-500 font-mono">
+        <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#171a2b] border border-[#2a2f45] text-[0.7rem] text-[#8a90ad] font-mono">
           /
         </kbd>
       </button>
@@ -89,12 +89,12 @@ export const DocsSearch: React.FC<DocsSearchProps> = ({ onNavigate }) => {
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4" onClick={() => setOpen(false)}>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-2xl bg-[#0d0f1e] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden"
+            className="relative w-full max-w-2xl bg-[#121423] border border-[#2a2f45] rounded-2xl shadow-2xl shadow-black/40 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 px-5 h-14 border-b border-white/8">
-              <Search className="w-4.5 h-4.5 text-zinc-500 shrink-0" />
+            <div className="flex items-center gap-3 px-5 h-14 border-b border-[#212131]">
+              <Search className="w-4.5 h-4.5 text-[#8a90ad] shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
@@ -102,14 +102,14 @@ export const DocsSearch: React.FC<DocsSearchProps> = ({ onNavigate }) => {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Suche nach Artikeln, Funktionen, Endpunkten…"
-                className="flex-1 bg-transparent text-white text-[0.95rem] placeholder:text-zinc-500 outline-none"
+                className="flex-1 bg-transparent text-white text-[0.95rem] placeholder:text-[#8a90ad] outline-none"
               />
               {query && (
-                <button onClick={() => setQuery('')} className="p-1 rounded-md hover:bg-white/8 text-zinc-500 hover:text-zinc-300 transition-colors">
+                <button onClick={() => setQuery('')} className="p-1 rounded-md hover:bg-[#171a2b] text-[#8a90ad] hover:text-[#b7bed8] transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="px-2 py-1 rounded-md bg-white/5 border border-white/8 text-[0.7rem] text-zinc-500 font-mono hover:bg-white/8 transition-colors">
+              <button onClick={() => setOpen(false)} className="px-2 py-1 rounded-md bg-[#171a2b] border border-[#2a2f45] text-[0.7rem] text-[#8a90ad] font-mono hover:bg-[#1a1a2a] transition-colors">
                 ESC
               </button>
             </div>
@@ -118,14 +118,14 @@ export const DocsSearch: React.FC<DocsSearchProps> = ({ onNavigate }) => {
             <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
               {query.length >= 2 && results.length === 0 && (
                 <div className="px-5 py-12 text-center">
-                  <Search className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-                  <p className="text-zinc-400 text-[0.9rem]">Keine Ergebnisse für „{query}"</p>
-                  <p className="text-zinc-600 text-[0.8rem] mt-1">Versuche andere Suchbegriffe</p>
+                  <Search className="w-10 h-10 text-[#8a90ad] mx-auto mb-3" />
+                  <p className="text-[#9ca2bd] text-[0.9rem]">Keine Ergebnisse für „{query}"</p>
+                  <p className="text-[#8a90ad] text-[0.8rem] mt-1">Versuche andere Suchbegriffe</p>
                 </div>
               )}
               {query.length < 2 && (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-zinc-500 text-[0.85rem]">Mindestens 2 Zeichen eingeben</p>
+                  <p className="text-[#8a90ad] text-[0.85rem]">Mindestens 2 Zeichen eingeben</p>
                 </div>
               )}
               {results.map((result, idx) => (
@@ -134,23 +134,23 @@ export const DocsSearch: React.FC<DocsSearchProps> = ({ onNavigate }) => {
                   onClick={() => handleSelect(result.article.slug)}
                   className={cn(
                     "w-full flex items-start gap-3.5 px-5 py-3 text-left transition-colors duration-100",
-                    idx === selectedIdx ? "bg-[#4b46c8]/15" : "hover:bg-white/4"
+                    idx === selectedIdx ? "bg-astra-purple/15" : "hover:bg-[#1a1a2a]"
                   )}
                 >
                   <div className={cn(
                     "mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
-                    idx === selectedIdx ? "bg-[#4b46c8]/30 text-[#b4adff]" : "bg-white/5 text-zinc-500"
+                    idx === selectedIdx ? "bg-astra-purple/30 text-[#b4adff]" : "bg-[#171a2b] text-[#8a90ad]"
                   )}>
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={cn("text-[0.9rem] font-medium truncate", idx === selectedIdx ? "text-white" : "text-zinc-200")}>
+                      <span className={cn("text-[0.9rem] font-medium truncate", idx === selectedIdx ? "text-white" : "text-[#d6dbf0]")}> 
                         {result.article.title}
                       </span>
-                      <span className="text-[0.7rem] text-zinc-600 shrink-0">{result.article.category}</span>
+                      <span className="text-[0.7rem] text-[#8a90ad] shrink-0">{result.article.category}</span>
                     </div>
-                    <p className="text-[0.8rem] text-zinc-500 truncate mt-0.5">{result.excerpt}</p>
+                    <p className="text-[0.8rem] text-[#9ca2bd] truncate mt-0.5">{result.excerpt}</p>
                   </div>
                   {idx === selectedIdx && <ArrowRight className="w-4 h-4 text-[#b4adff] mt-2 shrink-0" />}
                 </button>
@@ -159,10 +159,10 @@ export const DocsSearch: React.FC<DocsSearchProps> = ({ onNavigate }) => {
 
             {/* Footer */}
             {results.length > 0 && (
-              <div className="flex items-center gap-4 px-5 py-2.5 border-t border-white/6 text-[0.7rem] text-zinc-600">
-                <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/8 font-mono">↑↓</kbd> Navigieren</span>
-                <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/8 font-mono">↵</kbd> Öffnen</span>
-                <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/8 font-mono">ESC</kbd> Schließen</span>
+              <div className="flex items-center gap-4 px-5 py-2.5 border-t border-[#212131] text-[0.7rem] text-[#8a90ad]">
+                <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-[#171a2b] border border-[#2a2f45] font-mono">↑↓</kbd> Navigieren</span>
+                <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-[#171a2b] border border-[#2a2f45] font-mono">↵</kbd> Öffnen</span>
+                <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-[#171a2b] border border-[#2a2f45] font-mono">ESC</kbd> Schließen</span>
               </div>
             )}
           </div>

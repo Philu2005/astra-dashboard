@@ -38,17 +38,17 @@ export const DocsNav: React.FC<DocsNavProps> = ({ currentSlug, onNavigate }) => 
               onClick={() => toggle(cat.slug)}
               className={cn(
                 "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all duration-200 group",
-                hasActive ? "text-white" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/4"
+                hasActive ? "text-white bg-[#1a1a2a]" : "text-[#9ca2bd] hover:text-[#d6dbf0] hover:bg-[#1a1a2a]"
               )}
             >
               <span className="flex-1 text-[0.85rem] font-medium">{cat.title}</span>
               <ChevronDown className={cn(
-                "w-3.5 h-3.5 text-zinc-600 transition-transform duration-200",
+                "w-3.5 h-3.5 text-[#8a90ad] transition-transform duration-200",
                 isExpanded && "rotate-180"
               )} />
             </button>
             {isExpanded && (
-              <div className="ml-2 pl-3 border-l border-white/6 space-y-0.5 mt-0.5 mb-2">
+              <div className="ml-2 pl-3 border-l border-[#212131] space-y-0.5 mt-0.5 mb-2">
                 {articles.map((article) => {
                   const isActive = article.slug === currentSlug;
                   return (
@@ -58,11 +58,11 @@ export const DocsNav: React.FC<DocsNavProps> = ({ currentSlug, onNavigate }) => 
                       className={cn(
                         "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-all duration-150 text-[0.82rem]",
                         isActive
-                          ? "bg-[#4b46c8]/15 text-[#c4b5fd] font-medium"
-                          : "text-zinc-500 hover:text-zinc-300 hover:bg-white/4"
+                          ? "bg-astra-purple/15 text-[#c4b5fd] font-medium"
+                          : "text-[#9ca2bd] hover:text-[#d6dbf0] hover:bg-[#1a1a2a]"
                       )}
                     >
-                      <FileText className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-[#b4adff]" : "text-zinc-600")} />
+                      <FileText className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-[#b4adff]" : "text-[#8a90ad]")} />
                       <span className="truncate">{article.title}</span>
                     </button>
                   );

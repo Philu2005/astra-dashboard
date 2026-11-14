@@ -19,7 +19,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2.5 right-2.5 p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-all duration-200 opacity-0 group-hover/code:opacity-100"
+      className="absolute top-2.5 right-2.5 p-1.5 rounded-md bg-[#171a2b] hover:bg-[#1a1a2a] text-[#8a90ad] hover:text-[#d6dbf0] transition-all duration-200 opacity-0 group-hover/code:opacity-100 border border-[#2a2f45]"
       title="Kopieren"
     >
       {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -44,13 +44,13 @@ function renderInline(text: string): React.ReactNode[] {
       nodes.push(<em key={match.index}>{match[4]}</em>);
     } else if (match[5]) {
       nodes.push(
-        <code key={match.index} className="px-1.5 py-0.5 rounded-md bg-white/8 text-[#c4b5fd] text-[0.88em] font-mono">
+        <code key={match.index} className="px-1.5 py-0.5 rounded-md bg-[#171a2b] text-[#c4b5fd] text-[0.88em] font-mono border border-[#2a2f45]">
           {match[6]}
         </code>
       );
     } else if (match[7]) {
       nodes.push(
-        <a key={match.index} href={match[9]} className="text-[#7de3ff] hover:text-[#a5edff] underline underline-offset-2 transition-colors">
+        <a key={match.index} href={match[9]} className="text-astra-cyan hover:text-[#a5edff] underline underline-offset-2 transition-colors">
           {match[8]}
         </a>
       );
@@ -70,12 +70,12 @@ function renderTable(lines: string[]): React.ReactNode {
   );
 
   return (
-    <div className="overflow-x-auto my-5 rounded-xl border border-white/8">
+    <div className="overflow-x-auto my-5 rounded-xl border border-[#2a2f45]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/8 bg-white/3">
+          <tr className="border-b border-[#212131] bg-[#171a2b]">
             {headerCells.map((cell, i) => (
-              <th key={i} className="px-4 py-3 text-left font-semibold text-zinc-200 whitespace-nowrap">
+              <th key={i} className="px-4 py-3 text-left font-semibold text-[#d6dbf0] whitespace-nowrap">
                 {renderInline(cell)}
               </th>
             ))}
@@ -83,9 +83,9 @@ function renderTable(lines: string[]): React.ReactNode {
         </thead>
         <tbody>
           {rows.map((row, ri) => (
-            <tr key={ri} className="border-b border-white/5 last:border-0 hover:bg-white/2 transition-colors">
+            <tr key={ri} className="border-b border-[#212131] last:border-0 hover:bg-[#1a1a2a] transition-colors">
               {row.map((cell, ci) => (
-                <td key={ci} className="px-4 py-2.5 text-zinc-300">
+                <td key={ci} className="px-4 py-2.5 text-[#d6dbf0]">
                   {renderInline(cell)}
                 </td>
               ))}
@@ -123,8 +123,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
               {lang}
             </div>
           )}
-          <pre className={cn("rounded-xl bg-[#0a0a14] border border-white/6 overflow-x-auto", lang ? "pt-8 pb-4 px-4" : "p-4")}>
-            <code className="text-[0.85rem] leading-relaxed text-zinc-300 font-mono">{code}</code>
+          <pre className={cn("rounded-xl bg-[#0f1220] border border-[#2a2f45] overflow-x-auto", lang ? "pt-8 pb-4 px-4" : "p-4") }>
+            <code className="text-[0.85rem] leading-relaxed text-[#d6dbf0] font-mono">{code}</code>
           </pre>
           <CopyButton text={code} />
         </div>
@@ -156,10 +156,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       const borderColor = isWarning ? 'border-l-amber-500/60' : 'border-l-[#4b46c8]/60';
       const iconColor = isWarning ? 'text-amber-400' : 'text-[#7de3ff]';
       elements.push(
-        <div key={elements.length} className={cn("my-5 pl-4 py-3 pr-4 border-l-2 rounded-r-lg bg-white/3", borderColor)}>
+        <div key={elements.length} className={cn("my-5 pl-4 py-3 pr-4 border-l-2 rounded-r-lg bg-[#131625] border border-[#2a2f45]", borderColor)}>
           <div className="flex gap-2.5 items-start">
             <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", iconColor)} />
-            <p className="text-[0.9rem] text-zinc-300 leading-relaxed">{renderInline(quoteText)}</p>
+            <p className="text-[0.9rem] text-[#d6dbf0] leading-relaxed">{renderInline(quoteText)}</p>
           </div>
         </div>
       );
@@ -176,8 +176,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       elements.push(
         <ul key={elements.length} className="my-4 space-y-2">
           {items.map((item, idx) => (
-            <li key={idx} className="flex gap-2.5 text-[0.9rem] text-zinc-300 leading-relaxed">
-              <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#4b46c8] shrink-0" />
+            <li key={idx} className="flex gap-2.5 text-[0.9rem] text-[#d6dbf0] leading-relaxed">
+              <span className="mt-2 w-1.5 h-1.5 rounded-full bg-astra-purple shrink-0" />
               <span>{renderInline(item)}</span>
             </li>
           ))}
@@ -196,8 +196,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       elements.push(
         <ol key={elements.length} className="my-4 space-y-2 counter-reset-item">
           {items.map((item, idx) => (
-            <li key={idx} className="flex gap-3 text-[0.9rem] text-zinc-300 leading-relaxed">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#4b46c8]/15 text-[#b4adff] text-xs font-bold shrink-0 mt-0.5">
+            <li key={idx} className="flex gap-3 text-[0.9rem] text-[#d6dbf0] leading-relaxed">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-astra-purple/15 text-[#b4adff] text-xs font-bold shrink-0 mt-0.5">
                 {idx + 1}
               </span>
               <span className="flex-1">{renderInline(item)}</span>
