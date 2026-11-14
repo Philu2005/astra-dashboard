@@ -34,6 +34,7 @@ export const AdminTicketsPage: React.FC = () => {
   const [detail, setDetail] = useState<TicketDetail | null>(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [justSent, setJustSent] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | ''>('');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userHistory, setUserHistory] = useState<UserHistoryItem[] | null>(null);
@@ -151,6 +152,7 @@ export const AdminTicketsPage: React.FC = () => {
       const updated = await supportApi.reply(detail.id, { message: reply });
       setDetail(updated);
       setReply('');
+      setJustSent(true);
       setTickets((prev) => prev.map((t) => (t.id === updated.id ? { ...t, updated_at: updated.updated_at } : t)));
     } catch (e: any) {
       setError(e.message || 'Antwort konnte nicht gesendet werden');
@@ -413,7 +415,7 @@ export const AdminTicketsPage: React.FC = () => {
                 </div>
 
                 </div>
-                <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} ticket={detail} />
+                <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} ticket={detail} userJustSent={justSent} onScrolledToBottom={() => setJustSent(false)} />
                 <div className="px-5 pb-5 pt-2 shrink-0">
                   {detail.status === 'resolved' ? (
                     <div className="text-[#9ca2bd] text-[0.9rem]">Ticket ist als gelöst markiert. Status kann oben geändert werden.</div>

@@ -23,6 +23,7 @@ export const SupportPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [justSent, setJustSent] = useState(false);
   const [reopening, setReopening] = useState(false);
 
   const [form, setForm] = useState<TicketCreate>({ subject: '', category: SUPPORT_CATEGORIES[0], description: '' });
@@ -144,6 +145,7 @@ export const SupportPage: React.FC = () => {
       const updated = await supportApi.reply(detail.id, { message: reply });
       setDetail(updated);
       setReply('');
+      setJustSent(true);
       setTickets((prev) => prev ? prev.map((t) => (t.id === updated.id ? { ...t, updated_at: updated.updated_at, status: updated.status } : t)) : prev);
     } catch (e: any) {
       setError(e.message || 'Antwort konnte nicht gesendet werden');
@@ -354,7 +356,7 @@ export const SupportPage: React.FC = () => {
                       </div>
                       <StatusBadge status={detail.status} />
                     </div>
-                    <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={false} ticket={detail} />
+                    <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={false} ticket={detail} userJustSent={justSent} onScrolledToBottom={() => setJustSent(false)} />
                     <div className="px-5 pb-5 pt-2 shrink-0">
                       {detail.status === 'resolved' ? (
                         <div className="space-y-3">

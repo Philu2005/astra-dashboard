@@ -94,6 +94,14 @@ export const DocsPage: React.FC = () => {
             <div className="w-64 hidden md:block">
               <DocsSearch onNavigate={navigate} />
             </div>
+            <button
+              onClick={() => window.location.href = '/dashboard'}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-[#171a2b] px-4 py-2 text-[0.84rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Zurück zum Dashboard</span>
+              <span className="sm:hidden">Dashboard</span>
+            </button>
           </div>
         </header>
 
@@ -123,6 +131,15 @@ export const DocsPage: React.FC = () => {
 
           {/* Main content */}
           <main ref={contentRef} className="flex-1 min-w-0 px-6 sm:px-10 lg:px-14 py-10 max-w-3xl">
+            {/* Zurück zur Dokumentation */}
+            <button
+              onClick={() => navigate(null)}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-transparent px-3.5 py-2 text-[0.84rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97] mb-5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Zurück zur Dokumentation
+            </button>
+
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-[0.78rem] text-[#8a90ad] mb-6">
               <button onClick={() => navigate(null)} className="hover:text-[#d6dbf0] transition-colors">Docs</button>
