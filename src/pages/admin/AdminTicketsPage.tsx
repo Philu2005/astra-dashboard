@@ -6,6 +6,7 @@ import { supportApi } from '@/services/support-api';
 import type { TicketCounters, TicketDetail, TicketStatus, TicketSummary, TicketPriority, UserHistoryItem, UserInfo } from '@/types/support';
 import { SUPPORT_CATEGORIES } from '@/types/support';
 import { cn } from '@/lib/utils';
+import { CharCounter } from '@/components/support/CharCounter';
 import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { AstraConfirmDialog } from '@/components/ui/AstraConfirmDialog';
@@ -393,7 +394,20 @@ export const AdminTicketsPage: React.FC = () => {
                   ) : (
                     <form onSubmit={handleReply} className="space-y-2">
                       <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
-                      <textarea value={reply} onChange={(e) => setReply(e.target.value)} className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" />
+                      <textarea
+                        value={reply}
+                        onChange={(e) => { if (e.target.value.length <= 8000) setReply(e.target.value); }}
+                        maxLength={8000}
+                        className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
+                        placeholder="Schreibe deine Nachricht…"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) {
+                            e.preventDefault();
+                            if (reply.trim() && !sending) handleReply(e as unknown as React.FormEvent);
+                          }
+                        }}
+                      />
+                      <CharCounter current={reply.length} max={8000} warn={200} />
                       <button disabled={sending || !reply.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200', sending || !reply.trim() ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-not-allowed' : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]')}>{sending ? 'Sende…' : 'Antwort senden'}</button>
                     </form>
                   )}

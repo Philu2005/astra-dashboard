@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { cn } from '@/lib/utils';
+import { CharCounter } from '@/components/support/CharCounter';
 import { AstraSelect } from '@/components/ui/AstraSelect';
 import { AstraSelectMenu } from '@/components/ui/AstraSelectMenu';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
@@ -345,7 +346,20 @@ export const SupportPage: React.FC = () => {
                       ) : (
                         <form onSubmit={handleReply} className="space-y-2">
                           <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
-                          <textarea value={reply} onChange={(e) => setReply(e.target.value)} className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" />
+                          <textarea
+                            value={reply}
+                            onChange={(e) => { if (e.target.value.length <= 8000) setReply(e.target.value); }}
+                            maxLength={8000}
+                            className="w-full min-h-24 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-2 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
+                            placeholder="Schreibe deine Nachricht…"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) {
+                                e.preventDefault();
+                                if (reply.trim() && !sending) handleReply(e as unknown as React.FormEvent);
+                              }
+                            }}
+                          />
+                          <CharCounter current={reply.length} max={8000} warn={200} />
                           <button disabled={sending || !reply.trim()} className={cn('inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200', sending || !reply.trim() ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad] cursor-not-allowed' : 'bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]')}>{sending ? 'Sende…' : 'Antwort senden'}</button>
                         </form>
                       )}
@@ -365,19 +379,7 @@ export default SupportPage;
 
 // Kleine UI-Hilfskomponenten innerhalb dieser Datei, um Abhängigkeiten gering zu halten
 
-const CharCounter: React.FC<{ current: number; max: number; warn: number }> = ({ current, max, warn }) => {
-  const remaining = max - current;
-  const isWarning = remaining <= warn && remaining > 0;
-  const isLimit = remaining <= 0;
-  return (
-    <div className={cn(
-      'mt-1 text-[0.75rem] text-right tabular-nums transition-colors',
-      isLimit ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-[#596189]'
-    )}>
-      {remaining} / {max} Zeichen verbleibend
-    </div>
-  );
-};
+// CharCounter aus shared component importiert (oben)
 const StatCard: React.FC<{ label: string; value: number; accent?: 'cyan' | 'purple' | 'indigo' | 'slate'; loading?: boolean }> = ({ label, value, accent = 'slate', loading }) => {
   const accentStyles = {
     cyan: 'bg-[linear-gradient(180deg,rgba(125,227,255,0.12)_0%,rgba(125,227,255,0)_100%)] border-cyan-400/20',

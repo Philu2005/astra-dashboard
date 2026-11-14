@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supportApi } from '@/services/support-api';
 import type { TicketDetail } from '@/types/support';
 import { cn } from '@/lib/utils';
+import { CharCounter } from '@/components/support/CharCounter';
 import { MessageList } from '@/components/support/MessageList';
 import { useTicketMessagesPolling } from '@/hooks/useTicketMessagesPolling';
 
@@ -105,10 +106,18 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
                   <label className="block text-[0.82rem] text-[#8a90ad]">Antwort</label>
                   <textarea
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => { if (e.target.value.length <= 8000) setMessage(e.target.value); }}
+                    maxLength={8000}
                     className="w-full min-h-32 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 py-3 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40"
                     placeholder="Schreibe deine Nachricht…"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) {
+                        e.preventDefault();
+                        if (message.trim() && !sending) handleReply(e as unknown as React.FormEvent);
+                      }
+                    }}
                   />
+                  <CharCounter current={message.length} max={8000} warn={200} />
                   <div className="flex items-center gap-3">
                     <button
                       disabled={sending || !message.trim()}
