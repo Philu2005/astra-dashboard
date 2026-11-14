@@ -166,3 +166,15 @@ backend/.env
 
 
 tests/visual/diff/
+
+
+# Projektdateien explizit versionieren
+!AGENTS.md
+!DESIGN.md
+!PROJECT.md
+!ROADMAP.md
+!SECURITY.md
+!backend/.env.example
+!backend/README.md
+!docs/
+!docs/api-routing.md
