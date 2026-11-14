@@ -16,6 +16,7 @@ export interface ServiceStatus {
   response_time_ms: number | null;
   last_check: string | null;
   daily_history: DayHistory[];
+  sub_status?: string | null;
 }
 
 export interface OverallStatus {

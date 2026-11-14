@@ -50,6 +50,7 @@ const OVERALL_ICONS: Record<string, typeof CheckCircle2> = {
 };
 
 const SERVICE_ICONS: Record<string, typeof Globe> = {
+  'Website': Globe,
   'Landing Page': Globe,
   'Dashboard': LayoutDashboard,
   'Astra API': Server,
@@ -95,9 +96,9 @@ function StatusBar({ day }: { day: DayHistory }) {
   const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
   return (
-    <div className="relative flex-1" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div className="relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div
-        className="w-full h-[34px] rounded-[2px] transition-all duration-150 cursor-pointer"
+        className="w-[6px] sm:w-[7px] h-[32px] rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
           backgroundColor: color,
           opacity: hover ? 1 : 0.85,
@@ -154,8 +155,13 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         </div>
       </div>
 
+      {/* Sub-Status bei Website */}
+      {service.sub_status && (
+        <p className="text-xs text-yellow-400/80 mt-1 mb-3">{service.sub_status}</p>
+      )}
+
       {/* Historische Balken */}
-      <div className="flex gap-[1.5px] items-end w-full">
+      <div className="flex gap-[3px] items-end">
         {service.daily_history.map((day) => (
           <StatusBar key={day.date} day={day} />
         ))}
@@ -310,7 +316,7 @@ export default function StatusPage() {
         {/* Dienstkarten */}
         {loading && !data ? (
           <div className="grid gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-9 w-9 rounded-lg bg-[#1a1e38]" />

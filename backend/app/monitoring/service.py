@@ -104,7 +104,11 @@ SERVICE_WEIGHTS = {
     "MySQL": 3,
     "Landing Page": 2,
     "Discord": 1,  # Extern – geringere Gewichtung
+    "Website": 3,  # Kombiniert: Landing Page + Dashboard
 }
+
+# Dienste, die zu "Website" zusammengeführt werden
+WEBSITE_SUB_SERVICES = {"Landing Page", "Dashboard"}
 
 
 async def init_monitoring_tables() -> None:
@@ -752,17 +756,95 @@ def _calculate_overall_status(services: list[dict]) -> tuple[str, str]:
         return STATUS_OUTAGE, "Schwere Störung"
 
 
+def _merge_website_services(services: list[dict]) -> list[dict]:
+    """Führt Landing Page und Dashboard zu einem 'Website'-Dienst zusammen."""
+    sub_services = [s for s in services if s["name"] in WEBSITE_SUB_SERVICES]
+    other_services = [s for s in services if s["name"] not in WEBSITE_SUB_SERVICES]
+
+    if not sub_services:
+        return other_services
+
+    # Status berechnen: worst-case der Subkomponenten
+    statuses = [s["current_status"] for s in sub_services]
+    if all(st == STATUS_OPERATIONAL for st in statuses):
+        combined_status = STATUS_OPERATIONAL
+    elif any(st == STATUS_OUTAGE for st in statuses):
+        if all(st == STATUS_OUTAGE for st in statuses):
+            combined_status = STATUS_OUTAGE
+        else:
+            combined_status = STATUS_DEGRADED
+    elif any(st == STATUS_DEGRADED for st in statuses):
+        combined_status = STATUS_DEGRADED
+    elif any(st == STATUS_UNKNOWN for st in statuses):
+        combined_status = STATUS_DEGRADED
+    else:
+        combined_status = STATUS_UNKNOWN
+
+    # Uptime: Durchschnitt der Subkomponenten
+    uptimes = [s["uptime_percent"] for s in sub_services if s["uptime_percent"] > 0]
+    combined_uptime = round(sum(uptimes) / len(uptimes), 2) if uptimes else 0.0
+
+    # Response-Time: Maximum
+    response_times = [s["response_time_ms"] for s in sub_services if s["response_time_ms"] is not None]
+    combined_rt = max(response_times) if response_times else None
+
+    # Last check: neuester
+    last_checks = [s["last_check"] for s in sub_services if s["last_check"] is not None]
+    combined_last = max(last_checks) if last_checks else None
+
+    # Daily history: worst-case pro Tag zusammenführen
+    history_by_date = {}
+    for s in sub_services:
+        for day in s["daily_history"]:
+            d = day["date"]
+            if d not in history_by_date:
+                history_by_date[d] = {"date": d, "status": day["status"], "uptime_percent": day["uptime_percent"]}
+            else:
+                existing = history_by_date[d]
+                # Worst-case Status
+                priority = {STATUS_OUTAGE: 0, STATUS_DEGRADED: 1, STATUS_UNKNOWN: 2, STATUS_OPERATIONAL: 3}
+                if priority.get(day["status"], 2) < priority.get(existing["status"], 2):
+                    existing["status"] = day["status"]
+                # Niedrigere Uptime übernehmen
+                existing["uptime_percent"] = min(existing["uptime_percent"], day["uptime_percent"])
+
+    combined_history = sorted(history_by_date.values(), key=lambda x: x["date"])
+
+    # Sub-Status-Details für Frontend
+    sub_status_details = []
+    for s in sub_services:
+        if s["current_status"] != STATUS_OPERATIONAL:
+            label = "ausgefallen" if s["current_status"] == STATUS_OUTAGE else "beeinträchtigt"
+            sub_status_details.append(f"{s['name']} {label}")
+
+    website_service = {
+        "id": sub_services[0]["id"],
+        "name": "Website",
+        "description": "Öffentliche Astra-Website und Dashboard",
+        "service_type": "http",
+        "current_status": combined_status,
+        "response_time_ms": combined_rt,
+        "last_check": combined_last,
+        "uptime_percent": combined_uptime,
+        "daily_history": combined_history,
+        "sub_status": ", ".join(sub_status_details) if sub_status_details else None,
+    }
+
+    return [website_service] + other_services
+
+
 async def get_status_page_data() -> dict:
     """Gibt alle Daten für die öffentliche Status Page zurück."""
     services = await get_all_services_status()
-    overall_status, overall_label = _calculate_overall_status(services)
+    merged_services = _merge_website_services(services)
+    overall_status, overall_label = _calculate_overall_status(merged_services)
     incidents = await get_public_incidents()
 
     return {
         "overall": {
             "status": overall_status,
             "label": overall_label,
-            "services": services,
+            "services": merged_services,
         },
         "incidents": incidents,
         "last_updated": datetime.now(timezone.utc),
