@@ -88,16 +88,16 @@ function timeAgo(dateStr: string): string {
 
 // ─── Komponenten ─────────────────────────────────────────────
 
-function StatusBar({ day, index }: { day: DayHistory; index: number }) {
+function StatusBar({ day }: { day: DayHistory }) {
   const [hover, setHover] = useState(false);
   const color = STATUS_COLORS[day.status] || STATUS_COLORS.unknown;
   const d = new Date(day.date);
   const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
   return (
-    <div className="relative flex-1 min-w-[3px] max-w-[6px]" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div className="relative flex-1" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div
-        className="w-full h-[32px] rounded-[2px] transition-all duration-150 cursor-pointer"
+        className="w-full h-[34px] rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
           backgroundColor: color,
           opacity: hover ? 1 : 0.85,
@@ -125,15 +125,21 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a1e38] border border-[#252a45]">
-            <Icon className="h-4.5 w-4.5 text-[#a6adca]" />
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0"
+            style={{ backgroundColor: `${statusColor}15`, border: `1px solid ${statusColor}25` }}
+          >
+            <Icon className="h-5 w-5" style={{ color: statusColor }} />
           </div>
           <div>
             <h3 className="text-[0.95rem] font-semibold text-white leading-tight">{service.name}</h3>
             <p className="text-xs text-[#7a82a6] mt-0.5">{service.description}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-end gap-1.5">
+          <span className="text-sm font-semibold text-[#a6adca]">
+            {service.uptime_percent > 0 ? `${service.uptime_percent}%` : '–'}
+          </span>
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border"
             style={{
@@ -148,22 +154,22 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         </div>
       </div>
 
-      {/* Uptime + Response */}
-      <div className="flex items-center justify-between mb-3 text-xs text-[#7a82a6]">
-        <span className="font-medium text-[#a6adca]">{service.uptime_percent > 0 ? `${service.uptime_percent}%` : '–'} Uptime</span>
-        <span>90 Tage</span>
+      {/* Historische Balken */}
+      <div className="flex gap-[1.5px] items-end w-full">
+        {service.daily_history.map((day) => (
+          <StatusBar key={day.date} day={day} />
+        ))}
       </div>
 
-      {/* Historische Balken */}
-      <div className="flex gap-[2px] items-end">
-        {service.daily_history.map((day, i) => (
-          <StatusBar key={day.date} day={day} index={i} />
-        ))}
+      {/* Zeitachse */}
+      <div className="flex items-center justify-between mt-2 text-[0.7rem] text-[#5a6180]">
+        <span>vor 90 Tagen</span>
+        <span>heute</span>
       </div>
 
       {/* Footer */}
       {service.last_check && (
-        <div className="mt-3 flex items-center justify-between text-[0.7rem] text-[#5a6180]">
+        <div className="mt-2 flex items-center justify-between text-[0.7rem] text-[#5a6180]">
           <span>Letzte Prüfung: {timeAgo(service.last_check)}</span>
           {service.response_time_ms != null && service.response_time_ms > 0 && (
             <span>{Math.round(service.response_time_ms)} ms</span>
