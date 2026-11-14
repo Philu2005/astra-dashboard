@@ -71,6 +71,14 @@ wheels/
 # TESTING / PLAYWRIGHT
 # ==========================================
 
+tests/
+__tests__/
+test_*.py
+*_test.py
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
 test-results/
 playwright-report/
 playwright/.cache/

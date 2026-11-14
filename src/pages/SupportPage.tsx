@@ -185,17 +185,6 @@ export const SupportPage: React.FC = () => {
                   Unser Support antwortet in der Regel innerhalb weniger Minuten. Stelle ein Ticket ein oder verwalte deine laufenden Anfragen.
                 </p>
               </div>
-              <div className="shrink-0">
-                <button
-                  onClick={() => {
-                    setSelected(null);
-                    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
-                  }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all duration-200 bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] border-[#6861e1] text-white hover:translate-y-[-1px]"
-                >
-                  Neues Ticket
-                </button>
-              </div>
             </div>
           </div>
           {/* Kennzahlen */}
