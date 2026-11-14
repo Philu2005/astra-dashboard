@@ -119,14 +119,46 @@ async def init_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
-            # Für bestehende Installationen: Spalte priority idempotent ergänzen (MySQL 8+ unterstützt IF NOT EXISTS)
+            # Für bestehende Installationen: Spalte/Index 'priority' idempotent ergänzen (kompatibel mit MySQL < 8)
+            # 1) Prüfen, ob Spalte bereits existiert
             await cur.execute(
                 """
-                ALTER TABLE support_tickets
-                ADD COLUMN IF NOT EXISTS priority ENUM('low','normal','high','critical') NOT NULL DEFAULT 'normal',
-                ADD INDEX IF NOT EXISTS idx_priority (priority)
-                """
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = %s
+                  AND COLUMN_NAME = %s
+                """,
+                (settings.DB_NAME, "support_tickets", "priority"),
             )
+            row = await cur.fetchone()
+            priority_col_exists = bool(row and row[0] and int(row[0]) > 0)
+
+            if not priority_col_exists:
+                # Spalte hinzufügen (ohne IF NOT EXISTS, damit MySQL 5.7 kompatibel)
+                await cur.execute(
+                    """
+                    ALTER TABLE support_tickets
+                    ADD COLUMN priority ENUM('low','normal','high','critical') NOT NULL DEFAULT 'normal'
+                    """
+                )
+
+            # 2) Prüfen, ob Index bereits existiert
+            await cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.STATISTICS
+                WHERE TABLE_SCHEMA = %s
+                  AND TABLE_NAME = %s
+                  AND INDEX_NAME = %s
+                """,
+                (settings.DB_NAME, "support_tickets", "idx_priority"),
+            )
+            row = await cur.fetchone()
+            priority_idx_exists = bool(row and row[0] and int(row[0]) > 0)
+
+            if not priority_idx_exists:
+                await cur.execute("CREATE INDEX idx_priority ON support_tickets(priority)")
 
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS support_ticket_messages (
