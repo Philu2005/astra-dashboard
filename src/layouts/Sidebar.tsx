@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Layers,
   FileText,
@@ -22,6 +22,32 @@ import { useServerContext, iconColors } from '@/contexts/ServerContext';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 
 const inviteUrl = appConfig.botInviteUrl;
+
+const ServerIcon = ({ server, size = 'sm', colorClass }: { server: { icon: string | null; initials: string; name: string }; size?: 'sm' | 'md'; colorClass: string }) => {
+  const [imgError, setImgError] = useState(false);
+  const handleError = useCallback(() => setImgError(true), []);
+
+  const dims = size === 'md' ? 'w-8 h-8' : 'w-7 h-7';
+  const textSize = size === 'md' ? 'text-[11px]' : 'text-[10px]';
+
+  if (server.icon && !imgError) {
+    return (
+      <img
+        src={server.icon}
+        alt={server.name}
+        onError={handleError}
+        className={cn(dims, 'rounded-lg object-cover shrink-0 ring-1 ring-white/10')}
+        loading="lazy"
+      />
+    );
+  }
+
+  return (
+    <div className={cn(dims, 'rounded-lg flex items-center justify-center font-bold text-white shrink-0 ring-1 ring-white/10', textSize, colorClass)}>
+      {server.initials}
+    </div>
+  );
+};
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -152,12 +178,13 @@ export const Sidebar = () => {
                     : "bg-[#13162a] border-[#2a2f45] hover:border-[#3d4260] hover:bg-[#161a30] shadow-[0_8px_20px_-16px_rgba(0,0,0,0.8)]"
                 )}
               >
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.5)] ring-1 ring-white/10",
-                  selectedServer ? iconColors[servers.indexOf(selectedServer) % iconColors.length] : 'bg-astra-purple'
-                )}>
-                  {selectedServer?.initials ?? '??'}
-                </div>
+                {selectedServer ? (
+                  <ServerIcon server={selectedServer} size="md" colorClass={iconColors[servers.indexOf(selectedServer) % iconColors.length]} />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.5)] ring-1 ring-white/10 bg-astra-purple">
+                    ??
+                  </div>
+                )}
                 <div className="flex-1 min-w-0 text-left">
                   <span className="block font-semibold text-[0.92rem] truncate leading-tight">{selectedServer?.name ?? 'Server wählen'}</span>
                   <span className="block text-[0.7rem] text-[#6b7194] leading-tight mt-0.5">
@@ -207,11 +234,8 @@ export const Sidebar = () => {
                                 : "text-[#9ca2be] hover:bg-[#161a30] hover:text-white"
                             )}
                           >
-                            <div className={cn(
-                              "w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 transition-transform duration-200 group-hover/item:scale-110 ring-1 ring-white/10",
-                              iconColors[originalIdx % iconColors.length]
-                            )}>
-                              {server.initials}
+                            <div className="shrink-0 transition-transform duration-200 group-hover/item:scale-110">
+                              <ServerIcon server={server} size="sm" colorClass={iconColors[originalIdx % iconColors.length]} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <span className="block text-[0.88rem] font-medium truncate leading-tight">{server.name}</span>

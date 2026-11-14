@@ -4,6 +4,7 @@ import { QuickAccessCard } from '@/components/QuickAccessCard';
 import { AstraLogo } from '@/components/AstraLogo';
 import { Loader2 } from 'lucide-react';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import {
   Users,
   Layout,
@@ -56,8 +57,11 @@ const pointY = (value: number) => chartPadding.top + ((maxValue - value) / maxVa
 
 const statusConfig = botStatusConfig;
 
+const formatNumber = (n: number): string => n.toLocaleString('de-DE');
+
 export const Dashboard = () => {
   const botStatus = useBotStatus();
+  const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats();
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(commandData.length - 1);
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(commandData.length - 1);
 
@@ -100,9 +104,24 @@ export const Dashboard = () => {
 
       {/* Stats Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard title="Server" value="52" trend="2" trendUp icon={Layout} />
-        <StatCard title="Nutzer" value="10.482" trend="187" trendUp icon={Users} />
-        <StatCard title="Befehle (24h)" value="3.921" trend="14%" trendUp icon={Zap} />
+        <StatCard
+          title="Server"
+          value={statsLoading ? '…' : statsError ? '–' : formatNumber(statsData!.stats.guilds)}
+          icon={Layout}
+          className={statsData?.stale ? 'opacity-60' : undefined}
+        />
+        <StatCard
+          title="Nutzer"
+          value={statsLoading ? '…' : statsError ? '–' : formatNumber(statsData!.stats.users)}
+          icon={Users}
+          className={statsData?.stale ? 'opacity-60' : undefined}
+        />
+        <StatCard
+          title="Befehle"
+          value={statsLoading ? '…' : statsError ? '–' : formatNumber(statsData!.stats.commands)}
+          icon={Zap}
+          className={statsData?.stale ? 'opacity-60' : undefined}
+        />
         <StatCard title="Aktive Module" value="8 / 10" icon={Shield} />
       </section>
 
