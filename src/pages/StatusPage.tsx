@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Clock,
   Activity,
-  ChevronLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SharedNavbar } from '@/components/SharedNavbar';
@@ -121,8 +120,16 @@ function StatusBar({ day }: { day: DayHistory }) {
 
 function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showHint, setShowHint] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(1);
   const initializedRef = useRef(false);
+
+  const updateProgress = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) { setScrollProgress(1); return; }
+    setScrollProgress(el.scrollLeft / maxScroll);
+  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -130,55 +137,74 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     if (el.scrollWidth > el.clientWidth) {
       el.scrollLeft = el.scrollWidth - el.clientWidth;
       initializedRef.current = true;
+      updateProgress();
     }
-  }, [dailyHistory]);
+  }, [dailyHistory, updateProgress]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const onScroll = () => {
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      setShowHint(maxScroll - el.scrollLeft > 10);
-    };
+    const onScroll = () => updateProgress();
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [updateProgress]);
+
+  const showLeftFade = scrollProgress > 0.02;
+  const showRightFade = scrollProgress < 0.98;
 
   return (
-    <div className="md:hidden w-full min-w-0 relative">
-      <div
-        ref={scrollRef}
-        className="w-full overflow-x-auto scrollbar-hide"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
+    <div className="md:hidden w-full min-w-0">
+      {/* Scroll-Container mit Fade-Overlays */}
+      <div className="relative">
         <div
-          style={{
-            display: 'flex',
-            gap: '3px',
-            width: `${dailyHistory.length * 6 + (dailyHistory.length - 1) * 3}px`,
-          }}
+          ref={scrollRef}
+          className="w-full overflow-x-auto scrollbar-hide"
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {dailyHistory.map((day) => (
-            <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
-              <StatusBar day={day} />
-            </div>
-          ))}
+          <div
+            style={{
+              display: 'flex',
+              gap: '3px',
+              width: `${dailyHistory.length * 6 + (dailyHistory.length - 1) * 3}px`,
+            }}
+          >
+            {dailyHistory.map((day) => (
+              <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
+                <StatusBar day={day} />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      {/* Fade-Hinweis links */}
-      <div
-        className="absolute left-0 top-0 bottom-0 flex items-center pointer-events-none transition-opacity duration-300"
-        style={{ opacity: showHint ? 1 : 0 }}
-      >
+        {/* Fade links */}
         <div
-          className="h-full w-10"
+          className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none transition-opacity duration-200"
           style={{
-            background: 'linear-gradient(to right, rgba(18,21,42,0.95), transparent)',
+            opacity: showLeftFade ? 1 : 0,
+            background: 'linear-gradient(to right, rgba(18,21,42,0.9), transparent)',
           }}
         />
-        <span className="absolute left-1 text-[0.6rem] text-[#7a82a6] whitespace-nowrap" style={{ top: '50%', transform: 'translateY(-50%)' }}>
-          ← Ältere
-        </span>
+        {/* Fade rechts */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none transition-opacity duration-200"
+          style={{
+            opacity: showRightFade ? 1 : 0,
+            background: 'linear-gradient(to left, rgba(18,21,42,0.9), transparent)',
+          }}
+        />
+      </div>
+      {/* Navigation unterhalb: Labels + Fortschrittsindikator */}
+      <div className="flex items-center gap-2 mt-1.5 px-0.5">
+        <span className="text-[0.6rem] text-[#5a6180] whitespace-nowrap shrink-0">vor 90 Tagen</span>
+        <div className="flex-1 h-[3px] rounded-full bg-[#1a1e38] relative overflow-hidden">
+          <div
+            className="absolute top-0 left-0 h-full rounded-full bg-[#7de3ff]/40 transition-all duration-150"
+            style={{
+              width: '30%',
+              left: `${scrollProgress * 70}%`,
+            }}
+          />
+        </div>
+        <span className="text-[0.6rem] text-[#7de3ff] font-medium whitespace-nowrap shrink-0">Heute</span>
       </div>
     </div>
   );
@@ -246,8 +272,8 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       {/* Mobile */}
       <MobileHistoryScroll dailyHistory={service.daily_history} />
 
-      {/* Zeitachse */}
-      <div className="flex items-center justify-between mt-2 text-[0.7rem] text-[#5a6180]">
+      {/* Zeitachse – nur Desktop, Mobile hat eigene Navigation in MobileHistoryScroll */}
+      <div className="hidden md:flex items-center justify-between mt-2 text-[0.7rem] text-[#5a6180]">
         <span>vor 90 Tagen</span>
         <span>heute</span>
       </div>
