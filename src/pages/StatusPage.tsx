@@ -100,22 +100,23 @@ function StatusBarTooltip({ day, label }: { day: DayHistory; label: string }) {
   );
 }
 
-function StatusBar({ day, selected, onSelect }: { day: DayHistory; selected?: boolean; onSelect?: () => void }) {
+function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selected?: boolean; onSelect?: () => void; mode?: 'desktop' | 'mobile' }) {
   const [hover, setHover] = useState(false);
   const color = STATUS_COLORS[day.status] || STATUS_COLORS.unknown;
-  const d = new Date(day.date);
-  const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  const active = hover || selected;
+
+  const isDesktop = mode === 'desktop';
+  const isMobile = mode === 'mobile';
+  const active = isDesktop ? hover : selected;
 
   return (
     <div
       className="status-bar relative flex-1 min-w-0"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={onSelect}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } }}
+      onMouseEnter={isDesktop ? () => setHover(true) : undefined}
+      onMouseLeave={isDesktop ? () => setHover(false) : undefined}
+      onClick={isMobile ? onSelect : undefined}
+      role={isMobile ? 'button' : undefined}
+      tabIndex={isMobile ? 0 : undefined}
+      onKeyDown={isMobile ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } } : undefined}
     >
       <div
         className="transition-all duration-150 cursor-pointer"
@@ -124,13 +125,9 @@ function StatusBar({ day, selected, onSelect }: { day: DayHistory; selected?: bo
           backgroundColor: color,
           opacity: active ? 1 : 0.85,
           transform: active ? 'scaleY(1.15)' : 'scaleY(1)',
+          filter: active ? 'brightness(1.2)' : 'brightness(1)',
         }}
       />
-      {hover && !selected && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-          <StatusBarTooltip day={day} label={label} />
-        </div>
-      )}
     </div>
   );
 }
@@ -188,25 +185,28 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   const showRightFade = scrollProgress < 0.98;
 
   // Tooltip-Position berechnen
-  const getTooltipStyle = (): React.CSSProperties => {
-    if (selectedIndex === null || !scrollRef.current) return { display: 'none' };
+  const getTooltipStyle = (): { container: React.CSSProperties; arrowLeft: number } => {
+    if (selectedIndex === null || !scrollRef.current) return { container: { display: 'none' }, arrowLeft: 0 };
     const barWidth = 6;
     const gap = 3;
     const barCenter = selectedIndex * (barWidth + gap) + barWidth / 2;
     const scrollLeft = scrollRef.current.scrollLeft;
     const containerWidth = scrollRef.current.clientWidth;
     const visiblePos = barCenter - scrollLeft;
-    // Tooltip-Breite ca. 140px, zentriert, aber am Rand geclampt
     const tooltipW = 140;
     let left = visiblePos - tooltipW / 2;
     left = Math.max(4, Math.min(left, containerWidth - tooltipW - 4));
+    const arrowLeft = visiblePos - left;
     return {
-      position: 'absolute' as const,
-      bottom: '100%',
-      left: `${left}px`,
-      marginBottom: '6px',
-      zIndex: 50,
-      width: `${tooltipW}px`,
+      container: {
+        position: 'absolute' as const,
+        bottom: '100%',
+        left: `${left}px`,
+        marginBottom: '10px',
+        zIndex: 50,
+        width: `${tooltipW}px`,
+      },
+      arrowLeft,
     };
   };
 
@@ -220,11 +220,27 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
       {/* Scroll-Container mit Fade-Overlays */}
       <div className="relative">
         {/* Mobile Tooltip */}
-        {selectedDay && (
-          <div style={getTooltipStyle()}>
-            <StatusBarTooltip day={selectedDay} label={selectedLabel} />
-          </div>
-        )}
+        {selectedDay && (() => {
+          const { container, arrowLeft } = getTooltipStyle();
+          return (
+            <div style={container}>
+              <StatusBarTooltip day={selectedDay} label={selectedLabel} />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: `${arrowLeft}px`,
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '5px solid transparent',
+                  borderRight: '5px solid transparent',
+                  borderTop: '5px solid #2a2f4a',
+                }}
+              />
+            </div>
+          );
+        })()}
         <div
           ref={scrollRef}
           className="w-full overflow-x-auto scrollbar-hide"
@@ -241,6 +257,7 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
               <div key={day.date} style={{ width: '6px', flexShrink: 0, borderRadius: '2px', overflow: 'hidden' }}>
                 <StatusBar
                   day={day}
+                  mode="mobile"
                   selected={selectedIndex === i}
                   onSelect={() => setSelectedIndex(selectedIndex === i ? null : i)}
                 />
@@ -283,13 +300,79 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   );
 }
 
+function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ left: number; bottom: number } | null>(null);
+
+  const handleMouseEnter = (index: number, e: React.MouseEvent<HTMLDivElement>) => {
+    setHoverIndex(index);
+    const bar = e.currentTarget;
+    const container = containerRef.current;
+    if (!container) return;
+    const barRect = bar.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    setTooltipPos({
+      left: barRect.left - containerRect.left + barRect.width / 2,
+      bottom: containerRect.bottom - barRect.top + 8,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoverIndex(null);
+    setTooltipPos(null);
+  };
+
+  const hoveredDay = hoverIndex !== null ? dailyHistory[hoverIndex] : null;
+  const hoveredLabel = hoveredDay
+    ? new Date(hoveredDay.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    : '';
+
+  return (
+    <div ref={containerRef} className="w-full hidden md:block relative" style={{ overflow: 'visible' }}>
+      {/* Tooltip rendered outside overflow:hidden container */}
+      {hoveredDay && tooltipPos && (
+        <div
+          className="absolute z-50 pointer-events-none"
+          style={{
+            left: `${tooltipPos.left}px`,
+            bottom: `${tooltipPos.bottom}px`,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <StatusBarTooltip day={hoveredDay} label={hoveredLabel} />
+        </div>
+      )}
+      <div
+        className="status-history-grid w-full flex"
+        style={{
+          gap: '3px',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}
+      >
+        {dailyHistory.map((day, i) => (
+          <div
+            key={day.date}
+            className="flex-1 min-w-0"
+            onMouseEnter={(e) => handleMouseEnter(i, e)}
+            onMouseLeave={handleMouseLeave}
+          >
+            <StatusBar day={day} mode="desktop" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ServiceCard({ service }: { service: ServiceStatus }) {
   const Icon = SERVICE_ICONS[service.name] || Activity;
   const statusColor = STATUS_COLORS[service.current_status] || STATUS_COLORS.unknown;
   const statusLabel = STATUS_LABELS[service.current_status] || 'Unbekannt';
 
   return (
-    <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a] min-w-0 overflow-hidden">
+    <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a] min-w-0 overflow-visible">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap md:flex-nowrap gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -331,18 +414,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
 
       {/* Historische Balken – Desktop: Grid, Mobile: feste Balken mit Scroll */}
       {/* Desktop */}
-      <div
-        className="status-history-grid w-full hidden md:flex"
-        style={{
-          gap: '3px',
-          borderRadius: '4px',
-          overflow: 'hidden',
-        }}
-      >
-        {service.daily_history.map((day) => (
-          <StatusBar key={day.date} day={day} />
-        ))}
-      </div>
+      <DesktopHistory dailyHistory={service.daily_history} />
       {/* Mobile */}
       <MobileHistoryScroll dailyHistory={service.daily_history} />
 
