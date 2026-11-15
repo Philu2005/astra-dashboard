@@ -294,7 +294,7 @@ export const Dashboard = () => {
                   </defs>
 
                   {yTicks.map((tick) => {
-                    const y = pointY(tick);
+                    const y = calcPointY(tick, maxValue);
                     return (
                       <g key={tick}>
                         <line x1={chartPadding.left} y1={y} x2={chartWidth - chartPadding.right} y2={y} stroke="#2a2f45" strokeWidth="1" />
