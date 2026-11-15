@@ -85,7 +85,8 @@ export const DocsPage: React.FC = () => {
         const data = await res.json();
         if (!cancelled) {
           setLikeCount((p) => ({ ...p, [slug]: data.count ?? 0 }));
-          setFeedback((p) => ({ ...p, [slug]: data.liked ? 'up' : undefined as any }));
+          const nextState = data.disliked ? 'down' : (data.liked ? 'up' : undefined);
+          setFeedback((p) => ({ ...p, [slug]: (nextState as any) }));
         }
       } catch {
         // ignore
