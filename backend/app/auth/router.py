@@ -1,12 +1,13 @@
 import logging
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response, Depends
 from fastapi.responses import RedirectResponse
 
 from app.config import settings
 from app.auth.sessions import session_manager
 from app.auth.service import discord_service
+from app.security import verify_same_origin
 
 router = APIRouter(prefix="/auth")
 logger = logging.getLogger("astra.auth")
@@ -101,7 +102,7 @@ async def callback(
     return redirect_response
 
 
-@router.post("/exchange")
+@router.post("/exchange", dependencies=[Depends(verify_same_origin)])
 async def exchange(request: Request, response: Response):
     """Exchange a one-time token for a session cookie (called from frontend same-origin)."""
     try:
@@ -168,12 +169,8 @@ async def me(request: Request):
     }
 
 
-@router.post("/logout")
+@router.post("/logout", dependencies=[Depends(verify_same_origin)])
 async def logout(request: Request, response: Response):
-    origin = request.headers.get("origin")
-    if origin and origin not in settings.CORS_ORIGINS:
-        logger.warning("Logout mit ungültigem Origin blockiert: %s", origin)
-        raise HTTPException(status_code=403, detail="Forbidden origin")
 
     session_id = request.cookies.get("session_id")
     if session_id:

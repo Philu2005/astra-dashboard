@@ -1,10 +1,11 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Depends
 
 from app.auth.sessions import session_manager
 from app.config import settings
+from app.security import verify_same_origin
 from . import service
 from .schemas import (
     TicketCreate,
@@ -58,7 +59,7 @@ async def list_my_tickets(request: Request, offset: int = 0, limit: int = 50):
     ]
 
 
-@router.post("/tickets", response_model=TicketDetail)
+@router.post("/tickets", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
 async def create_ticket(request: Request, payload: TicketCreate):
     session = await _require_session(request)
     if payload.category not in ALLOWED_CATEGORIES:
@@ -87,7 +88,7 @@ async def get_ticket(request: Request, ticket_id: int):
     return TicketDetail(**detail)
 
 
-@router.post("/tickets/{ticket_id}/reply", response_model=TicketDetail)
+@router.post("/tickets/{ticket_id}/reply", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
 async def reply_ticket(request: Request, ticket_id: int, payload: MessageCreate):
     session = await _require_session(request)
     detail = await service.get_ticket_detail(ticket_id)
@@ -111,7 +112,7 @@ async def reply_ticket(request: Request, ticket_id: int, payload: MessageCreate)
     return TicketDetail(**new_detail)
 
 
-@router.post("/tickets/{ticket_id}/reopen", response_model=TicketDetail)
+@router.post("/tickets/{ticket_id}/reopen", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
 async def reopen_ticket(request: Request, ticket_id: int):
     """Benutzer kann eigenes gelöstes Ticket wieder öffnen."""
     session = await _require_session(request)
@@ -164,7 +165,7 @@ async def admin_list_tickets(
     ]
 
 
-@router.post("/admin/tickets/{ticket_id}/status", response_model=TicketDetail)
+@router.post("/admin/tickets/{ticket_id}/status", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
 async def admin_set_status(request: Request, ticket_id: int, payload: TicketUpdateStatus):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -179,7 +180,7 @@ async def admin_set_status(request: Request, ticket_id: int, payload: TicketUpda
     return TicketDetail(**detail)
 
 
-@router.post("/admin/tickets/{ticket_id}/priority", response_model=TicketDetail)
+@router.post("/admin/tickets/{ticket_id}/priority", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
 async def admin_set_priority(request: Request, ticket_id: int, payload: TicketUpdatePriority):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -193,7 +194,7 @@ async def admin_set_priority(request: Request, ticket_id: int, payload: TicketUp
     return TicketDetail(**detail)
 
 
-@router.delete("/admin/tickets/{ticket_id}")
+@router.delete("/admin/tickets/{ticket_id}", dependencies=[Depends(verify_same_origin)])
 async def admin_delete_ticket(request: Request, ticket_id: int):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
