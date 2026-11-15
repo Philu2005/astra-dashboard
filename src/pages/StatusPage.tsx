@@ -125,7 +125,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
   const statusLabel = STATUS_LABELS[service.current_status] || 'Unbekannt';
 
   return (
-    <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a]">
+    <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a] min-w-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap md:flex-nowrap gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -179,7 +179,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         ))}
       </div>
       {/* Mobile */}
-      <div className="md:hidden w-full overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="md:hidden w-full min-w-0 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div
           style={{
             display: 'flex',
