@@ -11,7 +11,6 @@ from app.config import settings
 from app.auth.router import router as auth_router
 from app.servers.router import router as servers_router
 from app.database import init_pool, close_pool, init_tables
-from app.redis import init_redis, close_redis, redis_available
 from app.auth.sessions import session_manager
 from app.support.router import router as support_router
 from app.monitoring.router import router as monitoring_router
