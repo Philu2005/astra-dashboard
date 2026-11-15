@@ -126,6 +126,75 @@ export const Dashboard = () => {
   const tooltipTop = Math.max(minTop, Math.min(maxTop, desiredTop));
   const tooltipPointerOffset = activePoint ? Math.max(-38, Math.min(38, activePoint.x - tooltipLeft)) : 0;
 
+  // ==== Linie zuverlässig zeichnen und animieren (echte Pfadlänge) ====
+  const lineRef = React.useRef<SVGPathElement | null>(null);
+  const [dash, setDash] = React.useState<{ array: number; offset: number }>({ array: 0, offset: 0 });
+
+  React.useEffect(() => {
+    const el = lineRef.current;
+    if (!el) return;
+
+    // Bei reduzierter Bewegung: nicht animieren
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const total = el.getTotalLength();
+    if (!isFinite(total) || total <= 0) {
+      setDash({ array: 0, offset: 0 });
+      return;
+    }
+
+    if (media.matches) {
+      setDash({ array: 0, offset: 0 });
+      return;
+    }
+
+    // Startzustand: komplett versteckt
+    setDash({ array: total, offset: total });
+
+    // sanfte Animation auf 0
+    let raf = 0;
+    const duration = 900; // ms
+    const start = performance.now();
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = ease(p);
+      setDash({ array: total, offset: (1 - eased) * 0 + (1 - 1) * total }); // array bleibt total, offset → 0
+      // Direkt setAttribute für flüssigere Darstellung
+      try {
+        el.style.strokeDasharray = `${total}`;
+        el.style.strokeDashoffset = `${(1 - eased) * 0}`;
+      } catch {}
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [linePath]);
+
+  // ==== Interaktion über gesamte Plot-Fläche: nächstgelegenen Punkt finden ====
+  const svgRef = React.useRef<SVGSVGElement | null>(null);
+  const handlePointerMove = (e: React.PointerEvent<SVGRectElement>) => {
+    if (!svgRef.current || points.length === 0) return;
+    const rect = (svgRef.current as SVGSVGElement).getBoundingClientRect();
+    const clientX = e.clientX;
+    const xInSvg = ((clientX - rect.left) / rect.width) * chartWidth; // viewBox Breite
+
+    // Nur horizontale Grenzen des Plotbereichs berücksichtigen
+    const clampedX = Math.max(chartPadding.left, Math.min(chartWidth - chartPadding.right, xInSvg));
+
+    // Mittelpunktgrenzen zwischen Punkten bestimmen
+    let idx = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < points.length; i++) {
+      const dist = Math.abs(points[i].x - clampedX);
+      if (dist < bestDist) {
+        bestDist = dist;
+        idx = i;
+      }
+    }
+    setHoveredIndex(idx);
+  };
+
   return (
     <div className="space-y-5 lg:space-y-6 w-full">
       {/* Welcome Section */}
@@ -291,7 +360,7 @@ export const Dashboard = () => {
                 className="w-full relative min-h-[212px] sm:min-h-[236px]"
                 onPointerLeave={() => setHoveredIndex(null)}
               >
-                <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto" role="img" aria-label="Befehle der letzten 7 Tage">
+                <svg ref={svgRef} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto" role="img" aria-label="Befehle der letzten 7 Tage">
                   <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#7e5dff" stopOpacity="0.55" />
@@ -330,23 +399,43 @@ export const Dashboard = () => {
                     <path
                       d={areaPath}
                       fill="url(#chartGradient)"
-                      className="motion-reduce:animate-none animate-[astra-pulse_1.8s_ease-in-out_1]"
+                      className="motion-reduce:animate-none animate-[astra-pulse_1.2s_ease-out_1]"
                       opacity={0.9}
                     />
                   )}
                   {linePath && (
                     <path
+                      ref={lineRef}
                       d={linePath}
                       fill="none"
                       stroke={activeIndex != null ? "url(#chartLineGrad)" : "#8f6cff"}
                       strokeWidth={activeIndex != null ? 3.5 : 3}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      pathLength={100}
-                      className="[stroke-dasharray:100] motion-reduce:[stroke-dasharray:unset] [stroke-dashoffset:100] motion-reduce:[stroke-dashoffset:unset] animate-[astra-draw_1.1s_cubic-bezier(0.22,1,0.36,1)_1]"
-                      style={{ filter: activeIndex != null ? 'drop-shadow(0 0 6px rgba(155,139,255,0.35))' as any : undefined }}
+                      // Zuverlässige Draw-Animation mit echter Pfadlänge
+                      style={{
+                        filter: activeIndex != null ? ('drop-shadow(0 0 6px rgba(155,139,255,0.35))' as any) : undefined,
+                        strokeDasharray: dash.array ? `${dash.array}` : undefined,
+                        strokeDashoffset: dash.offset ? `${dash.offset}` : undefined,
+                      }}
                     />
                   )}
+
+                  {/* Interaktive Plot-Overlay-Fläche: reagiert auf gesamte Breite */}
+                  <rect
+                    x={chartPadding.left}
+                    y={chartPadding.top}
+                    width={chartInnerWidth}
+                    height={chartInnerHeight}
+                    fill="transparent"
+                    onPointerMove={handlePointerMove}
+                    onPointerDown={(e) => {
+                      // Bei Klick auch auswählen
+                      handlePointerMove(e as unknown as React.PointerEvent<SVGRectElement>);
+                      if (hoveredIndex != null) setSelectedIndex(hoveredIndex);
+                    }}
+                    style={{ cursor: 'crosshair' }}
+                  />
 
                   {points.map((point, index) => {
                     const isActive = index === activeIndex;
@@ -363,19 +452,14 @@ export const Dashboard = () => {
                           filter={isActive ? 'url(#pointGlow)' : undefined}
                           className="transition-[r,filter] duration-200 ease-out"
                         />
+                        {/* Unsichtbarer Fokus-Ring/Hit-Bereich am Punkt für Tastaturbedienung */}
                         <circle
                           cx={point.x}
                           cy={point.y}
-                          r={16}
+                          r={18}
                           fill="transparent"
-                          onPointerEnter={() => setHoveredIndex(index)}
-                          onPointerDown={() => {
-                            setSelectedIndex(index);
-                            setHoveredIndex(index);
-                          }}
                           onFocus={() => setHoveredIndex(index)}
                           onBlur={() => setHoveredIndex(null)}
-                          style={{ cursor: 'pointer' }}
                           role="button"
                           aria-label={`Tag ${index + 1}: ${commandData[index].value.toLocaleString('de-DE')} Befehle`}
                           tabIndex={0}
@@ -419,13 +503,11 @@ export const Dashboard = () => {
                       strokeOpacity="0.9"
                       strokeWidth="1"
                     />
-                    {/* Pointer (Diamant ohne übertriebenen Pfeil) */}
-                    <rect
-                      x={tooltipHalf + tooltipPointerOffset - 5}
-                      y={placeAbove ? tooltipHeight - 1 : -4}
-                      width={10}
-                      height={10}
-                      transform={`rotate(45 ${tooltipHalf + tooltipPointerOffset} ${placeAbove ? tooltipHeight + 4 : 1})`}
+                    {/* Pointer (kleiner Pfeil, präzise auf aktiven Punkt ausgerichtet) */}
+                    <path
+                      d={placeAbove
+                        ? `M ${tooltipHalf + tooltipPointerOffset - 6} ${tooltipHeight - 0.5} L ${tooltipHalf + tooltipPointerOffset + 6} ${tooltipHeight - 0.5} L ${tooltipHalf + tooltipPointerOffset} ${tooltipHeight + 8} Z`
+                        : `M ${tooltipHalf + tooltipPointerOffset - 6} 0.5 L ${tooltipHalf + tooltipPointerOffset + 6} 0.5 L ${tooltipHalf + tooltipPointerOffset} -8 Z`}
                       fill="rgba(16,21,38,0.96)"
                       stroke="#5e67e9"
                       strokeOpacity="0.9"
