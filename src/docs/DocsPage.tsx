@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Rocket, Server, Shield, Code, LifeBuoy,
   BookOpen, ChevronRight, ArrowLeft, ArrowRight,
-  Clock, ChevronLeft, ThumbsUp, ThumbsDown, Menu, X,
+  Clock, ChevronLeft, ThumbsUp, ThumbsDown, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SharedNavbar } from '@/components/SharedNavbar';
 import { categories } from './categories';
 import { allArticles, getArticle, getArticlesByCategory, getPopularArticles, getAdjacentArticles } from './articles';
 import { DocsSearch } from './components/DocsSearch';
@@ -70,44 +71,42 @@ export const DocsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#070912]">
         {/* Reading progress bar */}
-        <div className="fixed top-0 left-0 right-0 h-0.5 z-50">
+        <div className="fixed top-0 left-0 right-0 h-0.5 z-[60]">
           <div className="h-full bg-gradient-to-r from-[#4b46c8] to-[#7de3ff] transition-all duration-150" style={{ width: `${readProgress * 100}%` }} />
         </div>
 
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-[#131522]/80 backdrop-blur-xl border-b border-[#212131]">
-          <div className="max-w-[1400px] mx-auto flex items-center gap-4 px-4 sm:px-6 h-14">
-            <button onClick={() => setMobileNavOpen(true)} className="lg:hidden p-1.5 rounded-lg hover:bg-[#1a1a2a] text-[#9ca2bd]">
-              <Menu className="w-5 h-5" />
-            </button>
-            <button onClick={() => navigate(null)} className="flex items-center gap-2 text-[#9ca2bd] hover:text-white transition-colors">
-              <BookOpen className="w-4.5 h-4.5 text-astra-cyan" />
-              <span className="text-[0.85rem] font-semibold tracking-tight">Astra Docs</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1.5 text-[#8a90ad] text-[0.8rem]">
-              <ChevronRight className="w-3.5 h-3.5" />
-              <span className="text-[#9ca2bd]">{article.category}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-              <span className="text-[#d6dbf0]">{article.title}</span>
+        <SharedNavbar
+          activeRoute="/docs"
+          customLeftContent={
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-[#7de3ff]" />
+              <span className="text-[0.95rem] font-bold tracking-tight text-white uppercase">Docs</span>
             </div>
-            <div className="flex-1" />
-            <div className="w-64 hidden md:block">
+          }
+          customRightContent={
+            <div className="w-48 hidden xl:block">
               <DocsSearch onNavigate={navigate} />
             </div>
-            <button
-              onClick={() => window.location.href = '/dashboard'}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-[#171a2b] px-4 py-2 text-[0.84rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97]"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Zurück zum Dashboard</span>
-              <span className="sm:hidden">Dashboard</span>
+          }
+        />
+
+        {/* Sub-Header für Mobile Navigation & Breadcrumbs */}
+        <div className="sticky top-[71px] z-40 bg-[#131522]/80 backdrop-blur-xl border-b border-[#212131] lg:hidden">
+          <div className="max-w-[1400px] mx-auto flex items-center gap-4 px-4 sm:px-6 h-12">
+            <button onClick={() => setMobileNavOpen(true)} className="p-1.5 rounded-lg hover:bg-[#1a1a2a] text-[#9ca2bd]">
+              <BookOpen className="w-5 h-5" />
             </button>
+            <div className="flex items-center gap-1.5 text-[#8a90ad] text-[0.8rem] truncate">
+              <span className="text-[#9ca2bd]">{article.category}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+              <span className="text-[#d6dbf0] truncate">{article.title}</span>
+            </div>
           </div>
-        </header>
+        </div>
 
         {/* Mobile nav overlay */}
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 z-[100] lg:hidden">
             <div className="fixed inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
             <div className="fixed left-0 top-0 bottom-0 w-72 bg-[#121423] border-r border-[#212131] overflow-y-auto p-4">
               <div className="flex items-center justify-between mb-4">
@@ -124,7 +123,7 @@ export const DocsPage: React.FC = () => {
         <div className="max-w-[1400px] mx-auto flex gap-0">
           {/* Left sidebar - nav */}
           <aside className="hidden lg:block w-64 shrink-0 border-r border-[#212131]">
-            <div className="sticky top-14 overflow-y-auto max-h-[calc(100vh-3.5rem)] p-4">
+            <div className="sticky top-[72px] overflow-y-auto max-h-[calc(100vh-4.5rem)] p-6">
               <DocsNav currentSlug={currentSlug ?? undefined} onNavigate={navigate} />
             </div>
           </aside>
@@ -242,28 +241,15 @@ export const DocsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#070912]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#131522]/80 backdrop-blur-xl border-b border-[#212131]">
-        <div className="max-w-6xl mx-auto flex items-center gap-4 px-4 sm:px-6 h-14">
-          <div className="flex items-center gap-2.5">
-            <BookOpen className="w-4.5 h-4.5 text-astra-cyan" />
-            <span className="text-[0.85rem] font-semibold text-white tracking-tight">Astra Docs</span>
+      <SharedNavbar
+        activeRoute="/docs"
+        customLeftContent={
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-5 h-5 text-[#7de3ff]" />
+            <span className="text-[0.95rem] font-bold tracking-tight text-white uppercase">Docs</span>
           </div>
-          <div className="hidden sm:flex items-center gap-1 ml-4">
-            <span className="text-[0.75rem] text-[#5a6080]">|</span>
-            <span className="text-[0.78rem] text-[#6b7094] ml-2">Dokumentation & Hilfe</span>
-          </div>
-          <div className="flex-1" />
-          <button
-            onClick={() => window.location.href = '/dashboard'}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#1e2235] bg-[#171a2b] px-4 py-2 text-[0.84rem] font-medium text-[#9ca2bd] transition-all duration-200 hover:border-[#4b46c8]/30 hover:bg-[#4b46c8]/8 hover:text-[#c4b5fd] active:scale-[0.97]"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Zurück zum Dashboard</span>
-            <span className="sm:hidden">Dashboard</span>
-          </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* Hero */}
       <section className="relative overflow-hidden">

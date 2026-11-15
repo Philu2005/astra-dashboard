@@ -10,12 +10,12 @@ import {
   Database,
   Server,
   MessageSquare,
-  ArrowLeft,
   RefreshCw,
   Clock,
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SharedNavbar } from '@/components/SharedNavbar';
 import { AstraLogo } from '@/components/AstraLogo';
 import { statusApi, type StatusPageData, type ServiceStatus, type Incident, type DayHistory } from '@/services/status-api';
 
@@ -263,29 +263,15 @@ export default function StatusPage() {
 
   return (
     <div className="min-h-screen bg-[#0b0e1a] text-white">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-[#1e2240] bg-[#0f1220]/95 backdrop-blur-lg">
-        <nav className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-4 py-3 sm:px-6">
-          <a href="/" className="flex items-center gap-3 group">
-            <div className="relative flex items-center justify-center w-[34px] h-[34px] bg-[#4b46c8] rounded-xl shadow-astra-glow border border-[#5f5ad6]/20 overflow-hidden shrink-0 transition-transform group-hover:scale-105">
-              <AstraLogo size={30} glow="soft" fill className="scale-[1.18]" alt="Astra" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold leading-none tracking-[-0.02em] text-white">Astra</p>
-              <p className="text-[0.72rem] font-medium leading-none text-[#a6adca]">Systemstatus</p>
-            </div>
-          </a>
+      <SharedNavbar
+        activeRoute="/status"
+        customLeftContent={
           <div className="flex items-center gap-3">
-            <a
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#252a45] bg-transparent px-3.5 py-2 text-sm font-medium text-[#a6adca] transition-all hover:border-[#6c5ce7]/40 hover:text-white hover:bg-[#1a1e38]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Zurück</span>
-            </a>
+            <Activity className="w-5 h-5 text-[#7de3ff]" />
+            <span className="text-[0.95rem] font-bold tracking-tight text-white uppercase">Status</span>
           </div>
-        </nav>
-      </header>
+        }
+      />
 
       {/* Content */}
       <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6">
