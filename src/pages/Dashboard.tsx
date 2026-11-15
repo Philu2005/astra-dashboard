@@ -401,7 +401,16 @@ export const Dashboard = () => {
                     const y = calcPointY(tick, maxValue);
                     return (
                       <g key={tick}>
-                        <line x1={chartPadding.left} y1={y} x2={chartWidth - chartPadding.right} y2={y} stroke="#2a2f45" strokeWidth="1" />
+                        {/* Dezentes Hintergrundraster (horizontale Linien) hinter Fläche/Linie/Punkten */}
+                        <line
+                          x1={chartPadding.left}
+                          y1={y}
+                          x2={chartWidth - chartPadding.right}
+                          y2={y}
+                          stroke="#2a2f45"
+                          strokeWidth="1"
+                          opacity={0.45}
+                        />
                         <text x={chartPadding.left - 14} y={y + 4} fill="#8c93b0" fontSize="12" textAnchor="end">
                           {tick.toLocaleString('de-DE')}
                         </text>
@@ -465,6 +474,7 @@ export const Dashboard = () => {
                           strokeWidth="1.4"
                           filter={isActive ? 'url(#pointGlow)' : undefined}
                           className="transition-[r,filter] duration-200 ease-out"
+                          pointerEvents="none" /* Dekoratives Element: darf Pointer nicht abfangen */
                         />
                         {/* Unsichtbarer Fokus-Ring/Hit-Bereich am Punkt für Tastaturbedienung */}
                         <circle
@@ -477,22 +487,38 @@ export const Dashboard = () => {
                           role="button"
                           aria-label={`Tag ${index + 1}: ${commandData[index].value.toLocaleString('de-DE')} Befehle`}
                           tabIndex={0}
+                          style={{ outline: 'none' }}
+                          onMouseDown={(e) => {
+                            // Verhindert den störenden rechteckigen Browser-Fokusrahmen bei Mausklicks
+                            e.preventDefault();
+                          }}
+                          pointerEvents="none" /* Pointer nicht hier abfangen – gesamte Fläche steuert Hover */
                         />
                       </g>
                     );
                   })}
                 </svg>
 
-                <div className="mt-2 ml-8 mr-2 sm:mt-2.5 sm:ml-11 sm:mr-4 grid grid-cols-7">
-                  {commandData.map((entry, index) => (
-                    <span
-                      key={entry.day}
-                      className={`text-[0.72rem] sm:text-[0.88rem] font-medium uppercase tracking-[0.08em] text-center ${index === activeIndex ? 'text-[#c8ccde]' : 'text-[#8d93b0]'}`}
+                {/* Wochentags-Beschriftungen exakt unter den Datenpunkten (identische X-Berechnung) */}
+                <svg
+                  viewBox={`0 0 ${chartWidth} 28`}
+                  className="mt-2 sm:mt-2.5 w-full h-[22px] sm:h-[26px] pointer-events-none"
+                  aria-hidden="true"
+                >
+                  {points.map((p, index) => (
+                    <text
+                      key={`lbl-${index}`}
+                      x={p.x}
+                      y={16}
+                      textAnchor="middle"
+                      className={`${index === activeIndex ? 'fill-[#c8ccde]' : 'fill-[#8d93b0]'} uppercase`}
+                      fontSize={window.matchMedia && window.matchMedia('(min-width: 640px)').matches ? 14 : 11}
+                      style={{ letterSpacing: '0.08em', fontWeight: 600 }}
                     >
-                      {entry.day}
-                    </span>
+                      {commandData[index].day}
+                    </text>
                   ))}
-                </div>
+                </svg>
 
                 {/* Custom Tooltip (SVG Overlay, sanfte Bewegungen, dunkles Theme) */}
                 <svg
