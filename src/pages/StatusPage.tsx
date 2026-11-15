@@ -312,8 +312,13 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     if (!container) return;
     const barRect = bar.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const tooltipW = 140;
+    let left = barRect.left - containerRect.left + barRect.width / 2;
+    // Clamp so tooltip stays within container bounds
+    left = Math.max(tooltipW / 2 + 4, Math.min(left, containerWidth - tooltipW / 2 - 4));
     setTooltipPos({
-      left: barRect.left - containerRect.left + barRect.width / 2,
+      left,
       bottom: containerRect.bottom - barRect.top + 8,
     });
   };
