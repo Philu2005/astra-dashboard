@@ -100,3 +100,21 @@ async def get_astra_status():
         raise _handle_astra_error(exc)
 
     return data
+
+
+@router.get("/statistics/commands")
+async def get_global_command_statistics(request: Request):
+    """Gibt die globalen Command-Statistiken (letzte 7 Tage) zurück.
+
+    Erfordert eine gültige Dashboard-Session. Ruft serverseitig die Internal API auf
+    und gibt die validierten Daten ohne Secrets an den Browser weiter.
+    """
+    await _get_user_id_from_session(request)
+
+    try:
+        data = await astra_client.get_command_statistics()
+    except AstraApiError as exc:
+        logger.warning("Command-Statistiken konnten nicht geladen werden: %s", exc)
+        raise _handle_astra_error(exc)
+
+    return data

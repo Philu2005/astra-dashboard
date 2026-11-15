@@ -118,5 +118,31 @@ class AstraClient:
             "stale": data.get("stale", False),
         }
 
+    async def get_command_statistics(self) -> dict[str, Any]:
+        """GET /statistics/commands – Globale Command-Nutzung (letzte 7 Tage)."""
+        data = await self._request("GET", "/statistics/commands")
+
+        # Erwartetes Format validieren
+        if not isinstance(data, dict):
+            raise AstraApiError("Ungültige Antwort von Astra.", status_code=502)
+
+        period = data.get("period")
+        total = data.get("total")
+        days = data.get("data")
+
+        if period != "7d" or not isinstance(total, int) or not isinstance(days, list) or len(days) != 7:
+            logger.warning("Astra Bot API: Unerwartetes Antwortformat von /statistics/commands")
+            raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
+
+        for day in days:
+            if not isinstance(day, dict):
+                raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
+            if not all(k in day for k in ("date", "weekday", "count")):
+                raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
+            if not isinstance(day["date"], str) or not isinstance(day["weekday"], str) or not isinstance(day["count"], int):
+                raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
+
+        return {"period": period, "total": total, "data": days}
+
 
 astra_client = AstraClient()

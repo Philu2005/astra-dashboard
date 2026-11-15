@@ -5,6 +5,7 @@ import { AstraLogo } from '@/components/AstraLogo';
 import { Loader2 } from 'lucide-react';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useCommandStatistics } from '@/hooks/useCommandStatistics';
 import {
   Users,
   Layout,
@@ -23,22 +24,10 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-type ChartPoint = {
-  day: string;
-  value: number;
-};
+type ChartPoint = { day: string; value: number };
 
-const commandData: ChartPoint[] = [
-  { day: 'Di', value: 2400 },
-  { day: 'Mi', value: 3300 },
-  { day: 'Do', value: 3100 },
-  { day: 'Fr', value: 4050 },
-  { day: 'Sa', value: 3400 },
-  { day: 'So', value: 3850 },
-  { day: 'Mo', value: 4650 },
-];
-
-const yTicks = [6000, 4000, 2000, 0];
+// Chart layout constants (visual only)
+const DEFAULT_TICKS = [6000, 4000, 2000, 0];
 const chartHeight = 244;
 const chartWidth = 520;
 const chartPadding = {
@@ -50,10 +39,10 @@ const chartPadding = {
 
 const chartInnerWidth = chartWidth - chartPadding.left - chartPadding.right;
 const chartInnerHeight = chartHeight - chartPadding.top - chartPadding.bottom;
-const maxValue = 6000;
-
-const pointX = (index: number) => chartPadding.left + (chartInnerWidth / (commandData.length - 1)) * index;
-const pointY = (value: number) => chartPadding.top + ((maxValue - value) / maxValue) * chartInnerHeight;
+const calcPointX = (index: number, len: number) =>
+  chartPadding.left + (chartInnerWidth / Math.max(1, len - 1)) * index;
+const calcPointY = (value: number, maxValue: number) =>
+  chartPadding.top + ((maxValue - value) / Math.max(1, maxValue)) * chartInnerHeight;
 
 const statusConfig = botStatusConfig;
 
@@ -62,20 +51,52 @@ const formatNumber = (n: number): string => n.toLocaleString('de-DE');
 export const Dashboard = () => {
   const botStatus = useBotStatus();
   const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats();
-  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(commandData.length - 1);
-  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(commandData.length - 1);
+  const { data: cmdStats, loading: cmdLoading, error: cmdError } = useCommandStatistics();
 
-  const points = commandData.map((entry, index) => ({
-    ...entry,
-    x: pointX(index),
-    y: pointY(entry.value),
-  }));
+  const commandData: ChartPoint[] = React.useMemo(() => {
+    if (!cmdStats || !cmdStats.data) return [];
+    return cmdStats.data.map((d) => ({ day: d.weekday.slice(0, 2), value: d.count }));
+  }, [cmdStats]);
 
-  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight - chartPadding.bottom} L ${points[0].x} ${chartHeight - chartPadding.bottom} Z`;
+  const maxValue = React.useMemo(() => {
+    const max = Math.max(0, ...commandData.map((d) => d.value));
+    // runde auf sinnvolle Schrittweite auf (z.B. 10er/50er/100er)
+    if (max <= 10) return 10;
+    if (max <= 50) return 50;
+    if (max <= 100) return 100;
+    // 10% Puffer
+    return Math.ceil(max * 1.1);
+  }, [commandData]);
+
+  const yTicks = React.useMemo(() => {
+    if (commandData.length === 0) return DEFAULT_TICKS;
+    const t3 = Math.round((maxValue * 2) / 3);
+    const t2 = Math.round(maxValue / 3);
+    return [maxValue, t3, t2, 0];
+  }, [commandData.length, maxValue]);
+
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
+
+  const points = React.useMemo(() => {
+    return commandData.map((entry, index) => ({
+      ...entry,
+      x: calcPointX(index, commandData.length || 1),
+      y: calcPointY(entry.value, maxValue),
+    }));
+  }, [commandData, maxValue]);
+
+  const linePath = React.useMemo(() => points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' '), [points]);
+  const areaPath = React.useMemo(
+    () =>
+      points.length
+        ? `${linePath} L ${points[points.length - 1].x} ${chartHeight - chartPadding.bottom} L ${points[0].x} ${chartHeight - chartPadding.bottom} Z`
+        : '',
+    [linePath, points]
+  );
 
   const activeIndex = hoveredIndex ?? selectedIndex;
-  const activePoint = activeIndex === null ? null : points[activeIndex];
+  const activePoint = activeIndex === null || points.length === 0 ? null : points[activeIndex];
 
   const activityItems = [
     { title: 'Ticketsystem aktualisiert', subtitle: 'Astra Community', time: 'vor 12 Minuten', icon: History },
@@ -240,7 +261,20 @@ export const Dashboard = () => {
                 <h3 className="text-white font-semibold text-[1.46rem] sm:text-[1.72rem] lg:text-[1.92rem] tracking-tight leading-none">Befehle <span className="text-[#9299b4] text-[0.9rem] sm:text-[1rem] lg:text-[1.05rem] font-medium ml-1">(letzte 7 Tage)</span></h3>
              </div>
 
-             <div
+             {cmdLoading ? (
+                <div className="flex items-center justify-center h-[220px] text-[#9d94ff]">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </div>
+              ) : cmdError ? (
+                <div className="flex items-center justify-center h-[220px]">
+                  <span className="text-[#c8ccde] text-sm">Statistiken konnten nicht geladen werden.</span>
+                </div>
+              ) : commandData.length === 0 ? (
+                <div className="flex items-center justify-center h-[220px]">
+                  <span className="text-[#8d93b0] text-sm">Keine Daten verfügbar.</span>
+                </div>
+              ) : (
+              <div
                 className="w-full relative min-h-[212px] sm:min-h-[236px]"
                 onPointerLeave={() => setHoveredIndex(null)}
               >
@@ -271,8 +305,8 @@ export const Dashboard = () => {
                     );
                   })}
 
-                  <path d={areaPath} fill="url(#chartGradient)" className="animate-[astra-pulse_1.8s_ease-in-out_1]" />
-                  <path d={linePath} fill="none" stroke="#8f6cff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  {areaPath && <path d={areaPath} fill="url(#chartGradient)" className="animate-[astra-pulse_1.8s_ease-in-out_1]" />}
+                  {linePath && <path d={linePath} fill="none" stroke="#8f6cff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
 
                   {points.map((point, index) => {
                     const isActive = index === activeIndex;
@@ -351,6 +385,7 @@ export const Dashboard = () => {
                   </svg>
                 )}
              </div>
+             )}
           </div>
         </div>
       </div>
