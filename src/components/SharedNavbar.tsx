@@ -17,11 +17,19 @@ interface NavItem {
 
 interface SharedNavbarProps {
   activeRoute?: string;
+  /**
+   * Visuelle Variante der Navbar.
+   * - "landing": Vollständige Landingpage-Navigation mit Menüpunkten und Aktionsbuttons
+   * - "subpage": Reduzierte Unterseiten-Navigation (kein zentrales Menü, keine Aktionsbuttons)
+   */
+  variant?: 'landing' | 'subpage';
+  /** Optionale linke Slot-Fläche (z. B. Zurück-Button + Seitentitel) */
   customLeftContent?: React.ReactNode;
+  /** Optionale rechte Slot-Fläche (z. B. Suche, Filter, etc.) */
   customRightContent?: React.ReactNode;
 }
 
-export const SharedNavbar = ({ activeRoute, customLeftContent, customRightContent }: SharedNavbarProps) => {
+export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftContent, customRightContent }: SharedNavbarProps) => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { authenticated, loading: authLoading, user } = useAuth();
@@ -76,6 +84,7 @@ export const SharedNavbar = ({ activeRoute, customLeftContent, customRightConten
           )}
         </div>
 
+        {variant === 'landing' && (
         <div className="hidden items-center gap-8 lg:flex">
           {navItems.map((item) => {
             const active = isLinkActive(item.href);
@@ -98,33 +107,40 @@ export const SharedNavbar = ({ activeRoute, customLeftContent, customRightConten
             );
           })}
         </div>
+        )}
 
         <div className="hidden items-center gap-3 lg:flex">
           {customRightContent}
-          {!isAdmin && (
-            <a href="/support" className={buttonSecondary}>Support</a>
-          )}
-          <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
-          {!authLoading && (
-            authenticated
-              ? <a href={ctaLinks.dashboard} className={buttonPrimary}>Dashboard</a>
-              : <a href={ctaLinks.login} className={buttonPrimary}>Login</a>
+          {variant === 'landing' && (
+            <>
+              {!isAdmin && (
+                <a href="/support" className={buttonSecondary}>Support</a>
+              )}
+              <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
+              {!authLoading && (
+                authenticated
+                  ? <a href={ctaLinks.dashboard} className={buttonPrimary}>Dashboard</a>
+                  : <a href={ctaLinks.login} className={buttonPrimary}>Login</a>
+              )}
+            </>
           )}
         </div>
 
         <div className="flex items-center gap-3 lg:hidden">
           {customRightContent}
-          <button
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-layout-divider bg-layout-topbar text-[#cfd4ec]"
-            onClick={() => setOpen((value) => !value)}
-            aria-label="Navigation öffnen"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {variant === 'landing' && (
+            <button
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-layout-divider bg-layout-topbar text-[#cfd4ec]"
+              onClick={() => setOpen((value) => !value)}
+              aria-label="Navigation öffnen"
+            >
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          )}
         </div>
       </nav>
 
-      {open && (
+      {variant === 'landing' && open && (
         <div className="border-t border-layout-divider bg-[#0f1220] px-4 pb-5 pt-4 lg:hidden">
           <div className="flex flex-col gap-2">
             {navItems.map((item) => (

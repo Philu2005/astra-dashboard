@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Clock,
   Activity,
+  ChevronLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SharedNavbar } from '@/components/SharedNavbar';
@@ -264,11 +265,17 @@ export default function StatusPage() {
   return (
     <div className="min-h-screen bg-[#0b0e1a] text-white">
       <SharedNavbar
+        variant="subpage"
         activeRoute="/status"
         customLeftContent={
-          <div className="flex items-center gap-3">
-            <Activity className="w-5 h-5 text-[#7de3ff]" />
-            <span className="text-[0.95rem] font-bold tracking-tight text-white uppercase">Status</span>
+          <div className="flex items-center gap-4">
+            <a href="/" className="inline-flex items-center gap-2 text-[#bcc3df] hover:text-white transition-colors text-[0.9rem]">
+              <ChevronLeft className="w-4 h-4" /> Zurück
+            </a>
+            <div className="flex items-center gap-3">
+              <Activity className="w-5 h-5 text-[#7de3ff]" />
+              <span className="text-[0.95rem] font-bold tracking-tight text-white">Systemstatus</span>
+            </div>
           </div>
         }
       />
