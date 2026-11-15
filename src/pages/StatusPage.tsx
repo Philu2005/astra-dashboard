@@ -131,7 +131,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
   return (
     <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0"
@@ -144,7 +144,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
             <p className="text-xs text-[#7a82a6] mt-0.5 truncate">{service.description}</p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1.5">
+        <div className="flex w-full md:w-auto flex-row md:flex-col items-start md:items-end justify-between md:justify-end gap-1.5 mt-2 md:mt-0">
           <span className="text-sm font-semibold text-[#a6adca]">
             {service.uptime_percent > 0 ? `${service.uptime_percent}%` : '–'}
           </span>
