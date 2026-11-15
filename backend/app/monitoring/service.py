@@ -278,9 +278,52 @@ async def _check_astra_api(config: dict) -> tuple[str, float, Optional[str]]:
 
 
 async def _check_heartbeat(config: dict) -> tuple[str, float, Optional[str]]:
-    """Prüft den letzten Bot-Heartbeat aus der Datenbank."""
+    """Prüft den Bot-Status über die Astra Bot API (/status) und optional die lokale DB."""
     max_age = config.get("max_age_seconds", 300)
+    base_url = settings.ASTRA_INTERNAL_API_URL.rstrip("/")
+    timeout_s = config.get("timeout", 15)
 
+    # Primär: Astra Bot API /status abfragen
+    try:
+        start = time.monotonic()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{base_url}/status",
+                timeout=aiohttp.ClientTimeout(total=timeout_s),
+                ssl=False,
+            ) as resp:
+                elapsed = (time.monotonic() - start) * 1000
+
+                if resp.status != 200:
+                    return STATUS_OUTAGE, elapsed, f"Bot-API /status HTTP {resp.status}"
+
+                try:
+                    data = await resp.json()
+                except Exception:
+                    return STATUS_UNKNOWN, elapsed, "Ungültige JSON-Antwort von /status"
+
+                # online-Feld und heartbeat_age_seconds auswerten
+                is_online = data.get("online", False)
+                bot_status = data.get("status", "unknown")
+                heartbeat_age = data.get("heartbeat_age_seconds")
+                stale_after = data.get("stale_after_seconds", max_age)
+
+                if not is_online or bot_status not in ("online", "alive", "ready"):
+                    return STATUS_OUTAGE, elapsed, f"Bot meldet Status: {bot_status}"
+
+                # Heartbeat-Alter prüfen
+                if heartbeat_age is not None and heartbeat_age > stale_after:
+                    return STATUS_OUTAGE, elapsed, f"Heartbeat veraltet ({int(heartbeat_age)}s alt, max {int(stale_after)}s)"
+
+                return STATUS_OPERATIONAL, elapsed, None
+
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        # API nicht erreichbar — Fallback auf lokale DB
+        pass
+    except Exception as e:
+        pass
+
+    # Fallback: Lokale Heartbeat-Datenbank prüfen
     try:
         pool = get_pool()
         start = time.monotonic()
@@ -299,11 +342,10 @@ async def _check_heartbeat(config: dict) -> tuple[str, float, Optional[str]]:
         elapsed = (time.monotonic() - start) * 1000
 
         if not row:
-            return STATUS_UNKNOWN, elapsed, "Kein Heartbeat empfangen"
+            return STATUS_UNKNOWN, elapsed, "Kein Heartbeat empfangen und Bot-API nicht erreichbar"
 
         hb_status, hb_details, received_at = row
 
-        # Prüfe Alter des Heartbeats
         now = datetime.now(timezone.utc)
         if received_at.tzinfo is None:
             received_at = received_at.replace(tzinfo=timezone.utc)
@@ -719,8 +761,8 @@ async def _get_daily_history(service_id: int, days: int = 90) -> list[dict]:
     return result
 
 
-def _calculate_overall_status(services: list[dict]) -> tuple[str, str]:
-    """Berechnet den Gesamtstatus mit Gewichtung."""
+def _calculate_overall_status(services: list[dict], active_incidents: Optional[list[dict]] = None) -> tuple[str, str]:
+    """Berechnet den Gesamtstatus mit Gewichtung und aktiven Incidents."""
     if not services:
         return STATUS_UNKNOWN, "Status unbekannt"
 
@@ -746,8 +788,14 @@ def _calculate_overall_status(services: list[dict]) -> tuple[str, str]:
 
     weighted_avg = sum(s * w for s, w in weighted_scores) / total_weight
 
-    if weighted_avg >= 0.95:
+    # Aktive Incidents berücksichtigen: wenn aktive Incidents existieren,
+    # kann der Status maximal "degraded" sein
+    has_active_incidents = bool(active_incidents)
+
+    if weighted_avg >= 0.95 and not has_active_incidents:
         return STATUS_OPERATIONAL, "Alle Systeme laufen"
+    elif weighted_avg >= 0.95 and has_active_incidents:
+        return STATUS_DEGRADED, "Eingeschränkter Betrieb"
     elif weighted_avg >= 0.5:
         return STATUS_DEGRADED, "Eingeschränkter Betrieb"
     elif weighted_avg > 0:
@@ -837,8 +885,12 @@ async def get_status_page_data() -> dict:
     """Gibt alle Daten für die öffentliche Status Page zurück."""
     services = await get_all_services_status()
     merged_services = _merge_website_services(services)
-    overall_status, overall_label = _calculate_overall_status(merged_services)
     incidents = await get_public_incidents()
+
+    # Aktive Incidents (nicht aufgelöst) ermitteln
+    active_incidents = [i for i in incidents if i.get("resolved_at") is None]
+
+    overall_status, overall_label = _calculate_overall_status(merged_services, active_incidents)
 
     return {
         "overall": {
@@ -847,6 +899,7 @@ async def get_status_page_data() -> dict:
             "services": merged_services,
         },
         "incidents": incidents,
+        "active_incidents": active_incidents,
         "last_updated": datetime.now(timezone.utc),
     }
 
