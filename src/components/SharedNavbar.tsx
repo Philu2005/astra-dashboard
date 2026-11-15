@@ -86,7 +86,7 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
               className="inline-flex items-center gap-2 rounded-xl border border-[#2a2f47] bg-layout-topbar/70 px-3.5 py-2 text-[0.92rem] font-medium text-[#d7ddf2] transition-all duration-200 hover:border-[#5d649b] hover:bg-layout-hover focus:outline-none focus:ring-2 focus:ring-[#4b46c8]/50"
               aria-label="Zurück"
             >
-              <ChevronLeft className="w-4.5 h-4.5" />
+              <ChevronLeft className="w-4 h-4" />
               {backLabel}
             </a>
           )}
