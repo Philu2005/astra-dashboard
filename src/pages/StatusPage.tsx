@@ -90,28 +90,45 @@ function timeAgo(dateStr: string): string {
 
 // ─── Komponenten ─────────────────────────────────────────────
 
-function StatusBar({ day }: { day: DayHistory }) {
+function StatusBarTooltip({ day, label }: { day: DayHistory; label: string }) {
+  return (
+    <div className="whitespace-nowrap rounded-lg border border-[#2a2f4a] bg-[#161929] px-3 py-2 text-xs shadow-xl">
+      <p className="font-medium text-white">{label}</p>
+      <p className="text-[#a6adca]">{STATUS_LABELS[day.status] || 'Unbekannt'}</p>
+      {day.status !== 'unknown' && <p className="text-[#a6adca]">{day.uptime_percent}% Verfügbarkeit</p>}
+    </div>
+  );
+}
+
+function StatusBar({ day, selected, onSelect }: { day: DayHistory; selected?: boolean; onSelect?: () => void }) {
   const [hover, setHover] = useState(false);
   const color = STATUS_COLORS[day.status] || STATUS_COLORS.unknown;
   const d = new Date(day.date);
   const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  const active = hover || selected;
 
   return (
-    <div className="status-bar relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div
+      className="status-bar relative"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } }}
+    >
       <div
         className="rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
           height: '34px',
           backgroundColor: color,
-          opacity: hover ? 1 : 0.85,
-          transform: hover ? 'scaleY(1.15)' : 'scaleY(1)',
+          opacity: active ? 1 : 0.85,
+          transform: active ? 'scaleY(1.15)' : 'scaleY(1)',
         }}
       />
-      {hover && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 whitespace-nowrap rounded-lg border border-[#2a2f4a] bg-[#161929] px-3 py-2 text-xs shadow-xl pointer-events-none">
-          <p className="font-medium text-white">{label}</p>
-          <p className="text-[#a6adca]">{STATUS_LABELS[day.status] || 'Unbekannt'}</p>
-          {day.status !== 'unknown' && <p className="text-[#a6adca]">{day.uptime_percent}% Verfügbarkeit</p>}
+      {hover && !selected && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+          <StatusBarTooltip day={day} label={label} />
         </div>
       )}
     </div>
@@ -120,7 +137,9 @@ function StatusBar({ day }: { day: DayHistory }) {
 
 function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(1);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const initializedRef = useRef(false);
 
   const updateProgress = useCallback(() => {
@@ -149,13 +168,63 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     return () => el.removeEventListener('scroll', onScroll);
   }, [updateProgress]);
 
+  // Tap-outside schließt Tooltip
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setSelectedIndex(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, [selectedIndex]);
+
   const showLeftFade = scrollProgress > 0.02;
   const showRightFade = scrollProgress < 0.98;
 
+  // Tooltip-Position berechnen
+  const getTooltipStyle = (): React.CSSProperties => {
+    if (selectedIndex === null || !scrollRef.current) return { display: 'none' };
+    const barWidth = 6;
+    const gap = 3;
+    const barCenter = selectedIndex * (barWidth + gap) + barWidth / 2;
+    const scrollLeft = scrollRef.current.scrollLeft;
+    const containerWidth = scrollRef.current.clientWidth;
+    const visiblePos = barCenter - scrollLeft;
+    // Tooltip-Breite ca. 140px, zentriert, aber am Rand geclampt
+    const tooltipW = 140;
+    let left = visiblePos - tooltipW / 2;
+    left = Math.max(4, Math.min(left, containerWidth - tooltipW - 4));
+    return {
+      position: 'absolute' as const,
+      bottom: '100%',
+      left: `${left}px`,
+      marginBottom: '6px',
+      zIndex: 50,
+      width: `${tooltipW}px`,
+    };
+  };
+
+  const selectedDay = selectedIndex !== null ? dailyHistory[selectedIndex] : null;
+  const selectedLabel = selectedDay
+    ? new Date(selectedDay.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    : '';
+
   return (
-    <div className="md:hidden w-full min-w-0">
+    <div ref={containerRef} className="md:hidden w-full min-w-0">
       {/* Scroll-Container mit Fade-Overlays */}
       <div className="relative">
+        {/* Mobile Tooltip */}
+        {selectedDay && (
+          <div style={getTooltipStyle()}>
+            <StatusBarTooltip day={selectedDay} label={selectedLabel} />
+          </div>
+        )}
         <div
           ref={scrollRef}
           className="w-full overflow-x-auto scrollbar-hide"
@@ -168,9 +237,13 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
               width: `${dailyHistory.length * 6 + (dailyHistory.length - 1) * 3}px`,
             }}
           >
-            {dailyHistory.map((day) => (
+            {dailyHistory.map((day, i) => (
               <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
-                <StatusBar day={day} />
+                <StatusBar
+                  day={day}
+                  selected={selectedIndex === i}
+                  onSelect={() => setSelectedIndex(selectedIndex === i ? null : i)}
+                />
               </div>
             ))}
           </div>
