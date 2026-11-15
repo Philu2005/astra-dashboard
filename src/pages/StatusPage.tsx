@@ -109,7 +109,7 @@ function StatusBar({ day, selected, onSelect }: { day: DayHistory; selected?: bo
 
   return (
     <div
-      className="status-bar relative"
+      className="status-bar relative flex-1 min-w-0"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={onSelect}
@@ -332,10 +332,9 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       {/* Historische Balken – Desktop: Grid, Mobile: feste Balken mit Scroll */}
       {/* Desktop */}
       <div
-        className="status-history-grid w-full hidden md:grid"
+        className="status-history-grid w-full hidden md:flex"
         style={{
-          gridTemplateColumns: `repeat(${service.daily_history.length}, 4px)`,
-          justifyContent: 'space-between',
+          gap: '2px',
         }}
       >
         {service.daily_history.map((day) => (
