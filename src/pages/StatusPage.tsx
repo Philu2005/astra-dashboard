@@ -102,10 +102,13 @@ function StatusBar({ day }: { day: DayHistory }) {
       <div
         className="rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
+          // Fix: Auf mobilen Grids darf der Balken schmaler als 6px werden,
+          // ohne einen horizontalen Overflow zu erzeugen. Auf Desktop (Flex)
+          // bleibt die Zielbreite 6px stabil.
           flex: '0 0 6px',
           width: '6px',
-          minWidth: '6px',
-          maxWidth: '6px',
+          minWidth: 0,
+          maxWidth: '100%',
           height: '34px',
           backgroundColor: color,
           opacity: hover ? 1 : 0.85,
@@ -170,18 +173,19 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       )}
 
       {/* Historische Balken */}
-      {/* Mobile: horizontal scrollbar erlaubt; Desktop: volle Kartenbreite mit flexibel verteilten Abständen */}
-      <div className="w-full overflow-x-auto md:overflow-visible">
-        <div
-          className={cn(
-            // Innerer Wrapper muss die gesamte Kartenbreite einnehmen, damit space-between greift
-            'flex w-full items-stretch',
-            // Auf Mobile behalten wir kleine feste Gaps und erlauben Scrollen
-            'gap-[2px] pr-1',
-            // Ab md: keine festen Gaps, stattdessen Platz flexibel zwischen 90 Fixbreiten-Balken verteilen
-            'md:gap-0 md:justify-between md:pr-0'
-          )}
-        >
+      {/* Mobile (<= md-1): 90 gleichbreite Spalten ohne horizontalen Scroll, Balken zentriert in ihrer Zelle. */}
+      <div className="w-full md:hidden">
+        <div className="grid grid-flow-col auto-cols-fr gap-[1px]">
+          {service.daily_history.map((day) => (
+            <div key={day.date} className="flex items-stretch justify-center">
+              <StatusBar day={day} />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Desktop (md+): volle Kartenbreite, fixe 6px-Breite pro Balken, Restplatz zwischen den Balken verteilen */}
+      <div className="hidden md:block w-full">
+        <div className="flex w-full items-stretch md:gap-0 md:justify-between">
           {service.daily_history.map((day) => (
             <StatusBar key={day.date} day={day} />
           ))}
