@@ -98,16 +98,10 @@ function StatusBar({ day }: { day: DayHistory }) {
   const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
 
   return (
-    <div className="relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div className="status-bar relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div
         className="rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
-          // Ursprüngliche, funktionierende Logik: fester, schmaler Balken.
-          // Sichtbare Abstände entstehen im Container via justify-between.
-          flex: '0 0 6px',
-          width: '6px',
-          minWidth: 0,
-          maxWidth: '100%',
           height: '34px',
           backgroundColor: color,
           opacity: hover ? 1 : 0.85,
@@ -171,24 +165,18 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         <p className="text-xs text-yellow-400/80 mt-1 mb-3">{service.sub_status}</p>
       )}
 
-      {/* Historische Balken */}
-      {/* Mobile (<= md-1): Flex-Container mit w-full und justify-between.
-          90 schmale Balken (feste 6px), klare Abstände durch space-between,
-          gleichmäßig über die Kartenbreite, ohne Horizontal-Scroll. */}
-      <div className="w-full md:hidden">
-        <div className="flex w-full items-stretch justify-between flex-nowrap">
-          {service.daily_history.map((day) => (
-            <StatusBar key={day.date} day={day} />
-          ))}
-        </div>
-      </div>
-      {/* Desktop (md+): volle Kartenbreite, fixe 6px-Breite pro Balken, Restplatz zwischen den Balken verteilen */}
-      <div className="hidden md:block w-full">
-        <div className="flex w-full items-stretch md:gap-0 md:justify-between">
-          {service.daily_history.map((day) => (
-            <StatusBar key={day.date} day={day} />
-          ))}
-        </div>
+      {/* Historische Balken – einheitlich für alle Viewports */}
+      <div
+        className="status-history-grid w-full"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${service.daily_history.length}, 1fr)`,
+          gap: '1.5px',
+        }}
+      >
+        {service.daily_history.map((day) => (
+          <StatusBar key={day.date} day={day} />
+        ))}
       </div>
 
       {/* Zeitachse */}
