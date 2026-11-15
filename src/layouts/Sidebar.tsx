@@ -17,6 +17,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { withFrom } from '@/lib/returnTo';
 import { appConfig } from '@/lib/app-config';
 import { AstraLogo } from '@/components/AstraLogo';
 import { useServerContext, iconColors } from '@/contexts/ServerContext';
@@ -281,8 +282,9 @@ export const Sidebar = () => {
               {!isAdmin && (
                 <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={() => setIsOpen(false)} />
               )}
-              <NavItem icon={BookOpen} label="Dokumentation" href="/docs" onClick={() => setIsOpen(false)} />
-              <NavItem icon={Activity} label="Status" href="/status" onClick={() => setIsOpen(false)} />
+              {/* Übergibt die Herkunft aus dem Dashboard explizit an Unterseiten */}
+              <NavItem icon={BookOpen} label="Dokumentation" href={withFrom('/docs', pathname)} onClick={() => setIsOpen(false)} />
+              <NavItem icon={Activity} label="Status" href={withFrom('/status', pathname)} onClick={() => setIsOpen(false)} />
               {isAdmin && (
                 <NavItem icon={FileText} label="Support-Tickets" active={pathname === '/dashboard/tickets'} href="/dashboard/tickets" onClick={() => setIsOpen(false)} />
               )}
