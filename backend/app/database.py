@@ -272,6 +272,7 @@ async def init_tables() -> None:
                     article_slug VARCHAR(100) NOT NULL,
                     user_id VARCHAR(20) NULL,
                     visitor_id VARCHAR(100) NULL,
+                    value TINYINT NOT NULL DEFAULT 1, -- 1 = like, -1 = dislike
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE KEY uniq_article_user (article_slug, user_id),
                     UNIQUE KEY uniq_article_visitor (article_slug, visitor_id),
@@ -281,5 +282,18 @@ async def init_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """
             )
+
+            # idempotente Migration: VALUE-Spalte ergänzen, falls in Bestands-DB nicht vorhanden
+            await cur.execute(
+                """
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'value'
+                """,
+                (settings.DB_NAME, "docs_article_likes"),
+            )
+            row = await cur.fetchone()
+            if not (row and row[0] and int(row[0]) > 0):
+                await cur.execute("ALTER TABLE docs_article_likes ADD COLUMN value TINYINT NOT NULL DEFAULT 1")
 
     logger.info("Datenbanktabellen initialisiert")

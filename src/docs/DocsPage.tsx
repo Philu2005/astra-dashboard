@@ -130,6 +130,42 @@ export const DocsPage: React.FC = () => {
     }
   }, []);
 
+  const doDislike = useCallback(async (slug: string) => {
+    setLikeLoading(true);
+    try {
+      const res = await fetch(`/api/docs/articles/${encodeURIComponent(slug)}/dislike`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Wenn vorher ein Like aktiv war, dekrementieren (Server zählt Likes nur value=1)
+        setLikeCount((p) => ({ ...p, [slug]: data.count ?? Math.max(0, (p[slug] ?? 0) - (feedback[slug] === 'up' ? 1 : 0)) }));
+        setFeedback((p) => ({ ...p, [slug]: 'down' }));
+      }
+    } finally {
+      setLikeLoading(false);
+    }
+  }, [feedback]);
+
+  const doUndislike = useCallback(async (slug: string) => {
+    setLikeLoading(true);
+    try {
+      const res = await fetch(`/api/docs/articles/${encodeURIComponent(slug)}/dislike`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'include',
+      });
+      if (res.ok) {
+        // count (Likes) ändert sich beim Entfernen eines Dislikes nicht
+        setFeedback((p) => ({ ...p, [slug]: undefined as any }));
+      }
+    } finally {
+      setLikeLoading(false);
+    }
+  }, []);
+
   // Article view
   if (article) {
     const { prev, next } = getAdjacentArticles(article.slug);
@@ -260,7 +296,7 @@ export const DocsPage: React.FC = () => {
                   <ThumbsUp className="w-3.5 h-3.5" /> Ja
                 </button>
                 <button
-                  onClick={() => setFeedback((p) => ({ ...p, [article.slug]: 'down' }))}
+                  onClick={() => (feedback[article.slug] === 'down' ? doUndislike(article.slug) : doDislike(article.slug))}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-lg border text-[0.82rem] transition-all duration-200",
                     feedback[article.slug] === 'down'

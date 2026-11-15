@@ -89,49 +89,65 @@ async def get_likes(slug: str, request: Request):
     pool = get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
-            # Optionaler Merge: Wenn Nutzer jetzt eingeloggt ist und zuvor anonym geliked hat, migrieren
+            # Optionaler Merge: Wenn Nutzer jetzt eingeloggt ist und zuvor anonym bewertet hat, migrieren
             if user_id and visitor_id:
-                # Nur migrieren, wenn noch kein User-Like existiert, aber ein Visitor-Like
                 await cur.execute(
-                    "SELECT 1 FROM docs_article_likes WHERE article_slug=%s AND user_id=%s LIMIT 1",
-                    (slug, user_id),
+                    "SELECT value FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s LIMIT 1",
+                    (slug, visitor_id),
                 )
-                has_user = (await cur.fetchone()) is not None
-                if not has_user:
+                vrow = await cur.fetchone()
+                if vrow is not None:
+                    # Nur wenn noch kein User-Rating existiert, migrieren wir das Besucher-Rating
                     await cur.execute(
-                        "DELETE FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s",
-                        (slug, visitor_id),
-                    )
-                    await cur.execute(
-                        """
-                        INSERT INTO docs_article_likes(article_slug, user_id, visitor_id)
-                        VALUES(%s,%s,NULL)
-                        ON DUPLICATE KEY UPDATE created_at = created_at
-                        """,
+                        "SELECT 1 FROM docs_article_likes WHERE article_slug=%s AND user_id=%s LIMIT 1",
                         (slug, user_id),
                     )
+                    has_user = (await cur.fetchone()) is not None
+                    if not has_user:
+                        await cur.execute(
+                            "DELETE FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s",
+                            (slug, visitor_id),
+                        )
+                        await cur.execute(
+                            """
+                            INSERT INTO docs_article_likes(article_slug, user_id, visitor_id, value)
+                            VALUES(%s,%s,NULL,%s)
+                            ON DUPLICATE KEY UPDATE value = VALUES(value)
+                            """,
+                            (slug, user_id, int(vrow[0])),
+                        )
+
+            # Like-Zähler (nur value=1)
             await cur.execute(
-                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s",
+                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s AND value=1",
                 (slug,),
             )
             row = await cur.fetchone()
             count = int(row[0]) if row else 0
 
             liked = False
+            disliked = False
             if user_id:
                 await cur.execute(
-                    "SELECT 1 FROM docs_article_likes WHERE article_slug=%s AND user_id=%s LIMIT 1",
+                    "SELECT value FROM docs_article_likes WHERE article_slug=%s AND user_id=%s LIMIT 1",
                     (slug, user_id),
                 )
-                liked = (await cur.fetchone()) is not None
+                r = await cur.fetchone()
+                if r is not None:
+                    liked = int(r[0]) == 1
+                    disliked = int(r[0]) == -1
             elif visitor_id:
                 await cur.execute(
-                    "SELECT 1 FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s LIMIT 1",
+                    "SELECT value FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s LIMIT 1",
                     (slug, visitor_id),
                 )
-                liked = (await cur.fetchone()) is not None
+                r = await cur.fetchone()
+                if r is not None:
+                    liked = int(r[0]) == 1
+                    disliked = int(r[0]) == -1
 
-    return {"count": count, "liked": liked}
+    # Hinweis: Keine Dislike-Anzahl zurückgeben, nur persönlicher Zustand
+    return {"count": count, "liked": liked, "disliked": disliked}
 
 
 @router.post("/{slug}/like", dependencies=[Depends(verify_same_origin)])
@@ -153,9 +169,9 @@ async def like_article(slug: str, request: Request, response: Response):
                 # Idempotent via Upsert (verhindert Rennbedingungen)
                 await cur.execute(
                     """
-                    INSERT INTO docs_article_likes(article_slug, user_id, visitor_id)
-                    VALUES(%s,%s,NULL)
-                    ON DUPLICATE KEY UPDATE created_at = created_at
+                    INSERT INTO docs_article_likes(article_slug, user_id, visitor_id, value)
+                    VALUES(%s,%s,NULL,1)
+                    ON DUPLICATE KEY UPDATE value = 1
                     """,
                     (slug, user_id),
                 )
@@ -164,16 +180,16 @@ async def like_article(slug: str, request: Request, response: Response):
                 visitor_id = _get_or_create_visitor_id(request, response)
                 await cur.execute(
                     """
-                    INSERT INTO docs_article_likes(article_slug, user_id, visitor_id)
-                    VALUES(%s,NULL,%s)
-                    ON DUPLICATE KEY UPDATE created_at = created_at
+                    INSERT INTO docs_article_likes(article_slug, user_id, visitor_id, value)
+                    VALUES(%s,NULL,%s,1)
+                    ON DUPLICATE KEY UPDATE value = 1
                     """,
                     (slug, visitor_id),
                 )
 
             # Antwort mit aktuellem Zähler
             await cur.execute(
-                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s",
+                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s AND value=1",
                 (slug,),
             )
             row = await cur.fetchone()
@@ -200,23 +216,102 @@ async def unlike_article(slug: str, request: Request):
         async with conn.cursor() as cur:
             if user_id:
                 await cur.execute(
-                    "DELETE FROM docs_article_likes WHERE article_slug=%s AND user_id=%s",
+                    "DELETE FROM docs_article_likes WHERE article_slug=%s AND user_id=%s AND value=1",
                     (slug, user_id),
                 )
             else:
                 await cur.execute(
-                    "DELETE FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s",
+                    "DELETE FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s AND value=1",
                     (slug, visitor_id),
                 )
 
             await cur.execute(
-                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s",
+                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s AND value=1",
                 (slug,),
             )
             row = await cur.fetchone()
             count = int(row[0]) if row else 0
 
     return {"ok": True, "count": count, "liked": False}
+
+
+@router.post("/{slug}/dislike", dependencies=[Depends(verify_same_origin)])
+async def dislike_article(slug: str, request: Request, response: Response):
+    """Setzt ein Dislike (-1) idempotent; entfernt ggf. vorhandenes Visitor-Rating beim User-Merge."""
+    user_id = await _get_session_user_id(request)
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            if user_id:
+                visitor_token = request.cookies.get(VISITOR_COOKIE_NAME)
+                visitor_id = _verify_visitor(visitor_token) if visitor_token else None
+                if visitor_id:
+                    await cur.execute(
+                        "DELETE FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s",
+                        (slug, visitor_id),
+                    )
+                await cur.execute(
+                    """
+                    INSERT INTO docs_article_likes(article_slug, user_id, visitor_id, value)
+                    VALUES(%s,%s,NULL,-1)
+                    ON DUPLICATE KEY UPDATE value = -1
+                    """,
+                    (slug, user_id),
+                )
+            else:
+                visitor_id = _get_or_create_visitor_id(request, response)
+                await cur.execute(
+                    """
+                    INSERT INTO docs_article_likes(article_slug, user_id, visitor_id, value)
+                    VALUES(%s,NULL,%s,-1)
+                    ON DUPLICATE KEY UPDATE value = -1
+                    """,
+                    (slug, visitor_id),
+                )
+
+            # Like-Zähler (nur value=1) unverändert zurückgeben
+            await cur.execute(
+                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s AND value=1",
+                (slug,),
+            )
+            row = await cur.fetchone()
+            count = int(row[0]) if row else 0
+
+    return {"ok": True, "count": count, "disliked": True}
+
+
+@router.delete("/{slug}/dislike", dependencies=[Depends(verify_same_origin)])
+async def undislike_article(slug: str, request: Request):
+    """Entfernt ein Dislike (-1) idempotent."""
+    user_id = await _get_session_user_id(request)
+    visitor_id = None
+    if not user_id:
+        token = request.cookies.get(VISITOR_COOKIE_NAME)
+        visitor_id = _verify_visitor(token) if token else None
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            if user_id:
+                await cur.execute(
+                    "DELETE FROM docs_article_likes WHERE article_slug=%s AND user_id=%s AND value=-1",
+                    (slug, user_id),
+                )
+            elif visitor_id:
+                await cur.execute(
+                    "DELETE FROM docs_article_likes WHERE article_slug=%s AND visitor_id=%s AND value=-1",
+                    (slug, visitor_id),
+                )
+
+            # Like-Zähler (nur value=1) zurückgeben
+            await cur.execute(
+                "SELECT COUNT(*) FROM docs_article_likes WHERE article_slug=%s AND value=1",
+                (slug,),
+            )
+            row = await cur.fetchone()
+            count = int(row[0]) if row else 0
+
+    return {"ok": True, "count": count, "disliked": False}
 
 
 async def _get_count(slug: str) -> int:
