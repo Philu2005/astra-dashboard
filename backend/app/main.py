@@ -11,6 +11,7 @@ from app.config import settings
 from app.auth.router import router as auth_router
 from app.servers.router import router as servers_router
 from app.database import init_pool, close_pool, init_tables
+from app.redis import init_redis, close_redis, redis_available
 from app.auth.sessions import session_manager
 from app.support.router import router as support_router
 from app.monitoring.router import router as monitoring_router
@@ -38,6 +39,7 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_pool()
     await init_tables()
+    await init_redis()
 
     cleanup_task = asyncio.create_task(_cleanup_loop())
 
@@ -51,6 +53,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await stop_scheduler()
     cleanup_task.cancel()
+    await close_redis()
 
     try:
         await cleanup_task
@@ -114,7 +117,11 @@ async def health_check():
 
 @app.get("/api/health")
 async def api_health_check():
-    return {"status": "healthy"}
+    redis_ok = await redis_available()
+    return {
+        "status": "healthy",
+        "redis": "connected" if redis_ok else "unavailable",
+    }
 
 
 # Local development
