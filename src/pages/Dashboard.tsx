@@ -98,6 +98,13 @@ export const Dashboard = () => {
   const activeIndex = hoveredIndex ?? selectedIndex;
   const activePoint = activeIndex === null || points.length === 0 ? null : points[activeIndex];
 
+  // Tooltip: vollständige Infos (Wochentag + Datum) aus Originaldaten
+  const activeMeta = React.useMemo(() => {
+    if (!cmdStats?.data || activeIndex == null) return null;
+    const d = cmdStats.data[activeIndex];
+    return { weekday: d.weekday, date: d.date, count: d.count };
+  }, [cmdStats, activeIndex]);
+
   const activityItems = [
     { title: 'Ticketsystem aktualisiert', subtitle: 'Astra Community', time: 'vor 12 Minuten', icon: History },
     { title: 'Joinrole hinzugefügt', subtitle: 'Astra Community', time: 'vor 37 Minuten', icon: UserPlus },
@@ -106,12 +113,18 @@ export const Dashboard = () => {
     { title: 'Level-Belohnung aktualisiert', subtitle: 'Creator Hub', time: 'vor 3 Stunden', icon: Trophy },
   ];
 
-  const tooltipWidth = 114;
-  const tooltipHeight = 44;
+  const tooltipWidth = 136;
+  const tooltipHeight = 58;
   const tooltipHalf = tooltipWidth / 2;
-  const tooltipLeft = activePoint ? Math.max(tooltipHalf, Math.min(chartWidth - tooltipHalf, activePoint.x)) : 0;
-  const tooltipTop = activePoint ? activePoint.y - tooltipHeight - 10 : 0;
-  const tooltipPointerOffset = activePoint ? Math.max(-34, Math.min(34, activePoint.x - tooltipLeft)) : 0;
+  // Intelligente Positionierung: Horizontal clamp, Vertikal ober-/unterhalb je nach Platz
+  const placeAbove = activePoint ? activePoint.y - (tooltipHeight + 12) >= chartPadding.top : true;
+  const rawLeft = activePoint ? activePoint.x : 0;
+  const tooltipLeft = activePoint ? Math.max(tooltipHalf, Math.min(chartWidth - tooltipHalf, rawLeft)) : 0;
+  const desiredTop = activePoint ? (placeAbove ? activePoint.y - tooltipHeight - 12 : activePoint.y + 12) : 0;
+  const minTop = 6;
+  const maxTop = chartHeight - tooltipHeight - 6;
+  const tooltipTop = Math.max(minTop, Math.min(maxTop, desiredTop));
+  const tooltipPointerOffset = activePoint ? Math.max(-38, Math.min(38, activePoint.x - tooltipLeft)) : 0;
 
   return (
     <div className="space-y-5 lg:space-y-6 w-full">
@@ -284,12 +297,20 @@ export const Dashboard = () => {
                       <stop offset="0%" stopColor="#7e5dff" stopOpacity="0.55" />
                       <stop offset="100%" stopColor="#4b46c8" stopOpacity="0" />
                     </linearGradient>
+                    <linearGradient id="chartLineGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#7f6aff" />
+                      <stop offset="100%" stopColor="#9b8bff" />
+                    </linearGradient>
                     <filter id="pointGlow" x="-50%" y="-50%" width="200%" height="200%">
                       <feGaussianBlur stdDeviation="3" result="blur" />
                       <feMerge>
                         <feMergeNode in="blur" />
                         <feMergeNode in="SourceGraphic" />
                       </feMerge>
+                    </filter>
+                    <filter id="tooltipShadow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#4b46c8" floodOpacity="0.25" />
+                      <feDropShadow dx="0" dy="2" stdDeviation="6" floodColor="#000000" floodOpacity="0.35" />
                     </filter>
                   </defs>
 
@@ -305,8 +326,27 @@ export const Dashboard = () => {
                     );
                   })}
 
-                  {areaPath && <path d={areaPath} fill="url(#chartGradient)" className="animate-[astra-pulse_1.8s_ease-in-out_1]" />}
-                  {linePath && <path d={linePath} fill="none" stroke="#8f6cff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+                  {areaPath && (
+                    <path
+                      d={areaPath}
+                      fill="url(#chartGradient)"
+                      className="motion-reduce:animate-none animate-[astra-pulse_1.8s_ease-in-out_1]"
+                      opacity={0.9}
+                    />
+                  )}
+                  {linePath && (
+                    <path
+                      d={linePath}
+                      fill="none"
+                      stroke={activeIndex != null ? "url(#chartLineGrad)" : "#8f6cff"}
+                      strokeWidth={activeIndex != null ? 3.5 : 3}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      pathLength={100}
+                      className="[stroke-dasharray:100] motion-reduce:[stroke-dasharray:unset] [stroke-dashoffset:100] motion-reduce:[stroke-dashoffset:unset] animate-[astra-draw_1.1s_cubic-bezier(0.22,1,0.36,1)_1]"
+                      style={{ filter: activeIndex != null ? 'drop-shadow(0 0 6px rgba(155,139,255,0.35))' as any : undefined }}
+                    />
+                  )}
 
                   {points.map((point, index) => {
                     const isActive = index === activeIndex;
@@ -316,11 +356,12 @@ export const Dashboard = () => {
                         <circle
                           cx={point.x}
                           cy={point.y}
-                          r={isActive ? 6 : 4}
+                          r={isActive ? 6.5 : 4.25}
                           fill="#8f6cff"
                           stroke="#f3f4ff"
-                          strokeWidth="1.5"
+                          strokeWidth="1.4"
                           filter={isActive ? 'url(#pointGlow)' : undefined}
+                          className="transition-[r,filter] duration-200 ease-out"
                         />
                         <circle
                           cx={point.x}
@@ -335,6 +376,9 @@ export const Dashboard = () => {
                           onFocus={() => setHoveredIndex(index)}
                           onBlur={() => setHoveredIndex(null)}
                           style={{ cursor: 'pointer' }}
+                          role="button"
+                          aria-label={`Tag ${index + 1}: ${commandData[index].value.toLocaleString('de-DE')} Befehle`}
+                          tabIndex={0}
                         />
                       </g>
                     );
@@ -352,40 +396,55 @@ export const Dashboard = () => {
                   ))}
                 </div>
 
-                {activePoint && (
-                  <svg
-                    viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                    className="absolute inset-0 w-full h-auto pointer-events-none z-20"
-                    aria-hidden="true"
+                {/* Custom Tooltip (SVG Overlay, sanfte Bewegungen, dunkles Theme) */}
+                <svg
+                  viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                  className="absolute inset-0 w-full h-auto pointer-events-none z-20"
+                  aria-hidden="true"
+                >
+                  <g
+                    transform={`translate(${(activePoint ? tooltipLeft - tooltipHalf : -9999).toFixed(2)} ${(activePoint ? tooltipTop : -9999).toFixed(2)})`}
+                    style={{
+                      transition: 'transform 220ms cubic-bezier(0.22,1,0.36,1), opacity 160ms ease-out',
+                      opacity: activePoint ? 1 : 0,
+                    }}
+                    filter="url(#tooltipShadow)"
                   >
-                    <g transform={`translate(${tooltipLeft - tooltipHalf} ${tooltipTop})`}>
-                      <rect
-                        width={tooltipWidth}
-                        height={tooltipHeight}
-                        rx={9}
-                        fill="rgba(17,22,41,0.95)"
-                        stroke="#757ee3"
-                        strokeOpacity="0.85"
-                        strokeWidth="1"
-                      />
-                      <rect
-                        x={tooltipHalf + tooltipPointerOffset - 4}
-                        y={tooltipHeight - 0.8}
-                        width={8}
-                        height={8}
-                        transform={`rotate(45 ${tooltipHalf + tooltipPointerOffset} ${tooltipHeight + 3.2})`}
-                        fill="rgba(17,22,41,0.95)"
-                        stroke="#757ee3"
-                        strokeOpacity="0.85"
-                        strokeWidth="1"
-                      />
-                      <text x={10} y={16} fill="#b8c0df" fontSize="9" letterSpacing="0.1em">{activePoint.day}</text>
-                      <text x={10} y={31} fill="#f4f6ff" fontSize="12" fontWeight={600}>{activePoint.value.toLocaleString('de-DE')}</text>
-                    </g>
-                  </svg>
-                )}
-             </div>
-             )}
+                    <rect
+                      width={tooltipWidth}
+                      height={tooltipHeight}
+                      rx={10}
+                      fill="rgba(16,21,38,0.96)"
+                      stroke="#5e67e9"
+                      strokeOpacity="0.9"
+                      strokeWidth="1"
+                    />
+                    {/* Pointer (Diamant ohne übertriebenen Pfeil) */}
+                    <rect
+                      x={tooltipHalf + tooltipPointerOffset - 5}
+                      y={placeAbove ? tooltipHeight - 1 : -4}
+                      width={10}
+                      height={10}
+                      transform={`rotate(45 ${tooltipHalf + tooltipPointerOffset} ${placeAbove ? tooltipHeight + 4 : 1})`}
+                      fill="rgba(16,21,38,0.96)"
+                      stroke="#5e67e9"
+                      strokeOpacity="0.9"
+                      strokeWidth="1"
+                    />
+                    {/* Inhalt */}
+                    <text x={12} y={18} fill="#9aa4c8" fontSize={9.5} letterSpacing="0.08em">
+                      {activeMeta ? `${activeMeta.weekday.toUpperCase()}, ${new Date(activeMeta.date + 'T00:00:00Z').toLocaleDateString('de-DE')}` : ''}
+                    </text>
+                    <text x={12} y={36} fill="#f4f6ff" fontSize={16} fontWeight={700}>
+                      {activeMeta ? activeMeta.count.toLocaleString('de-DE') : ''}
+                    </text>
+                    <text x={tooltipWidth - 12} y={36} fill="#b3b9d6" fontSize={10.5} textAnchor="end">
+                      Befehle
+                    </text>
+                  </g>
+                </svg>
+              </div>
+              )}
           </div>
         </div>
       </div>
