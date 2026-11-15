@@ -100,7 +100,21 @@ function StatusBarTooltip({ day, label }: { day: DayHistory; label: string }) {
   );
 }
 
-function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selected?: boolean; onSelect?: () => void; mode?: 'desktop' | 'mobile' }) {
+function StatusBar({ 
+  day, 
+  selected, 
+  onSelect, 
+  mode,
+  isFirst,
+  isLast
+}: { 
+  day: DayHistory; 
+  selected?: boolean; 
+  onSelect?: () => void; 
+  mode?: 'desktop' | 'mobile';
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
   const [hover, setHover] = useState(false);
   const color = STATUS_COLORS[day.status] || STATUS_COLORS.unknown;
 
@@ -124,9 +138,10 @@ function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selecte
           height: '34px',
           backgroundColor: color,
           opacity: active ? 1 : 0.85,
-          transform: active ? 'translateY(-2px)' : 'translateY(0)',
+          transform: active ? 'translateY(-3px)' : 'translateY(0)',
           filter: active ? 'brightness(1.25)' : 'brightness(1)',
-          transition: 'all 180ms cubic-bezier(0.25, 0.1, 0.25, 1)',
+          transition: 'all 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRadius: isFirst ? '4px 0 0 4px' : isLast ? '0 4px 4px 0' : '0',
         }}
       />
     </div>
@@ -306,6 +321,7 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   const [isInContainer, setIsInContainer] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipPos, setTooltipPos] = useState<{ left: number; arrowLeft: number; bottom: number } | null>(null);
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -319,18 +335,55 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     const barRect = bar.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const containerWidth = containerRect.width;
-    const tooltipW = 140;
+
+    // Wir messen den Tooltip falls er schon da ist, sonst Fallback 140
+    let tooltipW = 140;
+    if (tooltipRef.current) {
+      tooltipW = tooltipRef.current.getBoundingClientRect().width;
+    }
+
     const barCenter = barRect.left - containerRect.left + barRect.width / 2;
-    const left = Math.max(tooltipW / 2 + 4, Math.min(barCenter, containerWidth - tooltipW / 2 - 4));
-    const rawArrow = barCenter - left;
-    const maxArrow = tooltipW / 2 - 12;
-    const clampedArrow = Math.max(-maxArrow, Math.min(rawArrow, maxArrow));
+    
+    // Tooltip positionieren, aber innerhalb des Containers (oder Card-Viewports) halten
+    // Wir erlauben dem Tooltip leicht über den Container zu ragen, 
+    // solange er innerhalb der ServiceCard (overflow-visible) bleibt.
+    // Aber wir begrenzen ihn gegen die Bildschirmränder.
+    const viewportWidth = window.innerWidth;
+    const barGlobalCenter = barRect.left + barRect.width / 2;
+    
+    let left = barCenter;
+    const halfW = tooltipW / 2;
+    
+    // Prüfung gegen Viewport-Grenzen (global)
+    const minGlobal = halfW + 10;
+    const maxGlobal = viewportWidth - halfW - 10;
+    
+    if (barGlobalCenter < minGlobal) {
+      // Tooltip muss nach rechts geschoben werden
+      const shift = minGlobal - barGlobalCenter;
+      left += shift;
+    } else if (barGlobalCenter > maxGlobal) {
+      // Tooltip muss nach links geschoben werden
+      const shift = barGlobalCenter - maxGlobal;
+      left -= shift;
+    }
+
+    // Pfeil zeigt IMMER auf die Bar-Mitte relativ zur Tooltip-Linken-Kante
+    const arrowLeft = barCenter - left;
+
     setTooltipPos({
       left,
-      arrowLeft: clampedArrow,
+      arrowLeft,
       bottom: containerRect.bottom - barRect.top + 14,
     });
   }, []);
+
+  // Effekt um Tooltip-Position bei Breitenänderung nachzujustieren (falls offen)
+  useEffect(() => {
+    if (hoverIndex !== null) {
+      updateTooltipPos(hoverIndex);
+    }
+  }, [hoverIndex, updateTooltipPos]);
 
   const handleBarEnter = useCallback((index: number) => {
     if (leaveTimerRef.current) {
@@ -374,6 +427,7 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     >
       {/* Tooltip rendered outside overflow:hidden container */}
       <div
+        ref={tooltipRef}
         className="absolute z-50 pointer-events-none"
         style={{
           left: tooltipPos ? `${tooltipPos.left}px` : 0,
@@ -384,7 +438,7 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
         }}
       >
         {hoveredDay && (
-          <>
+          <div className="relative">
             <StatusBarTooltip day={hoveredDay} label={hoveredLabel} />
             <div
               style={{
@@ -393,15 +447,16 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
                 left: '50%',
                 marginLeft: tooltipPos ? `${tooltipPos.arrowLeft}px` : 0,
                 transform: 'translateX(-50%) rotate(45deg)',
-                marginTop: '-5px',
-                width: '10px',
-                height: '10px',
+                marginTop: '-6px',
+                width: '12px',
+                height: '12px',
                 backgroundColor: '#161929',
                 borderRight: '1px solid #2a2f4a',
                 borderBottom: '1px solid #2a2f4a',
+                zIndex: -1,
               }}
             />
-          </>
+          </div>
         )}
       </div>
       <div
@@ -416,13 +471,15 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
           <div
             key={day.date}
             className="flex-1 min-w-0"
-            style={{
-              borderRadius: i === 0 ? '4px 0 0 4px' : i === dailyHistory.length - 1 ? '0 4px 4px 0' : undefined,
-              overflow: i === 0 || i === dailyHistory.length - 1 ? 'hidden' : undefined,
-            }}
             onMouseEnter={() => handleBarEnter(i)}
           >
-            <StatusBar day={day} mode="desktop" selected={hoverIndex === i} />
+            <StatusBar 
+              day={day} 
+              mode="desktop" 
+              selected={hoverIndex === i} 
+              isFirst={i === 0}
+              isLast={i === dailyHistory.length - 1}
+            />
           </div>
         ))}
       </div>
