@@ -131,7 +131,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
   return (
     <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0"
@@ -144,7 +144,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
             <p className="text-xs text-[#7a82a6] mt-0.5 truncate">{service.description}</p>
           </div>
         </div>
-        <div className="flex w-full md:w-auto flex-row md:flex-col items-start md:items-end justify-between md:justify-end gap-1.5 mt-2 md:mt-0">
+        <div className="flex flex-col items-end gap-1.5">
           <span className="text-sm font-semibold text-[#a6adca]">
             {service.uptime_percent > 0 ? `${service.uptime_percent}%` : '–'}
           </span>
@@ -168,10 +168,18 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       )}
 
       {/* Historische Balken */}
-      {/* Mobile: verteilt die 90 Balken gleichmäßig über die verfügbare Breite (ohne Horizontal-Scroll).
-          Desktop: fester Abstand zwischen den Balken wie zuvor. */}
-      <div className="w-full">
-        <div className="flex items-stretch pr-1 gap-0 md:gap-[2px] justify-between md:justify-start">
+      {/* Mobile: horizontal scrollbar erlaubt; Desktop: volle Kartenbreite mit flexibel verteilten Abständen */}
+      <div className="w-full overflow-x-auto md:overflow-visible">
+        <div
+          className={cn(
+            // Innerer Wrapper muss die gesamte Kartenbreite einnehmen, damit space-between greift
+            'flex w-full items-stretch',
+            // Auf Mobile behalten wir kleine feste Gaps und erlauben Scrollen
+            'gap-[2px] pr-1',
+            // Ab md: keine festen Gaps, stattdessen Platz flexibel zwischen 90 Fixbreiten-Balken verteilen
+            'md:gap-0 md:justify-between md:pr-0'
+          )}
+        >
           {service.daily_history.map((day) => (
             <StatusBar key={day.date} day={day} />
           ))}
@@ -284,7 +292,7 @@ export default function StatusPage() {
       />
 
       {/* Content */}
-      <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 min-w-0">
         {/* Gesamtstatus */}
         <div className={cn(
           'rounded-2xl border p-6 mb-8 transition-all',
