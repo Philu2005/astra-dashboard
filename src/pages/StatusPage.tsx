@@ -124,9 +124,9 @@ function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selecte
           height: '34px',
           backgroundColor: color,
           opacity: active ? 1 : 0.85,
-          transform: active ? 'translateY(-3px) scaleY(1.12)' : 'translateY(0) scaleY(1)',
-          filter: active ? 'brightness(1.3)' : 'brightness(1)',
-          transition: 'all 220ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transform: active ? 'translateY(-2px)' : 'translateY(0)',
+          filter: active ? 'brightness(1.25)' : 'brightness(1)',
+          transition: 'all 180ms cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}
       />
     </div>
@@ -377,9 +377,7 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
           bottom: tooltipPos ? `${tooltipPos.bottom}px` : 0,
           transform: 'translateX(-50%)',
           opacity: showTooltip ? 1 : 0,
-          transition: showTooltip
-            ? 'opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), left 120ms cubic-bezier(0.4, 0, 0.2, 1), bottom 120ms cubic-bezier(0.4, 0, 0.2, 1)'
-            : 'opacity 120ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {hoveredDay && (
@@ -390,16 +388,14 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
                 position: 'absolute',
                 top: '100%',
                 left: '50%',
-                marginTop: '-1px',
                 marginLeft: tooltipPos ? `${tooltipPos.arrowLeft}px` : 0,
-                transform: 'translateX(-50%)',
-                width: 0,
-                height: 0,
-                borderLeft: '7px solid transparent',
-                borderRight: '7px solid transparent',
-                borderTop: '7px solid #2a2f4a',
-                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
-                transition: 'margin-left 120ms cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: 'translateX(-50%) rotate(45deg)',
+                marginTop: '-5px',
+                width: '10px',
+                height: '10px',
+                backgroundColor: '#161929',
+                borderRight: '1px solid #2a2f4a',
+                borderBottom: '1px solid #2a2f4a',
               }}
             />
           </>
