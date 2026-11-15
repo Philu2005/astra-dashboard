@@ -322,9 +322,12 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     const tooltipW = 140;
     const barCenter = barRect.left - containerRect.left + barRect.width / 2;
     const left = Math.max(tooltipW / 2 + 4, Math.min(barCenter, containerWidth - tooltipW / 2 - 4));
+    const rawArrow = barCenter - left;
+    const maxArrow = tooltipW / 2 - 12;
+    const clampedArrow = Math.max(-maxArrow, Math.min(rawArrow, maxArrow));
     setTooltipPos({
       left,
-      arrowLeft: barCenter - left,
+      arrowLeft: clampedArrow,
       bottom: containerRect.bottom - barRect.top + 14,
     });
   }, []);
@@ -406,14 +409,17 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
         className="status-history-grid w-full flex"
         style={{
           gap: '3px',
-          borderRadius: '4px',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         {dailyHistory.map((day, i) => (
           <div
             key={day.date}
             className="flex-1 min-w-0"
+            style={{
+              borderRadius: i === 0 ? '4px 0 0 4px' : i === dailyHistory.length - 1 ? '0 4px 4px 0' : undefined,
+              overflow: i === 0 || i === dailyHistory.length - 1 ? 'hidden' : undefined,
+            }}
             onMouseEnter={() => handleBarEnter(i)}
           >
             <StatusBar day={day} mode="desktop" selected={hoverIndex === i} />
