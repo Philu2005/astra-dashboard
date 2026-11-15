@@ -135,7 +135,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, currentUserI
 
   return (
     <div className="relative flex-1 min-h-0">
-      <div ref={containerRef} className="h-full p-5 space-y-3 overflow-y-auto scrollbar-hide">
+      <div ref={containerRef} className="h-full p-5 space-y-3 overflow-y-auto overscroll-contain scrollbar-hide">
         {messages.map((m) => {
           // Systemnachricht
           if (m.message_type === 'system') {

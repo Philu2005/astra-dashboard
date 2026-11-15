@@ -285,7 +285,7 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Rechte Spalte: Detail/Antwort/Status */}
-        <div className="lg:h-full lg:min-h-0 flex flex-col">
+        <div className="lg:h-full lg:min-h-0 flex flex-col min-w-0">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col lg:h-full lg:min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
             {!selected ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -310,12 +310,12 @@ export const AdminTicketsPage: React.FC = () => {
             ) : (
               <div className="flex flex-col flex-1 min-h-0">
                 <div className="p-5 space-y-4 shrink-0">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-4 flex-wrap md:flex-nowrap">
                   <div className="min-w-0">
                     <p className="text-white font-semibold truncate">{detail.subject}</p>
                     <p className="text-[#9ca2bd] text-[0.85rem] truncate">#{detail.ticket_number} • {detail.user_name} • {detail.category}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full md:w-auto">
                     <AstraSelectMenu
                       value={detail.priority}
                       onChange={(v) => handleSetPriority(detail.id, v as TicketPriority)}
@@ -326,7 +326,7 @@ export const AdminTicketsPage: React.FC = () => {
                         { value: 'critical', label: 'Kritisch' },
                       ]}
                       aria-label="Priorität setzen"
-                      className="h-9"
+                      className="h-9 w-full sm:w-auto"
                     />
                     <AstraSelectMenu
                       value={detail.status}
@@ -337,9 +337,9 @@ export const AdminTicketsPage: React.FC = () => {
                         { value: 'resolved', label: 'Gelöst' },
                       ]}
                       aria-label="Status setzen"
-                      className="h-9"
+                      className="h-9 w-full sm:w-auto"
                     />
-                    <button onClick={() => { setDeleteError(null); setDeleteDialogOpen(true); }} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem]', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
+                    <button onClick={() => { setDeleteError(null); setDeleteDialogOpen(true); }} disabled={deleting} className={cn('h-9 px-3 rounded-lg border text-[0.9rem] w-full sm:w-auto', deleting ? 'bg-[#171a2b] border-[#2a2f45] text-[#8a90ad]' : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:translate-y-[-1px]')}>{deleting ? 'Lösche…' : 'Löschen'}</button>
                   </div>
                 </div>
 
@@ -416,7 +416,7 @@ export const AdminTicketsPage: React.FC = () => {
 
                 </div>
                 <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={true} ticket={detail} userJustSent={justSent} onScrolledToBottom={() => setJustSent(false)} />
-                <div className="px-5 pb-5 pt-2 shrink-0">
+                <div className="px-5 pb-[env(safe-area-inset-bottom)] pb-5 pt-2 shrink-0">
                   {detail.status === 'resolved' ? (
                     <div className="text-[#9ca2bd] text-[0.9rem]">Ticket ist als gelöst markiert. Status kann oben geändert werden.</div>
                   ) : (
