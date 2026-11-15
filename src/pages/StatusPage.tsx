@@ -119,13 +119,14 @@ function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selecte
       onKeyDown={isMobile ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } } : undefined}
     >
       <div
-        className="transition-all duration-150 cursor-pointer"
+        className="cursor-pointer"
         style={{
           height: '34px',
           backgroundColor: color,
           opacity: active ? 1 : 0.85,
-          transform: active ? 'scaleY(1.15)' : 'scaleY(1)',
-          filter: active ? 'brightness(1.2)' : 'brightness(1)',
+          transform: active ? 'scaleY(1.18)' : 'scaleY(1)',
+          filter: active ? 'brightness(1.25)' : 'brightness(1)',
+          transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
     </div>
@@ -303,7 +304,7 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
 function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ left: number; bottom: number } | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ left: number; arrowLeft: number; bottom: number } | null>(null);
 
   const handleMouseEnter = (index: number, e: React.MouseEvent<HTMLDivElement>) => {
     setHoverIndex(index);
@@ -314,12 +315,13 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
     const containerRect = container.getBoundingClientRect();
     const containerWidth = containerRect.width;
     const tooltipW = 140;
-    let left = barRect.left - containerRect.left + barRect.width / 2;
+    const barCenter = barRect.left - containerRect.left + barRect.width / 2;
     // Clamp so tooltip stays within container bounds
-    left = Math.max(tooltipW / 2 + 4, Math.min(left, containerWidth - tooltipW / 2 - 4));
+    let left = Math.max(tooltipW / 2 + 4, Math.min(barCenter, containerWidth - tooltipW / 2 - 4));
     setTooltipPos({
       left,
-      bottom: containerRect.bottom - barRect.top + 8,
+      arrowLeft: barCenter - left,
+      bottom: containerRect.bottom - barRect.top + 12,
     });
   };
 
@@ -336,18 +338,36 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   return (
     <div ref={containerRef} className="w-full hidden md:block relative" style={{ overflow: 'visible' }}>
       {/* Tooltip rendered outside overflow:hidden container */}
-      {hoveredDay && tooltipPos && (
-        <div
-          className="absolute z-50 pointer-events-none"
-          style={{
-            left: `${tooltipPos.left}px`,
-            bottom: `${tooltipPos.bottom}px`,
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <StatusBarTooltip day={hoveredDay} label={hoveredLabel} />
-        </div>
-      )}
+      <div
+        className="absolute z-50 pointer-events-none"
+        style={{
+          left: tooltipPos ? `${tooltipPos.left}px` : 0,
+          bottom: tooltipPos ? `${tooltipPos.bottom}px` : 0,
+          transform: 'translateX(-50%)',
+          opacity: hoveredDay && tooltipPos ? 1 : 0,
+          transition: 'opacity 180ms cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        {hoveredDay && (
+          <>
+            <StatusBarTooltip day={hoveredDay} label={hoveredLabel} />
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                marginLeft: tooltipPos ? `${tooltipPos.arrowLeft}px` : 0,
+                transform: 'translateX(-50%)',
+                width: 0,
+                height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid #2a2f4a',
+              }}
+            />
+          </>
+        )}
+      </div>
       <div
         className="status-history-grid w-full flex"
         style={{
