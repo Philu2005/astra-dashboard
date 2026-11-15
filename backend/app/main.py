@@ -38,7 +38,6 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_pool()
     await init_tables()
-    await init_redis()
 
     cleanup_task = asyncio.create_task(_cleanup_loop())
 
@@ -52,8 +51,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await stop_scheduler()
     cleanup_task.cancel()
-    await close_redis()
-
     try:
         await cleanup_task
     except asyncio.CancelledError:
@@ -116,11 +113,7 @@ async def health_check():
 
 @app.get("/api/health")
 async def api_health_check():
-    redis_ok = await redis_available()
-    return {
-        "status": "healthy",
-        "redis": "connected" if redis_ok else "unavailable",
-    }
+    return {"status": "healthy"}
 
 
 # Local development
