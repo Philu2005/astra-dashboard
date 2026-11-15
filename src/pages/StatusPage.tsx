@@ -131,7 +131,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
   return (
     <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap md:flex-nowrap gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0"
@@ -140,11 +140,13 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
             <Icon className="h-5 w-5" style={{ color: statusColor }} />
           </div>
           <div className="min-w-0">
-            <h3 className="text-[0.95rem] font-semibold text-white leading-tight truncate">{service.name}</h3>
-            <p className="text-xs text-[#7a82a6] mt-0.5 truncate">{service.description}</p>
+            {/* Auf kleinen Screens umbrechen, auf Desktop wie zuvor ggf. truncaten */}
+            <h3 className="text-[0.95rem] font-semibold text-white leading-tight break-words md:truncate">{service.name}</h3>
+            <p className="text-xs text-[#7a82a6] mt-0.5 break-words md:truncate">{service.description}</p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1.5">
+        {/* Rechts: Kennzahlen auf XS unter den Titel umbrechen */}
+        <div className="flex flex-col gap-1.5 items-start md:items-end w-full md:w-auto mt-2 md:mt-0">
           <span className="text-sm font-semibold text-[#a6adca]">
             {service.uptime_percent > 0 ? `${service.uptime_percent}%` : '–'}
           </span>
@@ -231,8 +233,8 @@ function IncidentCard({ incident }: { incident: Incident }) {
               {statusLabel}
             </span>
           </div>
-          <p className="text-sm text-[#d1d7ef] font-medium">{incident.title}</p>
-          <p className="text-xs text-[#7a82a6] mt-1">{incident.description}</p>
+          <p className="text-sm text-[#d1d7ef] font-medium break-words">{incident.title}</p>
+          <p className="text-xs text-[#7a82a6] mt-1 break-words">{incident.description}</p>
         </div>
         <div className="text-right text-xs text-[#5a6180] whitespace-nowrap shrink-0">
           <p>{formatDate(incident.started_at)}</p>

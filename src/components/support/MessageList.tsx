@@ -29,10 +29,10 @@ const SystemMessage: React.FC<{ message: TicketMessage }> = ({ message }) => {
 
   return (
     <div className="flex justify-center my-2">
-      <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#1e2235] bg-[#0d0f1a]/90 shadow-[0_0_0_1px_rgba(104,97,225,0.04)]">
+      <div className="flex flex-wrap items-center justify-center gap-2.5 px-4 py-2 rounded-full border border-[#1e2235] bg-[#0d0f1a]/90 shadow-[0_0_0_1px_rgba(104,97,225,0.04)] text-center">
         <Icon className="w-3.5 h-3.5 text-[#7c78c9] shrink-0" />
-        <span className="text-[0.82rem] text-[#8a90ad]">{message.message}</span>
-        <span className="text-[0.72rem] text-[#5a6080] ml-1">
+        <span className="text-[0.9rem] sm:text-[0.82rem] text-[#8a90ad]">{message.message}</span>
+        <span className="block sm:inline text-[0.78rem] sm:text-[0.72rem] text-[#5a6080] sm:ml-1 w-full sm:w-auto">
           {new Date(message.created_at).toLocaleString('de-DE')}
         </span>
       </div>

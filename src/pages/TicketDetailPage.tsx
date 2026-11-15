@@ -94,8 +94,8 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
             ) : ticket ? (
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
-                  <h1 className="text-white font-semibold text-2xl truncate">{ticket.subject}</h1>
-                  <p className="text-[#9ca2bd] text-[0.9rem] truncate">#{ticket.ticket_number} • {ticket.category}</p>
+                  <h1 className="text-white font-semibold text-2xl break-words md:truncate">{ticket.subject}</h1>
+                  <p className="text-[#9ca2bd] text-[0.9rem] break-words md:truncate">#{ticket.ticket_number} • {ticket.category}</p>
                 </div>
                 <span className={cn(
                   "px-2 py-1 rounded-md text-[0.78rem] border shrink-0",

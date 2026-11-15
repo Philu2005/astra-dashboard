@@ -445,7 +445,7 @@ const TicketRow: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200',
+        'w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200 flex-wrap md:flex-nowrap',
         active
           ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]'
           : cn(
@@ -460,14 +460,16 @@ const TicketRow: React.FC<{
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <p className="text-[0.95rem] text-[#d6dbf0] font-medium truncate">{t.subject}</p>
+          <p className="text-[0.95rem] text-[#d6dbf0] font-medium break-words md:truncate">{t.subject}</p>
           <span className="text-[0.75rem] text-[#8a90ad] shrink-0">#{t.ticket_number}</span>
         </div>
-        <p className="text-[0.8rem] text-[#9ca2bd] truncate">
+        <p className="text-[0.8rem] text-[#9ca2bd] break-words md:truncate">
           {t.category} • Erstellt {new Date(t.created_at).toLocaleDateString('de-DE')} • Letzte Aktivität {new Date(t.updated_at).toLocaleString('de-DE')}
         </p>
       </div>
-      <StatusBadge status={t.status} />
+      <div className="w-full md:w-auto mt-2 md:mt-0 flex md:justify-end">
+        <StatusBadge status={t.status} />
+      </div>
     </button>
   );
 };
