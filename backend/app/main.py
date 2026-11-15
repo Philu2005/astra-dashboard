@@ -17,6 +17,7 @@ from app.database import init_pool, close_pool, init_tables
 from app.auth.sessions import session_manager
 from app.support.router import router as support_router
 from app.monitoring.router import router as monitoring_router
+from app.docs_likes.router import router as docs_likes_router
 from app.monitoring.service import start_scheduler, stop_scheduler
 
 
@@ -129,6 +130,7 @@ app.include_router(servers_router)
 # (Basis /api) konsistent darauf zugreifen kann und Apache /api/* → FastAPI weiterleitet
 app.include_router(support_router, prefix="/api")
 app.include_router(monitoring_router, prefix="/api")
+app.include_router(docs_likes_router, prefix="/api")
 
 
 # Health check – available at both /health (direct) and /api/health (via reverse proxy)

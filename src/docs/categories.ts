@@ -30,6 +30,13 @@ export const categories: DocCategory[] = [
     articles: ['architecture', 'rest-api-overview', 'api-reference', 'monitoring-overview', 'deployment-infra', 'frontend-stack', 'backend-stack'],
   },
   {
+    slug: 'bot',
+    title: 'Astra Discord Bot',
+    description: 'Übersicht, Systeme & Befehle des Bots.',
+    icon: 'Server',
+    articles: ['bot-overview', 'bot-systems'],
+  },
+  {
     slug: 'support',
     title: 'Support',
     description: 'Support-Tickets erstellen, verwalten und bearbeiten.',

@@ -30,6 +30,8 @@ export const DocsPage: React.FC = () => {
   const [currentSlug, setCurrentSlug] = useState<string | null>(getSlugFromPath);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Record<string, 'up' | 'down'>>({});
+  const [likeCount, setLikeCount] = useState<Record<string, number>>({});
+  const [likeLoading, setLikeLoading] = useState<boolean>(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,66 @@ export const DocsPage: React.FC = () => {
   }, []);
 
   const article = currentSlug ? getArticle(currentSlug) : null;
+
+  // Load like status for current article
+  useEffect(() => {
+    const slug = article?.slug;
+    if (!slug) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/docs/articles/${encodeURIComponent(slug)}/likes`, {
+          headers: { 'Accept': 'application/json' },
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setLikeCount((p) => ({ ...p, [slug]: data.count ?? 0 }));
+          setFeedback((p) => ({ ...p, [slug]: data.liked ? 'up' : undefined as any }));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [article?.slug]);
+
+  const doLike = useCallback(async (slug: string) => {
+    setLikeLoading(true);
+    try {
+      const res = await fetch(`/api/docs/articles/${encodeURIComponent(slug)}/like`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFeedback((p) => ({ ...p, [slug]: 'up' }));
+        setLikeCount((p) => ({ ...p, [slug]: data.count ?? (p[slug] ?? 0) + 1 }));
+      }
+    } finally {
+      setLikeLoading(false);
+    }
+  }, []);
+
+  const doUnlike = useCallback(async (slug: string) => {
+    setLikeLoading(true);
+    try {
+      const res = await fetch(`/api/docs/articles/${encodeURIComponent(slug)}/like`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFeedback((p) => ({ ...p, [slug]: undefined as any }));
+        setLikeCount((p) => ({ ...p, [slug]: data.count ?? Math.max(0, (p[slug] ?? 0) - 1) }));
+      }
+    } finally {
+      setLikeLoading(false);
+    }
+  }, []);
 
   // Article view
   if (article) {
@@ -163,34 +225,38 @@ export const DocsPage: React.FC = () => {
               <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{article.readingTime} Min. Lesezeit</span>
             </div>
 
-            {/* Sections */}
-            {article.sections.map((section) => (
-              <div key={section.id} id={section.id} className="scroll-mt-20 mb-10">
-                {section.level === 2 ? (
-                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <div className="w-1 h-6 rounded-full bg-astra-purple" />
-                    {section.title}
-                  </h2>
-                ) : (
-                  <h3 className="text-lg font-semibold text-[#d6dbf0] mb-3">{section.title}</h3>
-                )}
-                <MarkdownRenderer content={section.content} />
-              </div>
-            ))}
+            {/* Sections (FAQ als Accordion) */}
+            {article.slug === 'faq' ? (
+              <FaqAccordion sections={article.sections} />
+            ) : (
+              article.sections.map((section) => (
+                <div key={section.id} id={section.id} className="scroll-mt-20 mb-10">
+                  {section.level === 2 ? (
+                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                      <div className="w-1 h-6 rounded-full bg-astra-purple" />
+                      {section.title}
+                    </h2>
+                  ) : (
+                    <h3 className="text-lg font-semibold text-[#d6dbf0] mb-3">{section.title}</h3>
+                  )}
+                  <MarkdownRenderer content={section.content} />
+                </div>
+              ))
+            )}
 
             {/* Feedback */}
             <div className="mt-12 pt-8 border-t border-[#212131]">
               <p className="text-[0.85rem] text-[#9ca2bd] mb-3">War dieser Artikel hilfreich?</p>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setFeedback((p) => ({ ...p, [article.slug]: 'up' }))}
+                  onClick={() => (feedback[article.slug] === 'up' ? doUnlike(article.slug) : doLike(article.slug))}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-lg border text-[0.82rem] transition-all duration-200",
                     feedback[article.slug] === 'up'
                       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                       : "border-[#2a2f45] bg-[#131625] text-[#9ca2bd] hover:bg-[#171a2b] hover:text-white"
                   )}
-                >
+                  >
                   <ThumbsUp className="w-3.5 h-3.5" /> Ja
                 </button>
                 <button
@@ -201,9 +267,10 @@ export const DocsPage: React.FC = () => {
                       ? "border-red-500/30 bg-red-500/10 text-red-400"
                       : "border-[#2a2f45] bg-[#131625] text-[#9ca2bd] hover:bg-[#171a2b] hover:text-white"
                   )}
-                >
+                  >
                   <ThumbsDown className="w-3.5 h-3.5" /> Nein
                 </button>
+                <span className="ml-3 text-[0.8rem] text-[#8a90ad]">{likeCount[article.slug] ?? 0} hilfreich</span>
               </div>
             </div>
 
@@ -389,5 +456,43 @@ function ArticleCard({ article, onNavigate }: { article: DocArticle; onNavigate:
         <span>{article.readingTime} Min. Lesezeit</span>
       </div>
     </button>
+  );
+}
+
+// FAQ Accordion Component
+function FaqAccordion({ sections }: { sections: DocArticle['sections'] }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="space-y-3">
+      {sections.map((s) => (
+        <div key={s.id} className="rounded-xl border border-[#2a2f45] bg-[#131625]">
+          <button
+            aria-expanded={openId === s.id}
+            aria-controls={`panel-${s.id}`}
+            className={cn(
+              "w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 text-left transition-colors",
+              openId === s.id ? "bg-astra-purple/10" : "hover:bg-[#171a2b]"
+            )}
+            onClick={() => setOpenId((p) => (p === s.id ? null : s.id))}
+          >
+            <span className="text-[0.95rem] font-medium text-white">{s.title}</span>
+            <ChevronRight className={cn("w-4 h-4 text-[#8a90ad] transition-transform", openId === s.id && "rotate-90 text-[#b4adff]")} />
+          </button>
+          <div
+            id={`panel-${s.id}`}
+            role="region"
+            aria-labelledby={`header-${s.id}`}
+            className={cn(
+              "grid transition-[grid-template-rows] duration-300 ease-out",
+              openId === s.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            )}
+          >
+            <div className="overflow-hidden px-4 sm:px-5 pb-4 text-[#cdd3f0] text-[0.92rem] leading-relaxed">
+              <MarkdownRenderer content={s.content} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

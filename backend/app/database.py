@@ -264,4 +264,22 @@ async def init_tables() -> None:
                 """
             )
 
+            # 5) Likes für Dokumentationsartikel (idempotent)
+            await cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS docs_article_likes (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    article_slug VARCHAR(100) NOT NULL,
+                    user_id VARCHAR(20) NULL,
+                    visitor_id VARCHAR(100) NULL,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY uniq_article_user (article_slug, user_id),
+                    UNIQUE KEY uniq_article_visitor (article_slug, visitor_id),
+                    INDEX idx_article (article_slug),
+                    INDEX idx_user (user_id),
+                    INDEX idx_visitor (visitor_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+
     logger.info("Datenbanktabellen initialisiert")

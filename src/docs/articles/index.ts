@@ -19,6 +19,8 @@ import { supportOverview } from './support-overview';
 import { supportAdmin } from './support-admin';
 import { troubleshooting } from './troubleshooting';
 import { faq } from './faq';
+import { botOverview } from './bot-overview';
+import { botSystems } from './bot-systems';
 
 export const allArticles: DocArticle[] = [
   gettingStarted,
@@ -33,6 +35,8 @@ export const allArticles: DocArticle[] = [
   architecture,
   restApiOverview,
   apiReference,
+  botOverview,
+  botSystems,
   frontendStack,
   backendStack,
   monitoringOverview,
