@@ -168,9 +168,10 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       )}
 
       {/* Historische Balken */}
-      {/* Auf sehr kleinen Viewports horizontal scrollbar, damit 90 Indikatoren erhalten bleiben */}
-      <div className="w-full overflow-x-auto">
-        <div className="flex items-stretch gap-[2px] pr-1">
+      {/* Mobile: verteilt die 90 Balken gleichmäßig über die verfügbare Breite (ohne Horizontal-Scroll).
+          Desktop: fester Abstand zwischen den Balken wie zuvor. */}
+      <div className="w-full">
+        <div className="flex items-stretch pr-1 gap-0 md:gap-[2px] justify-between md:justify-start">
           {service.daily_history.map((day) => (
             <StatusBar key={day.date} day={day} />
           ))}
@@ -283,7 +284,7 @@ export default function StatusPage() {
       />
 
       {/* Content */}
-      <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 min-w-0">
+      <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6">
         {/* Gesamtstatus */}
         <div className={cn(
           'rounded-2xl border p-6 mb-8 transition-all',
