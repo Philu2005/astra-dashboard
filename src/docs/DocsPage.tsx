@@ -463,36 +463,72 @@ function ArticleCard({ article, onNavigate }: { article: DocArticle; onNavigate:
 function FaqAccordion({ sections }: { sections: DocArticle['sections'] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
-    <div className="space-y-3">
-      {sections.map((s) => (
-        <div key={s.id} className="rounded-xl border border-[#2a2f45] bg-[#131625]">
-          <button
-            aria-expanded={openId === s.id}
-            aria-controls={`panel-${s.id}`}
-            className={cn(
-              "w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 text-left transition-colors",
-              openId === s.id ? "bg-astra-purple/10" : "hover:bg-[#171a2b]"
-            )}
-            onClick={() => setOpenId((p) => (p === s.id ? null : s.id))}
-          >
-            <span className="text-[0.95rem] font-medium text-white">{s.title}</span>
-            <ChevronRight className={cn("w-4 h-4 text-[#8a90ad] transition-transform", openId === s.id && "rotate-90 text-[#b4adff]")} />
-          </button>
-          <div
-            id={`panel-${s.id}`}
-            role="region"
-            aria-labelledby={`header-${s.id}`}
-            className={cn(
-              "grid transition-[grid-template-rows] duration-300 ease-out",
-              openId === s.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-            )}
-          >
-            <div className="overflow-hidden px-4 sm:px-5 pb-4 text-[#cdd3f0] text-[0.92rem] leading-relaxed">
-              <MarkdownRenderer content={s.content} />
+    <section className="relative">
+      {/* Intro header for FAQ for better visual balance */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+          <div className="w-1.5 h-6 rounded-full bg-astra-purple" />
+          Häufige Fragen
+        </h2>
+        <p className="text-[#9ca2bd] text-[0.95rem]">Finde schnelle Antworten auf die häufigsten Fragen. Klicke eine Frage, um die Antwort zu öffnen.</p>
+      </div>
+
+      <div className="space-y-3">
+        {sections.map((s) => {
+          const open = openId === s.id;
+          return (
+            <div
+              key={s.id}
+              className={cn(
+                "rounded-2xl border bg-[#121423] transition-colors",
+                "border-[#2a2f45] hover:border-astra-purple/30",
+                open && "border-astra-purple/40 bg-astra-purple/10"
+              )}
+            >
+              {/* header button */}
+              <button
+                aria-expanded={open}
+                aria-controls={`panel-${s.id}`}
+                onClick={() => setOpenId((p) => (p === s.id ? null : s.id))}
+                className={cn(
+                  "w-full flex items-center justify-between gap-4 px-5 py-4 text-left",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0e1a] rounded-2xl"
+                )}
+              >
+                <span className="text-[0.98rem] font-semibold text-white leading-6">{s.title}</span>
+                <span
+                  className={cn(
+                    "inline-flex items-center justify-center w-7 h-7 rounded-full border",
+                    "transition-all duration-300",
+                    open ? "rotate-90 border-astra-purple/50 bg-astra-purple/15 text-[#b4adff]" : "border-[#2a2f45] bg-[#0f1220] text-[#8a90ad]"
+                  )}
+                  aria-hidden
+                >
+                  <ChevronRight className={cn("w-4 h-4 transition-transform", open && "rotate-180")} />
+                </span>
+              </button>
+
+              {/* animated content without overflow artifacts */}
+              <div
+                id={`panel-${s.id}`}
+                role="region"
+                aria-labelledby={`header-${s.id}`}
+                className={cn(
+                  "grid transition-[grid-template-rows] duration-300 ease-out",
+                  open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                )}
+              >
+                {/* Use inner wrapper with matching rounded bottom corners to avoid rectangular bleed */}
+                <div className="overflow-hidden">
+                  <div className="px-5 pb-5 pt-0 text-[#cdd3f0] text-[0.93rem] leading-relaxed">
+                    <MarkdownRenderer content={s.content} />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
-    </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
