@@ -118,7 +118,7 @@ function StatusBar({ day, selected, onSelect }: { day: DayHistory; selected?: bo
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } }}
     >
       <div
-        className="rounded-[2px] transition-all duration-150 cursor-pointer"
+        className="transition-all duration-150 cursor-pointer"
         style={{
           height: '34px',
           backgroundColor: color,
@@ -238,7 +238,7 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
             }}
           >
             {dailyHistory.map((day, i) => (
-              <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
+              <div key={day.date} style={{ width: '6px', flexShrink: 0, borderRadius: '2px', overflow: 'hidden' }}>
                 <StatusBar
                   day={day}
                   selected={selectedIndex === i}
@@ -334,7 +334,9 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       <div
         className="status-history-grid w-full hidden md:flex"
         style={{
-          gap: '2px',
+          gap: '3px',
+          borderRadius: '4px',
+          overflow: 'hidden',
         }}
       >
         {service.daily_history.map((day) => (
