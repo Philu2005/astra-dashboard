@@ -4,4 +4,3 @@ httpx
 python-dotenv
 aiomysql
 pydantic
-redis>=5.0.0

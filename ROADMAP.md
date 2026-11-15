@@ -74,18 +74,7 @@
 - [x] TypeScript-Prüfung bestanden
 - [x] Vite-Build erfolgreich
 
-## Phase 7: Redis-Infrastruktur (Abgeschlossen)
-- [x] Ist-Analyse: Session-Verwaltung bereits persistent in MySQL (nicht In-Memory)
-- [x] Redis-Docker-Container vorbereitet (docker-compose.redis.yml)
-- [x] Asynchrones Redis-Verbindungsmodul (app/redis.py) mit Lifecycle-Integration
-- [x] Redis als optionaler Dienst – kein Einfluss auf bestehende Auth/Sessions
-- [x] Health-Endpunkt zeigt Redis-Status an
-- [x] Konfiguration über REDIS_URL Umgebungsvariable
-- [x] Sicherheit: Nur localhost, passwortgeschützt, AOF-Persistenz
-- [x] Dokumentation in backend/README.md aktualisiert
-
 ## Fortschrittsprotokoll
-- **2026-11-15:** Redis-Infrastruktur vorbereitet: Ist-Analyse ergab, dass die Session-Verwaltung bereits persistent in MySQL liegt (nicht In-Memory). Redis als optionaler Dienst integriert (docker-compose.redis.yml, app/redis.py) fuer zukuenftiges Caching/Rate-Limiting. Asynchrones Verbindungsmodul mit Lifecycle-Integration, Health-Endpunkt mit Redis-Status, Konfiguration ueber REDIS_URL. Bestehende Auth/Session/OAuth2-Logik unveraendert. Redis-Ausfall hat keinen Einfluss auf Login oder Sessions.
 - **2026-11-15:** Navbar für Docs, Status und Homepage überarbeitet: Eine neue, zentrale `SharedNavbar`-Komponente wurde implementiert, die das hochwertige Design der Landingpage im gesamten Projekt vereinheitlicht. Features: visuelle Indikatoren für aktive Routen, konsistente Astra-Purple/Cyan-Highlights, Backdrop-Blur, responsive Drawer-Navigation und Unterstützung für seiten-spezifische Inhalte (z. B. Docs-Suche). Veraltete Header-Implementierungen in `DocsPage.tsx` und `StatusPage.tsx` wurden ersetzt. Sidebar-Positionierung in den Docs für Sticky-Header korrigiert. TypeScript-Prüfung und Build erfolgreich.
 - **2026-11-15:** Bot-Status und Incident-Aufloesung korrigiert: (1) _check_heartbeat fragte nur die lokale DB-Tabelle status_heartbeats ab, aber der Astra Bot schreibt dort nicht - er exponiert Heartbeat-Daten ueber seine eigene API (/status). Fix: Heartbeat-Check fragt nun primaer die Astra Bot API ab und mappt online:true + status:online korrekt auf operational, mit DB-Fallback. (2) _calculate_overall_status ignorierte aktive Incidents. Fix: Aktive Incidents begrenzen den Status auf maximal degraded. 9 neue Monitoring-Tests (alle bestanden). TypeScript-Pruefung und Build erfolgreich.
 - **2026-11-15:** Vollständiges Status- und Monitoring-System implementiert: Backend-Monitoring-Service mit 6 Prüfungen (HTTP, Astra API, Heartbeat, MySQL, Discord), periodischem Scheduler, Störungsverwaltung und gewichteter Statusberechnung. 4 neue DB-Tabellen. Öffentliche Status Page unter /status mit Dienstkarten, 90-Tage-Historienbalken, Störungshistorie und automatischer Aktualisierung. Navigation in Landing Page Navbar und Dashboard Sidebar ergänzt.

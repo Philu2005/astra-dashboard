@@ -32,9 +32,6 @@ class Config:
     DB_USER: str = os.getenv("DB_USER", "astra_dashboard")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
 
-    # Redis (optional – für zukünftiges Caching/Rate-Limiting)
-    REDIS_URL: str = os.getenv("REDIS_URL", "")
-
     # Admin-Discord-ID für Ticketverwaltung
     ADMIN_DISCORD_ID: str = os.getenv("ADMIN_DISCORD_ID", "789555434201677824")
 

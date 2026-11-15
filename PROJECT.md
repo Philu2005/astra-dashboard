@@ -13,7 +13,6 @@ Entwicklung eines modernen, hochwertigen und vollständig responsiven Web-Dashbo
 Das Projekt besteht aus einem React-Frontend und einem FastAPI-Backend.
 - **Authentifizierung:** Discord OAuth2 (identify scope).
 - **Session-Management:** Serverseitige In-Memory Sessions mit HttpOnly-Cookies.
-- **Redis:** Optionaler Dienst (Docker) für zukünftiges Caching/Rate-Limiting – kein Einfluss auf Sessions.
 - **Sicherheit:** State-Validierung, CORS-Protection, Secure-Cookies (in Produktion).
 - **Zustand:** Das Frontend nutzt einen zentralen `AuthContext` zur Verwaltung des Authentifizierungsstatus.
 - **Consent-Management:** Zentrales Cookie-Consent-System mit Banner, Einstellungsdialog, Versionierung und Widerrufmöglichkeit über „Cookie-Einstellungen".
