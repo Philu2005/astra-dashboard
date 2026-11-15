@@ -119,6 +119,71 @@ function StatusBar({ day }: { day: DayHistory }) {
   );
 }
 
+function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showHint, setShowHint] = useState(true);
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || initializedRef.current) return;
+    if (el.scrollWidth > el.clientWidth) {
+      el.scrollLeft = el.scrollWidth - el.clientWidth;
+      initializedRef.current = true;
+    }
+  }, [dailyHistory]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      setShowHint(maxScroll - el.scrollLeft > 10);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <div className="md:hidden w-full min-w-0 relative">
+      <div
+        ref={scrollRef}
+        className="w-full overflow-x-auto scrollbar-hide"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            gap: '3px',
+            width: `${dailyHistory.length * 6 + (dailyHistory.length - 1) * 3}px`,
+          }}
+        >
+          {dailyHistory.map((day) => (
+            <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
+              <StatusBar day={day} />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Fade-Hinweis links */}
+      <div
+        className="absolute left-0 top-0 bottom-0 flex items-center pointer-events-none transition-opacity duration-300"
+        style={{ opacity: showHint ? 1 : 0 }}
+      >
+        <div
+          className="h-full w-10"
+          style={{
+            background: 'linear-gradient(to right, rgba(18,21,42,0.95), transparent)',
+          }}
+        />
+        <span className="absolute left-1 text-[0.6rem] text-[#7a82a6] whitespace-nowrap" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+          ← Ältere
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ServiceCard({ service }: { service: ServiceStatus }) {
   const Icon = SERVICE_ICONS[service.name] || Activity;
   const statusColor = STATUS_COLORS[service.current_status] || STATUS_COLORS.unknown;
