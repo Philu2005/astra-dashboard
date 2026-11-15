@@ -98,12 +98,8 @@ export const Servers = () => {
   const [filter, setFilter] = useState<FilterType>('all');
   const [managingServerId, setManagingServerId] = useState<string | null>(null);
 
-  // Sync management view when server is selected via sidebar dropdown
-  useEffect(() => {
-    if (selectedServer) {
-      setManagingServerId(selectedServer.id);
-    }
-  }, [selectedServer]);
+  // Öffne die Verwaltungsansicht nur nach expliziter Nutzeraktion (z. B. Button "Verwalten").
+  // Keine automatische Synchronisierung von ausgewähltem Server → Liste soll zuerst sichtbar sein.
 
   const displayName = user?.display_name || user?.username || 'Benutzer';
 

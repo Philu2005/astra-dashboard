@@ -103,12 +103,8 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return [];
   }, [loadingState]);
 
-  // Auto-select first server when loaded
-  useEffect(() => {
-    if (servers.length > 0 && !selectedServerId) {
-      setSelectedServerId(servers[0].id);
-    }
-  }, [servers, selectedServerId]);
+  // Entfernt: kein automatisches Auswählen des ersten Servers
+  // Die Auswahl wird explizit durch Nutzeraktionen (z. B. Sidebar/Verwalten) gesetzt.
 
   const selectedServer = useMemo(
     () => servers.find((s) => s.id === selectedServerId) ?? null,

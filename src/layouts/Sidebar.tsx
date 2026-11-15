@@ -165,7 +165,9 @@ export const Sidebar = () => {
         <div className="flex-1 overflow-y-auto px-4 space-y-7 pt-3 pb-6 border-t-0">
           {/* Main */}
           <div>
-            <NavItem icon={Home} label="Übersicht" active={pathname === '/dashboard'} href="/dashboard" onClick={() => setIsOpen(false)} />
+            {pathname !== '/dashboard' && (
+              <NavItem icon={Home} label="Übersicht" active={false} href="/dashboard" onClick={() => setIsOpen(false)} />
+            )}
           </div>
 
           {/* Server Management */}
