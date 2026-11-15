@@ -9,11 +9,22 @@
     console.warn('[SwaggerUI] Bundle nicht geladen – prüfen Sie /api/docs/assets/swagger-ui-bundle.js');
     return;
   }
-  window.ui = window.SwaggerUIBundle({
-    url: '/api/openapi.json',
-    dom_id: '#swagger-ui',
-    layout: 'BaseLayout',
-    deepLinking: true,
-    presets: [window.SwaggerUIBundle.presets.apis],
-  });
+  if (typeof window.SwaggerUIStandalonePreset !== 'undefined') {
+    window.ui = window.SwaggerUIBundle({
+      url: '/api/openapi.json',
+      dom_id: '#swagger-ui',
+      layout: 'StandaloneLayout',
+      deepLinking: true,
+      presets: [window.SwaggerUIBundle.presets.apis, window.SwaggerUIStandalonePreset],
+    });
+  } else {
+    // Fallback: ohne StandalonePreset, damit die UI überhaupt initialisiert
+    window.ui = window.SwaggerUIBundle({
+      url: '/api/openapi.json',
+      dom_id: '#swagger-ui',
+      layout: 'BaseLayout',
+      deepLinking: true,
+      presets: [window.SwaggerUIBundle.presets.apis],
+    });
+  }
 })();
