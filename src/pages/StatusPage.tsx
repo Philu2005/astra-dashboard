@@ -132,16 +132,16 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
     <div className="rounded-xl border border-[#1e2240] bg-[#12152a]/80 p-5 transition-all hover:border-[#2a2f4a]">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg shrink-0"
             style={{ backgroundColor: `${statusColor}15`, border: `1px solid ${statusColor}25` }}
           >
             <Icon className="h-5 w-5" style={{ color: statusColor }} />
           </div>
-          <div>
-            <h3 className="text-[0.95rem] font-semibold text-white leading-tight">{service.name}</h3>
-            <p className="text-xs text-[#7a82a6] mt-0.5">{service.description}</p>
+          <div className="min-w-0">
+            <h3 className="text-[0.95rem] font-semibold text-white leading-tight truncate">{service.name}</h3>
+            <p className="text-xs text-[#7a82a6] mt-0.5 truncate">{service.description}</p>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -168,10 +168,13 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       )}
 
       {/* Historische Balken */}
-      <div className="w-full" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch' }}>
-        {service.daily_history.map((day) => (
-          <StatusBar key={day.date} day={day} />
-        ))}
+      {/* Auf sehr kleinen Viewports horizontal scrollbar, damit 90 Indikatoren erhalten bleiben */}
+      <div className="w-full overflow-x-auto">
+        <div className="flex items-stretch gap-[2px] pr-1">
+          {service.daily_history.map((day) => (
+            <StatusBar key={day.date} day={day} />
+          ))}
+        </div>
       </div>
 
       {/* Zeitachse */}
@@ -280,7 +283,7 @@ export default function StatusPage() {
       />
 
       {/* Content */}
-      <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 min-w-0">
         {/* Gesamtstatus */}
         <div className={cn(
           'rounded-2xl border p-6 mb-8 transition-all',

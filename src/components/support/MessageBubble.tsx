@@ -22,7 +22,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div className={cn('flex', align === 'right' ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[82%] rounded-2xl border p-3',
+          // Auf sehr kleinen Screens etwas breiter, um nutzbare Fläche zu erhöhen
+          'max-w-[88%] sm:max-w-[82%] rounded-2xl border p-3',
           highlight ? 'border-[#5b4cc8]/40 bg-astra-purple/10' : 'border-[#2a2f45] bg-[#0f1220]'
         )}
       >
@@ -41,7 +42,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {new Date(createdAt).toLocaleString('de-DE')}
           </span>
         </div>
-        <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed break-words">
+        <p className="text-[0.95rem] text-[#d6dbf0] whitespace-pre-wrap leading-relaxed break-words break-all sm:break-words">
           {message}
         </p>
       </div>

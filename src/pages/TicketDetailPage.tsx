@@ -107,7 +107,8 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
           )}
 
           {ticket && (
-            <div className="px-5 pb-5 pt-2 shrink-0">
+            // Compose-Bereich: Safe-Area-Padding für Mobile-Tastatur
+            <div className="px-5 pb-[env(safe-area-inset-bottom)] pb-5 pt-2 shrink-0">
               {ticket.status === 'resolved' ? (
                 <div className="space-y-3">
                   <div className="text-[#9ca2bd] text-[0.9rem]">Dieses Ticket wurde als gelöst markiert.</div>

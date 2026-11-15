@@ -265,7 +265,8 @@ export const SupportPage: React.FC = () => {
           </div>
 
           {/* Rechte Spalte: Detail oder Formular */}
-          <div className="min-w-[360px] sm:min-w-0 lg:h-full lg:min-h-0 flex flex-col">
+          {/* Auf Mobile darf keine feste Mindestbreite ein horizontales Scrollen erzwingen. */}
+          <div className="min-w-0 sm:min-w-[360px] lg:h-full lg:min-h-0 flex flex-col">
             {!selected ? (
               <div ref={formRef} className="rounded-2xl border border-[#2a2f45] bg-[#131625] p-5 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
                 <h2 className="text-white font-semibold mb-1">Neues Ticket</h2>
@@ -357,7 +358,8 @@ export const SupportPage: React.FC = () => {
                       <StatusBadge status={detail.status} />
                     </div>
                     <MessageList messages={detail.messages} currentUserId={user?.id ?? null} adminView={false} ticket={detail} userJustSent={justSent} onScrolledToBottom={() => setJustSent(false)} />
-                    <div className="px-5 pb-5 pt-2 shrink-0">
+                    {/* Compose-Bereich: auf Mobile mit Safe-Area-Padding, damit nichts von der Tastatur verdeckt wird */}
+                    <div className="px-5 pb-[env(safe-area-inset-bottom)] pb-5 pt-2 shrink-0">
                       {detail.status === 'resolved' ? (
                         <div className="space-y-3">
                           <div className="text-[#9ca2bd] text-[0.9rem]">Dieses Ticket wurde als gelöst markiert.</div>

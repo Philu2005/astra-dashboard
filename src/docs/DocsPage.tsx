@@ -114,7 +114,7 @@ export const DocsPage: React.FC = () => {
         {mobileNavOpen && (
           <div className="fixed inset-0 z-[100] lg:hidden">
             <div className="fixed inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
-            <div className="fixed left-0 top-0 bottom-0 w-72 bg-[#121423] border-r border-[#212131] overflow-y-auto p-4">
+            <div className="fixed left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-[#121423] border-r border-[#212131] overflow-y-auto p-4">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[0.85rem] font-semibold text-white">Navigation</span>
                 <button onClick={() => setMobileNavOpen(false)} className="p-1 rounded-md hover:bg-[#1a1a2a] text-[#9ca2bd]">
@@ -126,7 +126,7 @@ export const DocsPage: React.FC = () => {
           </div>
         )}
 
-        <div className="max-w-[1400px] mx-auto flex gap-0">
+        <div className="max-w-[1400px] mx-auto flex gap-0 min-w-0">
           {/* Left sidebar - nav */}
           <aside className="hidden lg:block w-64 shrink-0 border-r border-[#212131]">
             <div className="sticky top-[72px] overflow-y-auto max-h-[calc(100vh-4.5rem)] p-6">
