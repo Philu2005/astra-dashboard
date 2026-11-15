@@ -10,6 +10,9 @@ import { sessions } from './sessions';
 import { privacy } from './privacy';
 import { architecture } from './architecture';
 import { apiReference } from './api-reference';
+import { restApiOverview } from './rest-api-overview';
+import { monitoringOverview } from './monitoring-overview';
+import { deploymentInfra } from './deployment-infra';
 import { frontendStack } from './frontend-stack';
 import { backendStack } from './backend-stack';
 import { supportOverview } from './support-overview';
@@ -28,9 +31,12 @@ export const allArticles: DocArticle[] = [
   sessions,
   privacy,
   architecture,
+  restApiOverview,
   apiReference,
   frontendStack,
   backendStack,
+  monitoringOverview,
+  deploymentInfra,
   supportOverview,
   supportAdmin,
   troubleshooting,

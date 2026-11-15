@@ -17,11 +17,12 @@ from .schemas import (
     TicketUpdatePriority,
     UserInfo,
     UserHistoryItem,
+    OperationResult,
 )
 
 
 logger = logging.getLogger("astra.support")
-router = APIRouter(prefix="/support", tags=["support"])
+router = APIRouter(prefix="/support", tags=["Support"])
 
 ALLOWED_CATEGORIES = {
     "Fehler melden",
@@ -47,8 +48,48 @@ def _is_admin(discord_user_id: str) -> bool:
     return discord_user_id == settings.ADMIN_DISCORD_ID
 
 
-@router.get("/tickets", response_model=list[TicketSummary])
-async def list_my_tickets(request: Request, offset: int = 0, limit: int = 50):
+@router.get(
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    "/tickets",
+    response_model=list[TicketSummary],
+    summary="Eigene Tickets auflisten",
+    description="Gibt die Tickets des aktuell angemeldeten Benutzers paginiert zurück.",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+    },
+)
+async def list_my_tickets(
+    request: Request,
+    offset: int = Query(0, description="Anzahl zu überspringender Einträge für Pagination."),
+    limit: int = Query(50, description="Maximale Anzahl zurückzugebender Einträge."),
+):
     session = await _require_session(request)
     rows = await service.list_user_tickets(session.user_id, offset=offset, limit=limit)
     return [
@@ -59,7 +100,17 @@ async def list_my_tickets(request: Request, offset: int = 0, limit: int = 50):
     ]
 
 
-@router.post("/tickets", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/tickets",
+    response_model=TicketDetail,
+    dependencies=[Depends(verify_same_origin)],
+    summary="Neues Ticket erstellen",
+    description="Erstellt ein neues Support-Ticket für den angemeldeten Benutzer.",
+    responses={
+        400: {"description": "Ungültige Eingaben (z. B. Kategorie)."},
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+    },
+)
 async def create_ticket(request: Request, payload: TicketCreate):
     session = await _require_session(request)
     if payload.category not in ALLOWED_CATEGORIES:
@@ -76,7 +127,17 @@ async def create_ticket(request: Request, payload: TicketCreate):
     return TicketDetail(**detail)
 
 
-@router.get("/tickets/{ticket_id}", response_model=TicketDetail)
+@router.get(
+    "/tickets/{ticket_id}",
+    response_model=TicketDetail,
+    summary="Ticket-Details abrufen",
+    description="Liest die Details eines Tickets. Zugriff nur für Besitzer oder Admins.",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Kein Zugriff auf das Ticket."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def get_ticket(request: Request, ticket_id: int):
     session = await _require_session(request)
     detail = await service.get_ticket_detail(ticket_id)
@@ -88,7 +149,19 @@ async def get_ticket(request: Request, ticket_id: int):
     return TicketDetail(**detail)
 
 
-@router.post("/tickets/{ticket_id}/reply", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/tickets/{ticket_id}/reply",
+    response_model=TicketDetail,
+    dependencies=[Depends(verify_same_origin)],
+    summary="Auf Ticket antworten",
+    description="Fügt eine Antwort zum Ticket hinzu. Besitzer oder Admin erforderlich.",
+    responses={
+        400: {"description": "Ticket ist bereits gelöst."},
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Kein Zugriff auf das Ticket."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def reply_ticket(request: Request, ticket_id: int, payload: MessageCreate):
     session = await _require_session(request)
     detail = await service.get_ticket_detail(ticket_id)
@@ -112,7 +185,19 @@ async def reply_ticket(request: Request, ticket_id: int, payload: MessageCreate)
     return TicketDetail(**new_detail)
 
 
-@router.post("/tickets/{ticket_id}/reopen", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/tickets/{ticket_id}/reopen",
+    response_model=TicketDetail,
+    dependencies=[Depends(verify_same_origin)],
+    summary="Ticket wieder öffnen",
+    description="Öffnet ein gelöstes Ticket erneut. Nur der Ersteller darf dies durchführen.",
+    responses={
+        400: {"description": "Ticket ist nicht gelöst."},
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur der Ersteller darf das Ticket wieder öffnen."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def reopen_ticket(request: Request, ticket_id: int):
     """Benutzer kann eigenes gelöstes Ticket wieder öffnen."""
     session = await _require_session(request)
@@ -134,7 +219,16 @@ async def reopen_ticket(request: Request, ticket_id: int):
 # --- Admin endpoints ---
 
 
-@router.get("/admin/counters", response_model=TicketCounters)
+@router.get(
+    "/admin/counters",
+    response_model=TicketCounters,
+    summary="Ticket-Zähler (Admin)",
+    description="Aggregierte Zähler über alle Tickets (nur Admin).",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+    },
+)
 async def get_counters(request: Request):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -142,16 +236,25 @@ async def get_counters(request: Request):
     return TicketCounters(**await service.counters())
 
 
-@router.get("/admin/tickets", response_model=list[TicketSummary])
+@router.get(
+    "/admin/tickets",
+    response_model=list[TicketSummary],
+    summary="Tickets auflisten (Admin)",
+    description="Listet Tickets mit Filtern/Pagination auf (nur Admin).",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+    },
+)
 async def admin_list_tickets(
     request: Request,
-    status: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    priority: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    exclude_status: Optional[str] = Query(None),
-    offset: int = 0,
-    limit: int = 50,
+    status: Optional[str] = Query(None, description="Status-Filter (open, in_progress, resolved)"),
+    category: Optional[str] = Query(None, description="Kategorie-Filter"),
+    priority: Optional[str] = Query(None, description="Priorität-Filter (low, normal, high, critical)"),
+    search: Optional[str] = Query(None, description="Freitextsuche in Betreff/Name"),
+    exclude_status: Optional[str] = Query(None, description="Diesen Status ausschließen"),
+    offset: int = Query(0, description="Pagination: Anzahl zu überspringender Einträge"),
+    limit: int = Query(50, description="Pagination: maximale Anzahl Einträge"),
 ):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -165,7 +268,19 @@ async def admin_list_tickets(
     ]
 
 
-@router.post("/admin/tickets/{ticket_id}/status", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/admin/tickets/{ticket_id}/status",
+    response_model=TicketDetail,
+    dependencies=[Depends(verify_same_origin)],
+    summary="Ticket-Status setzen (Admin)",
+    description="Setzt den Status eines Tickets auf open/in_progress/resolved (nur Admin).",
+    responses={
+        400: {"description": "Ungültiger Status."},
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def admin_set_status(request: Request, ticket_id: int, payload: TicketUpdateStatus):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -180,7 +295,19 @@ async def admin_set_status(request: Request, ticket_id: int, payload: TicketUpda
     return TicketDetail(**detail)
 
 
-@router.post("/admin/tickets/{ticket_id}/priority", response_model=TicketDetail, dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/admin/tickets/{ticket_id}/priority",
+    response_model=TicketDetail,
+    dependencies=[Depends(verify_same_origin)],
+    summary="Ticket-Priorität setzen (Admin)",
+    description="Setzt die Priorität eines Tickets (low/normal/high/critical).",
+    responses={
+        400: {"description": "Ungültige Priorität."},
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def admin_set_priority(request: Request, ticket_id: int, payload: TicketUpdatePriority):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -194,7 +321,18 @@ async def admin_set_priority(request: Request, ticket_id: int, payload: TicketUp
     return TicketDetail(**detail)
 
 
-@router.delete("/admin/tickets/{ticket_id}", dependencies=[Depends(verify_same_origin)])
+@router.delete(
+    "/admin/tickets/{ticket_id}",
+    dependencies=[Depends(verify_same_origin)],
+    response_model=OperationResult,
+    summary="Ticket löschen (Admin)",
+    description="Löscht ein Ticket dauerhaft (nur Admin).",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def admin_delete_ticket(request: Request, ticket_id: int):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -206,7 +344,17 @@ async def admin_delete_ticket(request: Request, ticket_id: int):
     return {"ok": True}
 
 
-@router.get("/admin/tickets/{ticket_id}/user-info", response_model=UserInfo)
+@router.get(
+    "/admin/tickets/{ticket_id}/user-info",
+    response_model=UserInfo,
+    summary="Benutzerinfo zum Ticket (Admin)",
+    description="Liefert Profil- und Ticketstatistiken des Ticket-Erstellers (nur Admin).",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def admin_user_info(request: Request, ticket_id: int):
     session = await _require_session(request)
     if not _is_admin(session.user_id):
@@ -231,7 +379,17 @@ async def admin_user_info(request: Request, ticket_id: int):
     )
 
 
-@router.get("/admin/tickets/{ticket_id}/user-history", response_model=list[UserHistoryItem])
+@router.get(
+    "/admin/tickets/{ticket_id}/user-history",
+    response_model=list[UserHistoryItem],
+    summary="Ticket-Historie des Nutzers (Admin)",
+    description="Gibt die Ticket-Historie des Ticket-Erstellers zurück (nur Admin).",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen."},
+        403: {"description": "Nur für Admins."},
+        404: {"description": "Ticket nicht gefunden."},
+    },
+)
 async def admin_user_history(request: Request, ticket_id: int):
     session = await _require_session(request)
     if not _is_admin(session.user_id):

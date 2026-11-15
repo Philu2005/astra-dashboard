@@ -132,12 +132,22 @@ app.include_router(monitoring_router, prefix="/api")
 
 
 # Health check – available at both /health (direct) and /api/health (via reverse proxy)
-@app.get("/health")
+@app.get(
+    "/health",
+    tags=["Health"],
+    summary="Health‑Check (Root)",
+    description="Einfacher Health‑Check des Backends; gibt den Zustand des Dienstes zurück.",
+)
 async def health_check():
     return {"status": "healthy"}
 
 
-@app.get("/api/health")
+@app.get(
+    "/api/health",
+    tags=["Health"],
+    summary="Health‑Check (API‑Pfad)",
+    description="Gleicher Health‑Check wie /health; wird über den Reverse‑Proxy unter /api/health bereitgestellt.",
+)
 async def api_health_check():
     return {"status": "healthy"}
 

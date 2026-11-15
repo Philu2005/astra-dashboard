@@ -3,7 +3,7 @@ import type { DocArticle } from '../types';
 export const authentication: DocArticle = {
   slug: 'authentication',
   title: 'Authentifizierung',
-  description: 'Technische Details zum Discord OAuth2-Ablauf und zur Session-Verwaltung.',
+  description: 'Technische Details zum Discord OAuth2-Ablauf und zur Session-Verwaltung. Stand: 16.11.2026',
   category: 'Sicherheit & Datenschutz',
   categorySlug: 'sicherheit',
   readingTime: 5,
@@ -24,6 +24,12 @@ export const authentication: DocArticle = {
 8. **Session erstellen** – Session in MySQL mit SHA-256-gehashtem Token
 9. **Exchange-Token** – Einmaliges Token (60s) für Cross-Origin Cookie-Setzung
 10. **Cookie setzen** – Frontend tauscht Exchange-Token gegen Session-Cookie`,
+    },
+    {
+      id: 'csrf-same-origin',
+      title: 'CSRF-Schutz für Schreibendpunkte',
+      level: 2,
+      content: `Für browserbasierte, session-authentifizierte **Schreib**-Endpunkte prüft das Backend den **Origin**‑Header strikt gegen die Whitelist (\`CORS_ORIGINS\`).\n\n- Fehlender oder abweichender Origin → **403**\n- Gilt u. a. für: \`POST /auth/exchange\`, \`POST /auth/logout\`, Support‑POST/DELETE\n- OAuth2‑Callback ist davon ausgenommen (externer Redirect, State‑Prüfung schützt)`,
     },
     {
       id: 'exchange-token',

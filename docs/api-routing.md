@@ -23,6 +23,10 @@
 | `/api/support/admin/counters`             | support_router  | Admin-Zähler                  |
 | `/api/support/admin/tickets`              | support_router  | Admin-Ticketliste             |
 | `/api/support/admin/tickets/{id}/status`  | support_router  | Admin-Statusänderung          |
+| `/api/support/admin/tickets/{id}/priority`| support_router  | Admin-Priorität setzen        |
+| `/api/support/admin/tickets/{id}`         | support_router  | Admin: Ticket löschen         |
+| `/api/support/admin/tickets/{id}/user-info` | support_router| Admin: Benutzerinfo zum Ticket|
+| `/api/support/admin/tickets/{id}/user-history` | support_router | Admin: User-Ticket-Historie |
 
 ### Frontend API-Client
 
@@ -56,3 +60,8 @@ ProxyPassReverse /auth/ http://127.0.0.1:8000/auth/
 ```
 
 **Wichtig:** Apache leitet `/api/*` und `/auth/*` **ohne Pfad-Umschreibung** an FastAPI weiter. Die Pfade auf FastAPI-Seite müssen exakt den öffentlichen URLs entsprechen.
+
+### Interaktive API-Referenz
+
+- Swagger UI: `https://<domain>/api/docs` (lokal ausgeliefert, CSP‑konform, ohne externe CDNs)
+- OpenAPI JSON: `https://<domain>/api/openapi.json`

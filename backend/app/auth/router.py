@@ -9,7 +9,25 @@ from app.auth.sessions import session_manager
 from app.auth.service import discord_service
 from app.security import verify_same_origin
 
-router = APIRouter(prefix="/auth")
+from pydantic import BaseModel, Field
+
+
+class UserPublic(BaseModel):
+    id: str = Field(description="Discord User-ID")
+    username: str | None = Field(default=None, description="Discord Username (optional)")
+    display_name: str | None = Field(default=None, description="Darstellungsname (optional)")
+    avatar_url: str | None = Field(default=None, description="Avatar-URL (optional)")
+
+
+class SessionInfo(BaseModel):
+    authenticated: bool = Field(description="Ob die Session authentifiziert ist")
+    user: UserPublic
+
+
+class LogoutResult(BaseModel):
+    success: bool = Field(description="Logout erfolgreich")
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
 logger = logging.getLogger("astra.auth")
 
 
@@ -102,7 +120,20 @@ async def callback(
     return redirect_response
 
 
-@router.post("/exchange", dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/exchange",
+    dependencies=[Depends(verify_same_origin)],
+    response_model=SessionInfo,
+    summary="Exchange-Token gegen Session-Cookie tauschen",
+    description=(
+        "Tauscht ein einmaliges Exchange-Token gegen ein Session-Cookie aus. "
+        "Wird ausschließlich same-origin vom Frontend aufgerufen."
+    ),
+    responses={
+        400: {"description": "Ungültiger Request-Body oder fehlendes Token."},
+        401: {"description": "Exchange-Token ungültig/abgelaufen oder Session nicht gefunden."},
+    },
+)
 async def exchange(request: Request, response: Response):
     """Exchange a one-time token for a session cookie (called from frontend same-origin)."""
     try:
@@ -140,12 +171,20 @@ async def exchange(request: Request, response: Response):
             "id": session.user_id,
             "username": session.username,
             "display_name": session.display_name,
-            "avatar_url": session.avatar_url
-        }
+            "avatar_url": session.avatar_url,
+        },
     }
 
 
-@router.get("/me")
+@router.get(
+    "/me",
+    response_model=SessionInfo,
+    summary="Session-Informationen abrufen",
+    description="Gibt die aktuelle Session mitsamt Benutzerinformationen zurück.",
+    responses={
+        401: {"description": "Nicht angemeldet oder Session abgelaufen/ungültig."},
+    },
+)
 async def me(request: Request):
     session_id = request.cookies.get("session_id")
     if not session_id:
@@ -164,12 +203,18 @@ async def me(request: Request):
             "id": session.user_id,
             "username": session.username,
             "display_name": session.display_name,
-            "avatar_url": session.avatar_url
-        }
+            "avatar_url": session.avatar_url,
+        },
     }
 
 
-@router.post("/logout", dependencies=[Depends(verify_same_origin)])
+@router.post(
+    "/logout",
+    dependencies=[Depends(verify_same_origin)],
+    response_model=LogoutResult,
+    summary="Logout durchführen",
+    description="Invalidiert die aktuelle Session und löscht das Session-Cookie.",
+)
 async def logout(request: Request, response: Response):
 
     session_id = request.cookies.get("session_id")

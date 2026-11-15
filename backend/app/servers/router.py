@@ -5,7 +5,7 @@ from app.config import settings
 from app.auth.sessions import session_manager
 from app.services.astra_client import astra_client, AstraApiError
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", tags=["Servers"])
 logger = logging.getLogger("astra.servers")
 
 
@@ -38,7 +38,23 @@ def _handle_astra_error(exc: AstraApiError) -> HTTPException:
     return HTTPException(status_code=status, detail=str(exc))
 
 
-@router.get("/servers")
+@router.get(
+    "/servers",
+    summary="Eigene Server auflisten",
+    description=(
+        "Gibt die Liste der Discord‑Server (Guilds) zurück, auf denen der Benutzer berechtigt ist. "
+        "Die Daten werden vom Astra Bot (Internal API) abgerufen und unverändert durchgereicht."
+    ),
+    responses={
+        200: {"description": "Liste der Server wurde erfolgreich geladen.", "content": {"application/json": {"example": {"servers": [{"id": "123456789012345678", "name": "Beispielserver", "icon": "https://cdn.discordapp.com/icons/.../icon.png"}]}}}},
+        401: {"description": "Nicht angemeldet."},
+        403: {"description": "Zugriff verweigert (Upstream)."},
+        404: {"description": "Nicht gefunden (Upstream)."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
 async def get_servers(request: Request):
     user_id = await _get_user_id_from_session(request)
 
@@ -51,7 +67,23 @@ async def get_servers(request: Request):
     return data
 
 
-@router.get("/servers/{guild_id}")
+@router.get(
+    "/servers/{guild_id}",
+    summary="Serverdetails abrufen",
+    description=(
+        "Gibt Details zu einem Discord‑Server (Guild) zurück. "
+        "Die Antwortstruktur stammt direkt vom Astra Bot (Internal API)."
+    ),
+    responses={
+        200: {"description": "Serverdetails geladen.", "content": {"application/json": {"example": {"id": "123456789012345678", "name": "Beispielserver", "owner_id": "987654321098765432"}}}},
+        401: {"description": "Nicht angemeldet."},
+        403: {"description": "Kein Zugriff auf diesen Server (Upstream)."},
+        404: {"description": "Server nicht gefunden (Upstream)."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
 async def get_server(guild_id: str, request: Request):
     user_id = await _get_user_id_from_session(request)
     logger.info("Serverlisten-Anfrage für Discord-User-ID: %s", user_id)
@@ -65,7 +97,23 @@ async def get_server(guild_id: str, request: Request):
     return data
 
 
-@router.get("/servers/{guild_id}/roles")
+@router.get(
+    "/servers/{guild_id}/roles",
+    summary="Serverrollen abrufen",
+    description=(
+        "Gibt die Rollen (Roles) eines Discord‑Servers zurück. "
+        "Antwortstruktur kommt direkt vom Astra Bot (Internal API)."
+    ),
+    responses={
+        200: {"description": "Rollenliste geladen.", "content": {"application/json": {"example": {"roles": [{"id": "1", "name": "Admin"}, {"id": "2", "name": "Member"}]}}}},
+        401: {"description": "Nicht angemeldet."},
+        403: {"description": "Kein Zugriff auf diesen Server (Upstream)."},
+        404: {"description": "Server/Rollen nicht gefunden (Upstream)."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
 async def get_server_roles(guild_id: str, request: Request):
     user_id = await _get_user_id_from_session(request)
 
@@ -78,7 +126,21 @@ async def get_server_roles(guild_id: str, request: Request):
     return data
 
 
-@router.get("/dashboard/stats")
+@router.get(
+    "/dashboard/stats",
+    summary="Dashboard‑Statistiken abrufen",
+    description=(
+        "Gibt aggregierte Statistiken für das Dashboard zurück (z. B. Counters/Verläufe). "
+        "Antwortstruktur wird vom Astra Bot geliefert und unverändert durchgereicht."
+    ),
+    responses={
+        200: {"description": "Statistiken geladen.", "content": {"application/json": {"example": {"users": 1200, "guilds": 85, "commands_today": 3421}}}},
+        401: {"description": "Nicht angemeldet."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
 async def get_dashboard_stats(request: Request):
     await _get_user_id_from_session(request)
 
@@ -91,7 +153,21 @@ async def get_dashboard_stats(request: Request):
     return data
 
 
-@router.get("/status")
+@router.get(
+    "/status",
+    summary="Astra Bot Status abrufen",
+    description=(
+        "Öffentlicher Endpunkt: Liefert den aktuellen Status der Astra‑Dienste gemäß Internal API."
+    ),
+    responses={
+        200: {"description": "Statusdaten geladen.", "content": {"application/json": {"example": {"ok": True, "version": "1.2.3"}}}},
+        403: {"description": "Zugriff verweigert (Upstream)."},
+        404: {"description": "Nicht gefunden (Upstream)."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
 async def get_astra_status():
     try:
         data = await astra_client.get_status()
@@ -102,7 +178,21 @@ async def get_astra_status():
     return data
 
 
-@router.get("/statistics/commands")
+@router.get(
+    "/statistics/commands",
+    summary="Globale Befehlsstatistiken (7 Tage)",
+    description=(
+        "Gibt die globalen Command‑Statistiken der letzten 7 Tage zurück. "
+        "Erfordert gültige Dashboard‑Session; Daten stammen direkt vom Astra Bot."
+    ),
+    responses={
+        200: {"description": "Statistiken geladen.", "content": {"application/json": {"example": {"days": [{"date": "2026-11-10", "count": 1234}]}}}},
+        401: {"description": "Nicht angemeldet."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
 async def get_global_command_statistics(request: Request):
     """Gibt die globalen Command-Statistiken (letzte 7 Tage) zurück.
 

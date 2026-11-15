@@ -3,12 +3,18 @@ import type { DocArticle } from '../types';
 export const apiReference: DocArticle = {
   slug: 'api-reference',
   title: 'API-Referenz',
-  description: 'Vollständige Dokumentation aller HTTP-Endpunkte.',
+  description: 'Vollständige Dokumentation aller HTTP-Endpunkte. Interaktive Referenz: /api/docs · Stand: 16.11.2026',
   category: 'Technik & API',
   categorySlug: 'technik',
   readingTime: 8,
   popular: true,
   sections: [
+    {
+      id: 'swagger',
+      title: 'Interaktive Swagger-Dokumentation',
+      level: 2,
+      content: `Die vollständige, interaktive API-Referenz steht lokal unter \`/api/docs\` bereit (CSP‑kompatibel, ohne externe CDNs).\n\nHinweis: Diese Text‑Referenz fasst die wichtigsten Endpunkte zusammen. Verbindlich ist die OpenAPI‑Spezifikation unter \`/api/openapi.json\`.`,
+    },
     {
       id: 'ueberblick',
       title: 'Endpunkt-Übersicht',
@@ -26,18 +32,19 @@ export const apiReference: DocArticle = {
 | \`/api/dashboard/stats\` | GET | Session | Dashboard-Statistiken |
 | \`/api/status\` | GET | – | Bot-Status |
 | \`/health\` | GET | – | Health-Check |
-| \`/support/tickets\` | GET | Session | Eigene Tickets auflisten |
-| \`/support/tickets\` | POST | Session | Neues Ticket erstellen |
-| \`/support/tickets/{id}\` | GET | Session | Ticketdetails abrufen |
-| \`/support/tickets/{id}/reply\` | POST | Session | Auf Ticket antworten |
-| \`/support/tickets/{id}/reopen\` | POST | Session | Gelöstes Ticket wieder öffnen |
-| \`/support/admin/counters\` | GET | Admin | Ticketzähler abrufen |
-| \`/support/admin/tickets\` | GET | Admin | Alle Tickets auflisten (mit Filtern) |
-| \`/support/admin/tickets/{id}/status\` | POST | Admin | Ticketstatus ändern |
-| \`/support/admin/tickets/{id}/priority\` | POST | Admin | Ticketpriorität ändern |
-| \`/support/admin/tickets/{id}\` | DELETE | Admin | Ticket löschen |
-| \`/support/admin/tickets/{id}/user-info\` | GET | Admin | Benutzerprofil zum Ticket |
-| \`/support/admin/tickets/{id}/user-history\` | GET | Admin | Tickethistorie des Benutzers |`,
+| \`/api/health\` | GET | – | Health-Check (Proxy) |
+| \`/api/support/tickets\` | GET | Session | Eigene Tickets auflisten |
+| \`/api/support/tickets\` | POST | Session | Neues Ticket erstellen |
+| \`/api/support/tickets/{id}\` | GET | Session | Ticketdetails abrufen |
+| \`/api/support/tickets/{id}/reply\` | POST | Session | Auf Ticket antworten |
+| \`/api/support/tickets/{id}/reopen\` | POST | Session | Gelöstes Ticket wieder öffnen |
+| \`/api/support/admin/counters\` | GET | Admin | Ticketzähler abrufen |
+| \`/api/support/admin/tickets\` | GET | Admin | Alle Tickets auflisten (mit Filtern) |
+| \`/api/support/admin/tickets/{id}/status\` | POST | Admin | Ticketstatus ändern |
+| \`/api/support/admin/tickets/{id}/priority\` | POST | Admin | Ticketpriorität ändern |
+| \`/api/support/admin/tickets/{id}\` | DELETE | Admin | Ticket löschen |
+| \`/api/support/admin/tickets/{id}/user-info\` | GET | Admin | Benutzerprofil zum Ticket |
+| \`/api/support/admin/tickets/{id}/user-history\` | GET | Admin | Tickethistorie des Benutzers |`,
     },
     {
       id: 'auth-me',
@@ -107,20 +114,8 @@ export const apiReference: DocArticle = {
 **Response (200):**
 \`\`\`json
 {
-  "success": true,
-  "count": 2,
   "servers": [
-    {
-      "id": "111222333444555",
-      "name": "Mein Server",
-      "icon": "abc123def456",
-      "memberCount": 150,
-      "owner": true,
-      "permissions": {
-        "administrator": true,
-        "manage_guild": true
-      }
-    }
+    { "id": "111222333444555", "name": "Mein Server", "icon": "https://cdn.discordapp.com/icons/.../icon.png" }
   ]
 }
 \`\`\`
@@ -138,20 +133,9 @@ export const apiReference: DocArticle = {
 **Response (200):**
 \`\`\`json
 {
-  "success": true,
-  "server": {
-    "id": "111222333444555",
-    "name": "Mein Server",
-    "icon": "abc123def456",
-    "memberCount": 150,
-    "channelCount": 25,
-    "roleCount": 10,
-    "ownerId": "999888777666555",
-    "permissions": {
-      "administrator": true,
-      "manage_guild": true
-    }
-  }
+  "id": "111222333444555",
+  "name": "Mein Server",
+  "owner_id": "999888777666555"
 }
 \`\`\`
 
@@ -166,18 +150,7 @@ export const apiReference: DocArticle = {
 **Response (200):**
 \`\`\`json
 {
-  "success": true,
-  "roles": [
-    {
-      "id": "111222333444555",
-      "name": "Moderator",
-      "color": 3447003,
-      "position": 5,
-      "permissions": "2147483647",
-      "managed": false,
-      "mentionable": true
-    }
-  ]
+  "roles": [ { "id": "1", "name": "Admin" }, { "id": "2", "name": "Member" } ]
 }
 \`\`\``,
     },
@@ -214,23 +187,17 @@ export const apiReference: DocArticle = {
       id: 'api-status',
       title: 'GET /api/status',
       level: 2,
-      content: `Gibt den Bot-Status zurück. **Keine Authentifizierung erforderlich.**
+      content: `Gibt den Bot-Status zurück. **Keine Authentifizierung erforderlich.** Die Struktur wird direkt von der internen API geliefert (Beispiel exemplarisch).
 
-**Response (200):**
+**Response (200) – Beispiel:**
 \`\`\`json
-{
-  "online": true,
-  "status": "online",
-  "last_heartbeat": "2026-11-14T15:30:00Z",
-  "stale_after_seconds": 120
-}
+{ "ok": true, "version": "1.2.3" }
 \`\`\`
-
-Mögliche Status-Werte: \`online\`, \`offline\`, \`connecting\`, \`unknown\``,
+`,
     },
     {
       id: 'health',
-      title: 'GET /health',
+      title: 'GET /health und GET /api/health',
       level: 2,
       content: `Health-Check für Monitoring. **Keine Authentifizierung erforderlich.**
 
@@ -262,11 +229,11 @@ Interne Details werden nie an den Client weitergegeben.`,
       id: 'support-tickets',
       title: 'Support-Endpunkte (Benutzer)',
       level: 2,
-      content: `**GET /support/tickets** – Eigene Tickets auflisten
+      content: `**GET /api/support/tickets** – Eigene Tickets auflisten
 
 Query-Parameter: \`offset\` (int), \`limit\` (int, Standard: 50)
 
-**POST /support/tickets** – Neues Ticket erstellen
+**POST /api/support/tickets** – Neues Ticket erstellen
 
 Request-Body:
 \`\`\`json
@@ -279,17 +246,17 @@ Request-Body:
 
 Erlaubte Kategorien: \`Fehler melden\`, \`Problem mit einem Befehl\`, \`Problem mit einer Funktion\`, \`Verbesserungsvorschlag\`, \`Allgemeine Frage\`, \`Sonstiges\`
 
-**GET /support/tickets/{id}** – Ticketdetails inkl. Nachrichtenverlauf
+**GET /api/support/tickets/{id}** – Ticketdetails inkl. Nachrichtenverlauf
 
 Zugriff nur für den Ticket-Ersteller oder Administratoren.
 
-**POST /support/tickets/{id}/reply** – Nachricht senden
+**POST /api/support/tickets/{id}/reply** – Nachricht senden
 
 Request-Body: \`{ "message": "Nachrichtentext" }\`
 
 Fehler: \`400\` wenn Ticket gelöst ist.
 
-**POST /support/tickets/{id}/reopen** – Gelöstes Ticket wieder öffnen
+**POST /api/support/tickets/{id}/reopen** – Gelöstes Ticket wieder öffnen
 
 Nur der Ticket-Ersteller kann ein gelöstes Ticket wieder öffnen. Fehler: \`400\` wenn Ticket nicht gelöst ist, \`403\` wenn nicht der Ersteller.`,
     },
@@ -299,11 +266,11 @@ Nur der Ticket-Ersteller kann ein gelöstes Ticket wieder öffnen. Fehler: \`400
       level: 2,
       content: `Alle Admin-Endpunkte erfordern Administrator-Berechtigung (\`403\` bei fehlendem Zugriff).
 
-**GET /support/admin/counters** – Ticketzähler
+**GET /api/support/admin/counters** – Ticketzähler
 
 Response: \`{ "open": 5, "in_progress": 2, "resolved": 10, "total": 17 }\`
 
-**GET /support/admin/tickets** – Alle Tickets auflisten
+**GET /api/support/admin/tickets** – Alle Tickets auflisten
 
 | Parameter | Typ | Beschreibung |
 |---|---|---|
@@ -315,23 +282,23 @@ Response: \`{ "open": 5, "in_progress": 2, "resolved": 10, "total": 17 }\`
 | \`offset\` | int | Pagination-Offset |
 | \`limit\` | int | Maximale Anzahl (Standard: 50) |
 
-**POST /support/admin/tickets/{id}/status** – Status ändern
+**POST /api/support/admin/tickets/{id}/status** – Status ändern
 
 Request-Body: \`{ "status": "in_progress" }\`
 
 Erlaubte Werte: \`open\`, \`in_progress\`, \`resolved\`
 
-**POST /support/admin/tickets/{id}/priority** – Priorität ändern
+**POST /api/support/admin/tickets/{id}/priority** – Priorität ändern
 
 Request-Body: \`{ "priority": "high" }\`
 
 Erlaubte Werte: \`low\`, \`normal\`, \`high\`, \`critical\`
 
-**DELETE /support/admin/tickets/{id}** – Ticket dauerhaft löschen
+**DELETE /api/support/admin/tickets/{id}** – Ticket dauerhaft löschen
 
-**GET /support/admin/tickets/{id}/user-info** – Benutzerprofil und Ticketstatistiken
+**GET /api/support/admin/tickets/{id}/user-info** – Benutzerprofil und Ticketstatistiken
 
-**GET /support/admin/tickets/{id}/user-history** – Alle anderen Tickets des Benutzers`,
+**GET /api/support/admin/tickets/{id}/user-history** – Alle anderen Tickets des Benutzers`,
     },
   ],
 };

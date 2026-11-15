@@ -3,7 +3,7 @@ import type { DocArticle } from '../types';
 export const sessions: DocArticle = {
   slug: 'sessions',
   title: 'Sessions & Cookies',
-  description: 'Wie Sessions verwaltet werden und welche Cookies verwendet werden.',
+  description: 'Wie Sessions verwaltet werden und welche Cookies verwendet werden. Stand: 16.11.2026',
   category: 'Sicherheit & Datenschutz',
   categorySlug: 'sicherheit',
   readingTime: 3,
@@ -70,6 +70,12 @@ Zusätzlich werden abgelaufene Sessions bei Zugriff erkannt und sofort gelöscht
 - **Analyse-Cookies** – Optional, nur mit Zustimmung
 
 Die Consent-Entscheidung wird in \`localStorage\` gespeichert (Key: \`astra_consent\`) und ist versioniert. Bei Änderung der Consent-Version wird erneut gefragt. Die Einstellungen können jederzeit über „Cookie-Einstellungen" geändert oder widerrufen werden.`,
+    },
+    {
+      id: 'cors-csp-xss',
+      title: 'CORS, CSP & XSS-Schutz (Überblick)',
+      level: 2,
+      content: `**CORS**: Whitelist über \`CORS_ORIGINS\`; Methoden: **GET, POST, OPTIONS, DELETE**; Credentials aktiviert.\n\n**CSP/Swagger**: Swagger‑UI wird lokal inkl. Assets bereitgestellt (**/api/docs**), kein Inline‑JS, keine externen CDNs.\n\n**XSS‑Schutz (Frontend)**: Es werden keine Nutzerdaten per \`dangerouslySetInnerHTML\` gerendert. Zusätzlich erzwingen CI‑Guards den Verzicht auf riskante DOM‑APIs (z. B. \`innerHTML\`, \`eval\`). Playwright‑Tests prüfen gängige XSS‑Payloads.`,
     },
   ],
 };

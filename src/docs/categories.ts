@@ -27,7 +27,7 @@ export const categories: DocCategory[] = [
     title: 'Technik & API',
     description: 'Architektur, API-Endpunkte und technische Details.',
     icon: 'Code',
-    articles: ['architecture', 'api-reference', 'frontend-stack', 'backend-stack'],
+    articles: ['architecture', 'rest-api-overview', 'api-reference', 'monitoring-overview', 'deployment-infra', 'frontend-stack', 'backend-stack'],
   },
   {
     slug: 'support',
