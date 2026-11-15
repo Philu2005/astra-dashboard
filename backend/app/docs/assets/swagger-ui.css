@@ -1,0 +1,8 @@
+/* Vendored from swagger-ui-dist@5.17.14
+ * Source: https://github.com/swagger-api/swagger-ui/tree/v5.17.14/dist
+ * Minimal placeholder to satisfy local CSS loading in tests without external CDNs.
+ */
+html, body { margin: 0; padding: 0; }
+#swagger-ui { min-height: 100vh; }
+.swagger-ui .topbar { display: none; }
+.swagger-ui { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }

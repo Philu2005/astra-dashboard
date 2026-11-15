@@ -6,6 +6,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse
+from pathlib import Path
 
 from app.config import settings
 from app.auth.router import router as auth_router
@@ -75,13 +78,36 @@ app = FastAPI(
 )
 
 
-# Custom Swagger UI
+# Swagger UI – CSP‑kompatibel, lokal ausgeliefert
+DOCS_DIR = Path(__file__).parent / "docs"
+ASSETS_DIR = DOCS_DIR / "assets"
+
+# Statische Assets mounten (CSS/JS/Favicon)
+app.mount("/api/docs/assets", StaticFiles(directory=str(ASSETS_DIR)), name="swagger-assets")
+
+
+@app.get("/api/docs", include_in_schema=False)
+async def swagger_docs_page() -> FileResponse:
+    # Liefert eine reine HTML-Datei ohne Inline-JS, die nur lokale Ressourcen referenziert
+    return FileResponse(path=str(DOCS_DIR / "swagger.html"), media_type="text/html")
+
+
+@app.get("/api/docs/swagger-init.js", include_in_schema=False)
+async def swagger_init_js() -> FileResponse:
+    # Liefert die lokale Initialisierungsdatei (ohne Inline-JS)
+    return FileResponse(path=str(DOCS_DIR / "swagger-init.js"), media_type="application/javascript")
+
+
 @app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui():
-    return get_swagger_ui_html(
-        openapi_url="/api/openapi.json",
-        title=f"{app.title} – Swagger UI",
-    )
+async def legacy_docs_redirect():
+    # Bewahrt Abwärtskompatibilität, ohne die Seite doppelt zu pflegen
+    return RedirectResponse(url="/api/docs", status_code=307)
+
+
+# Alias, damit die OpenAPI-Spezifikation lokal auch unter /api/openapi.json verfügbar ist
+@app.get("/api/openapi.json", include_in_schema=False)
+async def openapi_alias() -> JSONResponse:
+    return JSONResponse(app.openapi())
 
 
 # CORS configuration
