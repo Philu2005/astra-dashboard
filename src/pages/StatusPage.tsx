@@ -332,9 +332,9 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       {/* Historische Balken – Desktop: Grid, Mobile: feste Balken mit Scroll */}
       {/* Desktop */}
       <div
-        className="status-history-grid w-full hidden md:grid"
+        className="status-history-grid hidden md:grid"
         style={{
-          gridTemplateColumns: `repeat(${service.daily_history.length}, 1fr)`,
+          gridTemplateColumns: `repeat(${service.daily_history.length}, 4px)`,
           gap: '1.5px',
         }}
       >
