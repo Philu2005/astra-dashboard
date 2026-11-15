@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -179,21 +179,7 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         ))}
       </div>
       {/* Mobile */}
-      <div className="md:hidden w-full min-w-0 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div
-          style={{
-            display: 'flex',
-            gap: '3px',
-            width: `${service.daily_history.length * 6 + (service.daily_history.length - 1) * 3}px`,
-          }}
-        >
-          {service.daily_history.map((day) => (
-            <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
-              <StatusBar day={day} />
-            </div>
-          ))}
-        </div>
-      </div>
+      <MobileHistoryScroll dailyHistory={service.daily_history} />
 
       {/* Zeitachse */}
       <div className="flex items-center justify-between mt-2 text-[0.7rem] text-[#5a6180]">
