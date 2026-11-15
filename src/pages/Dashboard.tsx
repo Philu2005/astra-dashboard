@@ -124,13 +124,14 @@ export const Dashboard = () => {
   const minTop = 6;
   const maxTop = chartHeight - tooltipHeight - 6;
   const tooltipTop = Math.max(minTop, Math.min(maxTop, desiredTop));
-  const tooltipPointerOffset = activePoint ? Math.max(-38, Math.min(38, activePoint.x - tooltipLeft)) : 0;
+  // Pfeil exakt auf aktiven Punkt ausrichten: kein künstliches Clamping des Versatzes
+  const tooltipPointerOffset = activePoint ? activePoint.x - tooltipLeft : 0;
 
   // ==== Linie zuverlässig zeichnen und animieren (echte Pfadlänge) ====
   const lineRef = React.useRef<SVGPathElement | null>(null);
   const [dash, setDash] = React.useState<{ array: number; offset: number }>({ array: 0, offset: 0 });
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const el = lineRef.current;
     if (!el) return;
 
@@ -144,26 +145,37 @@ export const Dashboard = () => {
 
     if (media.matches) {
       setDash({ array: 0, offset: 0 });
+      // Sicherstellen, dass Linie vollständig sichtbar ist
+      try {
+        el.style.strokeDasharray = '';
+        el.style.strokeDashoffset = '';
+      } catch {}
       return;
     }
 
     // Startzustand: komplett versteckt
     setDash({ array: total, offset: total });
+    try {
+      el.style.strokeDasharray = `${total}`;
+      el.style.strokeDashoffset = `${total}`;
+    } catch {}
 
     // sanfte Animation auf 0
     let raf = 0;
-    const duration = 900; // ms
+    const duration = 1000; // ms
     const start = performance.now();
     const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
 
     const tick = (now: number) => {
       const p = Math.min(1, (now - start) / duration);
       const eased = ease(p);
-      setDash({ array: total, offset: (1 - eased) * 0 + (1 - 1) * total }); // array bleibt total, offset → 0
+      // Offset kontinuierlich von total → 0 reduzieren
+      const offset = total * (1 - eased);
+      setDash({ array: total, offset }); // für React-gebundenes Style
       // Direkt setAttribute für flüssigere Darstellung
       try {
         el.style.strokeDasharray = `${total}`;
-        el.style.strokeDashoffset = `${(1 - eased) * 0}`;
+        el.style.strokeDashoffset = `${offset}`;
       } catch {}
       if (p < 1) raf = requestAnimationFrame(tick);
     };
@@ -337,7 +349,10 @@ export const Dashboard = () => {
           </div>
 
           {/* Commands Chart */}
-          <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-4 sm:p-5 space-y-4 shadow-astra min-h-[300px] sm:min-h-[330px] overflow-hidden">
+          <div
+            className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-4 sm:p-5 space-y-4 shadow-astra min-h-[300px] sm:min-h-[330px] overflow-hidden"
+            onPointerLeave={() => setHoveredIndex(null)}
+          >
              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pb-1">
                 <BarChart3 className="w-5 h-5 text-[#9d94ff]" />
                 <h3 className="text-white font-semibold text-[1.46rem] sm:text-[1.72rem] lg:text-[1.92rem] tracking-tight leading-none">Befehle <span className="text-[#9299b4] text-[0.9rem] sm:text-[1rem] lg:text-[1.05rem] font-medium ml-1">(letzte 7 Tage)</span></h3>
@@ -358,7 +373,6 @@ export const Dashboard = () => {
               ) : (
               <div
                 className="w-full relative min-h-[212px] sm:min-h-[236px]"
-                onPointerLeave={() => setHoveredIndex(null)}
               >
                 <svg ref={svgRef} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto" role="img" aria-label="Befehle der letzten 7 Tage">
                   <defs>
