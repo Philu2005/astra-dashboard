@@ -102,11 +102,14 @@ function StatusBar({ day }: { day: DayHistory }) {
       <div
         className="rounded-[2px] transition-all duration-150 cursor-pointer"
         style={{
-          // Fix: Auf mobilen Grids darf der Balken schmaler als 6px werden,
-          // ohne einen horizontalen Overflow zu erzeugen. Auf Desktop (Flex)
-          // bleibt die Zielbreite 6px stabil.
-          flex: '0 0 6px',
-          width: '6px',
+          // Breite der Balken:
+          // - Desktop (Standard/Fallback): exakt 6px
+          // - Mobile: per Container-Variable --bar-w dynamisch berechnet,
+          //   sodass 90 Balken mit sichtbaren Abständen ohne Horizontal-Scroll
+          //   über die gesamte Kartenbreite verteilt werden.
+          //   (Container setzt außerdem justify-between für klare Zwischenräume.)
+          flex: '0 0 var(--bar-w, 6px)',
+          width: 'var(--bar-w, 6px)',
           minWidth: 0,
           maxWidth: '100%',
           height: '34px',
@@ -173,13 +176,27 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
       )}
 
       {/* Historische Balken */}
-      {/* Mobile (<= md-1): 90 gleichbreite Spalten ohne horizontalen Scroll, Balken zentriert in ihrer Zelle. */}
+      {/* Mobile (<= md-1): Flex-Container mit w-full und justify-between.
+          Die 90 Balken haben eine schmale, dynamische Breite (--bar-w),
+          werden gleichmäßig über die gesamte Breite verteilt und bleiben
+          klar voneinander getrennt, ohne Horizontal-Scroll. */}
       <div className="w-full md:hidden">
-        <div className="grid grid-flow-col auto-cols-fr gap-[1px]">
+        <div
+          className="flex w-full items-stretch justify-between flex-nowrap"
+          style={{
+            // Sichtbare Abstände entstehen durch justify-between.
+            // Die Breite jedes Balkens wird so berechnet, dass 90 Balken
+            // inkl. Zwischenräume vollständig in die Kartenbreite passen.
+            // Unterkante: 3px, Oberkante: 6px (Ziel 5–6px, fällt bei sehr kleinen
+            // Viewports ggf. leicht darunter, um Abschneiden zu vermeiden).
+            // --bar-w wird in StatusBar als Breite/Basis verwendet.
+            ['--bar-w' as any]: 'clamp(3px, calc((100% - (var(--gap,0px) * 89)) / 90), 6px)',
+            // Optionale Feinsteuerung eines minimalen Zwischenraums, falls nötig:
+            ['--gap' as any]: '0px',
+          }}
+        >
           {service.daily_history.map((day) => (
-            <div key={day.date} className="flex items-stretch justify-center">
-              <StatusBar day={day} />
-            </div>
+            <StatusBar key={day.date} day={day} />
           ))}
         </div>
       </div>
