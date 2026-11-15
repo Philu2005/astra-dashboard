@@ -106,7 +106,7 @@ function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selecte
 
   const isDesktop = mode === 'desktop';
   const isMobile = mode === 'mobile';
-  const active = isDesktop ? hover : selected;
+  const active = isDesktop ? (hover || selected) : selected;
 
   return (
     <div
@@ -124,9 +124,9 @@ function StatusBar({ day, selected, onSelect, mode }: { day: DayHistory; selecte
           height: '34px',
           backgroundColor: color,
           opacity: active ? 1 : 0.85,
-          transform: active ? 'scaleY(1.18)' : 'scaleY(1)',
-          filter: active ? 'brightness(1.25)' : 'brightness(1)',
-          transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: active ? 'translateY(-3px) scaleY(1.12)' : 'translateY(0) scaleY(1)',
+          filter: active ? 'brightness(1.3)' : 'brightness(1)',
+          transition: 'all 220ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       />
     </div>
@@ -303,40 +303,72 @@ function MobileHistoryScroll({ dailyHistory }: { dailyHistory: DayHistory[] }) {
 
 function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [isInContainer, setIsInContainer] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const [tooltipPos, setTooltipPos] = useState<{ left: number; arrowLeft: number; bottom: number } | null>(null);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleMouseEnter = (index: number, e: React.MouseEvent<HTMLDivElement>) => {
-    setHoverIndex(index);
-    const bar = e.currentTarget;
+  const updateTooltipPos = useCallback((index: number) => {
+    const grid = gridRef.current;
     const container = containerRef.current;
-    if (!container) return;
+    if (!grid || !container) return;
+    const bars = grid.children;
+    if (index < 0 || index >= bars.length) return;
+    const bar = bars[index] as HTMLElement;
     const barRect = bar.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const containerWidth = containerRect.width;
     const tooltipW = 140;
     const barCenter = barRect.left - containerRect.left + barRect.width / 2;
-    // Clamp so tooltip stays within container bounds
-    let left = Math.max(tooltipW / 2 + 4, Math.min(barCenter, containerWidth - tooltipW / 2 - 4));
+    const left = Math.max(tooltipW / 2 + 4, Math.min(barCenter, containerWidth - tooltipW / 2 - 4));
     setTooltipPos({
       left,
       arrowLeft: barCenter - left,
-      bottom: containerRect.bottom - barRect.top + 12,
+      bottom: containerRect.bottom - barRect.top + 14,
     });
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
-    setHoverIndex(null);
-    setTooltipPos(null);
-  };
+  const handleBarEnter = useCallback((index: number) => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+    setHoverIndex(index);
+    setIsInContainer(true);
+    updateTooltipPos(index);
+  }, [updateTooltipPos]);
+
+  const handleContainerLeave = useCallback(() => {
+    leaveTimerRef.current = setTimeout(() => {
+      setHoverIndex(null);
+      setIsInContainer(false);
+      setTooltipPos(null);
+    }, 30);
+  }, []);
+
+  const handleContainerEnter = useCallback(() => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
+  }, []);
 
   const hoveredDay = hoverIndex !== null ? dailyHistory[hoverIndex] : null;
   const hoveredLabel = hoveredDay
     ? new Date(hoveredDay.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
     : '';
 
+  const showTooltip = isInContainer && hoveredDay && tooltipPos;
+
   return (
-    <div ref={containerRef} className="w-full hidden md:block relative" style={{ overflow: 'visible' }}>
+    <div
+      ref={containerRef}
+      className="w-full hidden md:block relative"
+      style={{ overflow: 'visible' }}
+      onMouseEnter={handleContainerEnter}
+      onMouseLeave={handleContainerLeave}
+    >
       {/* Tooltip rendered outside overflow:hidden container */}
       <div
         className="absolute z-50 pointer-events-none"
@@ -344,8 +376,10 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
           left: tooltipPos ? `${tooltipPos.left}px` : 0,
           bottom: tooltipPos ? `${tooltipPos.bottom}px` : 0,
           transform: 'translateX(-50%)',
-          opacity: hoveredDay && tooltipPos ? 1 : 0,
-          transition: 'opacity 180ms cubic-bezier(0.4, 0, 0.2, 1)',
+          opacity: showTooltip ? 1 : 0,
+          transition: showTooltip
+            ? 'opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), left 120ms cubic-bezier(0.4, 0, 0.2, 1), bottom 120ms cubic-bezier(0.4, 0, 0.2, 1)'
+            : 'opacity 120ms cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {hoveredDay && (
@@ -356,19 +390,23 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
                 position: 'absolute',
                 top: '100%',
                 left: '50%',
+                marginTop: '-1px',
                 marginLeft: tooltipPos ? `${tooltipPos.arrowLeft}px` : 0,
                 transform: 'translateX(-50%)',
                 width: 0,
                 height: 0,
-                borderLeft: '5px solid transparent',
-                borderRight: '5px solid transparent',
-                borderTop: '5px solid #2a2f4a',
+                borderLeft: '7px solid transparent',
+                borderRight: '7px solid transparent',
+                borderTop: '7px solid #2a2f4a',
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                transition: 'margin-left 120ms cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             />
           </>
         )}
       </div>
       <div
+        ref={gridRef}
         className="status-history-grid w-full flex"
         style={{
           gap: '3px',
@@ -380,10 +418,9 @@ function DesktopHistory({ dailyHistory }: { dailyHistory: DayHistory[] }) {
           <div
             key={day.date}
             className="flex-1 min-w-0"
-            onMouseEnter={(e) => handleMouseEnter(i, e)}
-            onMouseLeave={handleMouseLeave}
+            onMouseEnter={() => handleBarEnter(i)}
           >
-            <StatusBar day={day} mode="desktop" />
+            <StatusBar day={day} mode="desktop" selected={hoverIndex === i} />
           </div>
         ))}
       </div>
