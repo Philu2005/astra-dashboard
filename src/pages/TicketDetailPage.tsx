@@ -76,14 +76,23 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
     <DashboardLayout>
       <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1600px] h-full flex flex-col min-h-0">
         <div className="flex items-center justify-between gap-3">
-          <button onClick={() => window.history.back()} className="text-[#8a90ad] hover:text-[#d6dbf0] text-[0.9rem]">← Zurück</button>
+          <button
+            onClick={() => window.history.back()}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[0.9rem] transition-colors',
+              'border-[#2a2f45] text-[#8a90ad] bg-[#0f1220] hover:text-[#d6dbf0] hover:border-astra-purple/40'
+            )}
+            aria-label="Zurück"
+          >
+            ← <span>Zurück</span>
+          </button>
         </div>
         <div className="mt-3 rounded-2xl border border-[#2a2f45] bg-[#131625] flex flex-col flex-1 min-h-0 shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)]">
           <div className="px-5 py-4 border-b border-[#212131] bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
             {loadingDetail ? (
               <div className="text-[#8a90ad]">Laden…</div>
             ) : ticket ? (
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
                   <h1 className="text-white font-semibold text-2xl truncate">{ticket.subject}</h1>
                   <p className="text-[#9ca2bd] text-[0.9rem] truncate">#{ticket.ticket_number} • {ticket.category}</p>

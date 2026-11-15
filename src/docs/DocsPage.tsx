@@ -114,6 +114,7 @@ export const DocsPage: React.FC = () => {
         {mobileNavOpen && (
           <div className="fixed inset-0 z-[100] lg:hidden">
             <div className="fixed inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
+            {/* Drawer: auf sehr kleinen Screens max. 85vw, ansonsten feste Breite; Desktop bleibt unverändert */}
             <div className="fixed left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-[#121423] border-r border-[#212131] overflow-y-auto p-4">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[0.85rem] font-semibold text-white">Navigation</span>
@@ -135,6 +136,7 @@ export const DocsPage: React.FC = () => {
           </aside>
 
           {/* Main content */}
+          {/* Hauptinhalt: min-w-0 verhindert horizontale Überläufe in Flex-Layouts auf XS */}
           <main ref={contentRef} className="flex-1 min-w-0 px-6 sm:px-10 lg:px-14 py-10 max-w-3xl">
             {/* Zurück zur Dokumentation */}
             <button

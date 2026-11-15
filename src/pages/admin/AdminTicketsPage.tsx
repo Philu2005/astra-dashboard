@@ -194,7 +194,7 @@ export const AdminTicketsPage: React.FC = () => {
               <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Suche</label>
               <input value={search} onChange={(e) => setSearch(e.target.value)} className="w-full h-10 rounded-lg bg-[#0f1220] border border-[#2a2f45] px-3 text-white placeholder:text-[#596189] focus:outline-none focus:border-astra-purple/40" placeholder="Ticketnummer, Nutzer, Betreff" />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-[0.82rem] text-[#8a90ad] mb-1">Status</label>
                 <AstraSelectMenu
@@ -242,13 +242,13 @@ export const AdminTicketsPage: React.FC = () => {
         </div>
 
         {/* Mittlere Spalte: Liste */}
-        <div className="lg:h-full lg:min-h-0 flex flex-col">
+        <div className="lg:h-full lg:min-h-0 flex flex-col min-w-0">
           <div className="rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)] flex flex-col lg:h-full lg:min-h-0">
             <div className="px-5 py-4 border-b border-[#212131] flex items-center justify-between bg-[linear-gradient(180deg,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_100%)] shrink-0">
               <h2 className="text-white font-semibold">Tickets</h2>
               {loadingList && <span className="text-[0.8rem] text-[#8a90ad]">Laden…</span>}
             </div>
-            <div className="p-3 space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+            <div className="p-3 space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-hide min-w-0">
               {tickets.map((t) => (
                 <button key={t.id} onClick={() => setSelected(t)} className={cn('w-full text-left p-3 rounded-xl border transition-colors', selected?.id === t.id ? 'border-astra-purple/40 bg-astra-purple/10 shadow-[inset_0_0_0_1px_rgba(125,227,255,0.08)]' : 'border-[#2a2f45] bg-[#131625] hover:bg-[#171a2b] hover:border-astra-purple/40 hover:shadow-[0_0_0_1px_rgba(125,227,255,0.06)]')}>
                 <div className="flex items-center justify-between gap-3">
