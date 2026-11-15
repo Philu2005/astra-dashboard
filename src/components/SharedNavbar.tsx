@@ -1,9 +1,10 @@
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AstraLogo } from '@/components/AstraLogo';
 import { cn } from '@/lib/utils';
 import { ctaLinks } from '@/lib/landing-content';
+import { withFrom } from '@/lib/returnTo';
 
 const buttonPrimary =
   'inline-flex items-center justify-center gap-2.5 rounded-xl border border-[#7770f5] bg-[linear-gradient(138deg,#6662e8_0%,#4b46c8_52%,#b14fff_100%)] px-5 py-2.5 text-sm font-semibold text-white tracking-wide transition-all duration-300 hover:-translate-y-0.5 hover:border-[#9f95ff] hover:shadow-[0_14px_28px_-16px_rgba(168,85,247,0.9)]';
@@ -27,9 +28,18 @@ interface SharedNavbarProps {
   customLeftContent?: React.ReactNode;
   /** Optionale rechte Slot-Fläche (z. B. Suche, Filter, etc.) */
   customRightContent?: React.ReactNode;
+  /**
+   * Optionaler Zurück-Button nur für Subpages. Wenn gesetzt, wird links ein
+   * eigenständiger Button mit Icon und Label angezeigt.
+   */
+  showBackButton?: boolean;
+  /** Zielpfad für den Zurück-Button (muss interner Pfad sein, z. B. "/" oder "/dashboard"). */
+  backTo?: string;
+  /** Beschriftung für den Zurück-Button (Default: "Zurück"). */
+  backLabel?: string;
 }
 
-export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftContent, customRightContent }: SharedNavbarProps) => {
+export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftContent, customRightContent, showBackButton, backTo = '/', backLabel = 'Zurück' }: SharedNavbarProps) => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { authenticated, loading: authLoading, user } = useAuth();
@@ -56,6 +66,9 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
     return false;
   };
 
+  // Aktueller Pfad (für from-Weitergabe bei Landing-Navigation)
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/';
+
   return (
     <header
       className={cn(
@@ -66,7 +79,22 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
       )}
     >
       <nav className="mx-auto flex w-full max-w-[1380px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
+          {variant === 'subpage' && showBackButton && (
+            <a
+              href={backTo || '/'}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#2a2f47] bg-layout-topbar/70 px-3.5 py-2 text-[0.92rem] font-medium text-[#d7ddf2] transition-all duration-200 hover:border-[#5d649b] hover:bg-layout-hover focus:outline-none focus:ring-2 focus:ring-[#4b46c8]/50"
+              aria-label="Zurück"
+            >
+              <ChevronLeft className="w-4.5 h-4.5" />
+              {backLabel}
+            </a>
+          )}
+
+          {variant === 'subpage' && showBackButton && (
+            <div className="hidden lg:block h-6 w-px bg-layout-divider" />
+          )}
+
           <a href={ctaLinks.home} className="flex items-center gap-3 group">
             <div className="relative flex items-center justify-center w-[38px] h-[38px] bg-[#4b46c8] rounded-xl shadow-astra-glow border border-[#5f5ad6]/20 overflow-hidden shrink-0 transition-transform group-hover:scale-105">
               <AstraLogo size={34} glow="soft" fill className="scale-[1.18]" alt="Astra" />
@@ -78,7 +106,7 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
           </a>
 
           {customLeftContent && (
-            <div className="hidden items-center lg:flex border-l border-layout-divider pl-6 ml-2 h-8">
+            <div className="hidden items-center lg:flex pl-4 ml-1">
               {customLeftContent}
             </div>
           )}
@@ -88,10 +116,13 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
         <div className="hidden items-center gap-8 lg:flex">
           {navItems.map((item) => {
             const active = isLinkActive(item.href);
+            const href = (item.href === '/docs' || item.href === '/status')
+              ? withFrom(item.href, currentPath)
+              : item.href;
             return (
               <a
                 key={item.label}
-                href={item.href}
+                href={href}
                 className={cn(
                   'relative text-[0.96rem] font-medium transition-all duration-200 py-1 px-1',
                   active
@@ -143,21 +174,26 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
       {variant === 'landing' && open && (
         <div className="border-t border-layout-divider bg-[#0f1220] px-4 pb-5 pt-4 lg:hidden">
           <div className="flex flex-col gap-2">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  'rounded-xl border px-4 py-2.5 text-[#d7ddf2] transition-colors',
-                  isLinkActive(item.href)
-                    ? 'bg-[#4b46c8]/20 border-[#4b46c8]/40 text-white'
-                    : 'bg-layout-topbar/70 border-layout-divider'
-                )}
-              >
-                {item.label}
-              </a>
-            ))}
+              {navItems.map((item) => {
+                const href = (item.href === '/docs' || item.href === '/status')
+                  ? withFrom(item.href, currentPath)
+                  : item.href;
+                return (
+                <a
+                  key={item.label}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'rounded-xl border px-4 py-2.5 text-[#d7ddf2] transition-colors',
+                    isLinkActive(item.href)
+                      ? 'bg-[#4b46c8]/20 border-[#4b46c8]/40 text-white'
+                      : 'bg-layout-topbar/70 border-layout-divider'
+                  )}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
             {!isAdmin && (
               <a href="/support" onClick={() => setOpen(false)} className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]">Support</a>
             )}

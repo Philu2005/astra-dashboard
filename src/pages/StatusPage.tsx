@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { SharedNavbar } from '@/components/SharedNavbar';
 import { AstraLogo } from '@/components/AstraLogo';
 import { statusApi, type StatusPageData, type ServiceStatus, type Incident, type DayHistory } from '@/services/status-api';
+import { getReturnToFromUrl } from '@/lib/returnTo';
 
 // ─── Konstanten ──────────────────────────────────────────────
 
@@ -238,6 +239,7 @@ export default function StatusPage() {
   const [data, setData] = useState<StatusPageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const backTo = getReturnToFromUrl(undefined, '/');
 
   const fetchData = useCallback(async () => {
     try {
@@ -267,15 +269,12 @@ export default function StatusPage() {
       <SharedNavbar
         variant="subpage"
         activeRoute="/status"
+        showBackButton
+        backTo={backTo}
         customLeftContent={
-          <div className="flex items-center gap-4">
-            <a href="/" className="inline-flex items-center gap-2 text-[#bcc3df] hover:text-white transition-colors text-[0.9rem]">
-              <ChevronLeft className="w-4 h-4" /> Zurück
-            </a>
-            <div className="flex items-center gap-3">
-              <Activity className="w-5 h-5 text-[#7de3ff]" />
-              <span className="text-[0.95rem] font-bold tracking-tight text-white">Systemstatus</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <Activity className="w-5 h-5 text-[#7de3ff]" />
+            <span className="text-[0.95rem] font-bold tracking-tight text-white">Systemstatus</span>
           </div>
         }
       />

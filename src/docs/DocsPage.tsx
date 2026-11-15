@@ -13,6 +13,7 @@ import { DocsNav } from './components/DocsNav';
 import { DocsToc } from './components/DocsToc';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import type { DocArticle } from './types';
+import { getReturnToFromUrl } from '@/lib/returnTo';
 
 const iconMap: Record<string, React.ElementType> = {
   Rocket, Server, Shield, Code, LifeBuoy,
@@ -32,6 +33,7 @@ export const DocsPage: React.FC = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  const backTo = getReturnToFromUrl(undefined, '/');
 
   // Handle popstate for browser back/forward
   useEffect(() => {
@@ -57,7 +59,8 @@ export const DocsPage: React.FC = () => {
 
   const navigate = useCallback((slug: string | null) => {
     const path = slug ? `/docs/${slug}` : '/docs';
-    window.history.pushState(null, '', path);
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    window.history.pushState(null, '', `${path}${search}`);
     setCurrentSlug(slug);
     setMobileNavOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -78,15 +81,12 @@ export const DocsPage: React.FC = () => {
         <SharedNavbar
           variant="subpage"
           activeRoute="/docs"
+          showBackButton
+          backTo={backTo}
           customLeftContent={
-            <div className="flex items-center gap-4">
-              <a href="/" className="inline-flex items-center gap-2 text-[#bcc3df] hover:text-white transition-colors text-[0.9rem]">
-                <ChevronLeft className="w-4 h-4" /> Zurück
-              </a>
-              <div className="flex items-center gap-3">
-                <BookOpen className="w-5 h-5 text-[#7de3ff]" />
-                <span className="text-[0.95rem] font-bold tracking-tight text-white">Dokumentation</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-[#7de3ff]" />
+              <span className="text-[0.95rem] font-bold tracking-tight text-white">Dokumentation</span>
             </div>
           }
           customRightContent={
