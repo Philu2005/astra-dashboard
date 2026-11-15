@@ -165,11 +165,11 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         <p className="text-xs text-yellow-400/80 mt-1 mb-3">{service.sub_status}</p>
       )}
 
-      {/* Historische Balken – einheitlich für alle Viewports */}
+      {/* Historische Balken – Desktop: Grid, Mobile: feste Balken mit Scroll */}
+      {/* Desktop */}
       <div
-        className="status-history-grid w-full"
+        className="status-history-grid w-full hidden md:grid"
         style={{
-          display: 'grid',
           gridTemplateColumns: `repeat(${service.daily_history.length}, 1fr)`,
           gap: '1.5px',
         }}
@@ -177,6 +177,22 @@ function ServiceCard({ service }: { service: ServiceStatus }) {
         {service.daily_history.map((day) => (
           <StatusBar key={day.date} day={day} />
         ))}
+      </div>
+      {/* Mobile */}
+      <div className="md:hidden w-full overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '3px',
+            width: `${service.daily_history.length * 6 + (service.daily_history.length - 1) * 3}px`,
+          }}
+        >
+          {service.daily_history.map((day) => (
+            <div key={day.date} style={{ width: '6px', flexShrink: 0 }}>
+              <StatusBar day={day} />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Zeitachse */}
