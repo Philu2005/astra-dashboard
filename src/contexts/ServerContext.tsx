@@ -110,7 +110,8 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     function syncFromPath() {
       const path = window.location.pathname.replace(/\/+$/, '');
-      const m = path.match(/^\/servers\/(.+)$/);
+      // Erkenne auch Unterpfade wie /servers/{id}/settings
+      const m = path.match(/^\/servers\/([^/]+)(?:\/.*)?$/);
       if (m && m[1]) {
         const id = decodeURIComponent(m[1]);
         if (servers.some((s) => s.id === id)) {
@@ -118,7 +119,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           return;
         }
       }
-      // Außerhalb einer Server-Einstellungsroute: Auswahl zurücksetzen
+      // Außerhalb einer Server-Verwaltungsroute: Auswahl zurücksetzen
       setSelectedServerId(null);
     }
     syncFromPath();

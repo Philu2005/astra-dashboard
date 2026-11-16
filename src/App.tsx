@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { Dashboard } from '@/pages/Dashboard';
 import { Servers } from '@/pages/Servers';
 import { LandingPage } from '@/pages/LandingPage';
@@ -14,35 +13,72 @@ import { CookieConsentBanner } from '@/components/consent/CookieConsentBanner';
 import { CookieSettingsModal } from '@/components/consent/CookieSettingsModal';
 import { apiClient } from '@/lib/api-client';
 import { appConfig } from '@/lib/app-config';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { createBrowserRouter, RouterProvider, Outlet, useLocation, useParams, Navigate } from 'react-router-dom';
+import GlobalDashboardLayout from '@/layouts/GlobalDashboardLayout';
+import ServerLayout from '@/layouts/ServerLayout';
+import ServerOverview from '@/pages/server/ServerOverview';
+import ServerSettingsPlaceholder from '@/pages/server/ServerSettingsPlaceholder';
+import ModuleOverview from '@/pages/server/modules/ModuleOverview';
+import ModuleLayout from '@/layouts/modules/ModuleLayout';
+import AutomodPage from '@/pages/server/modules/moderation/AutomodPage';
+import WarningsPage from '@/pages/server/modules/moderation/WarningsPage';
+import ModlogPage from '@/pages/server/modules/moderation/ModlogPage';
+import ServerPermissionsPlaceholder from '@/pages/server/ServerPermissionsPlaceholder';
+import ServerLogsPlaceholder from '@/pages/server/ServerLogsPlaceholder';
+import ServerStatsPlaceholder from '@/pages/server/ServerStatsPlaceholder';
 
-function App() {
-  const { authenticated, loading, login, error, status } = useAuth();
-  const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') || '/' : '/';
+// --- Route Elements to preserve previous behaviors ---
+const RequireAuth: React.FC<{ children: React.ReactNode; message: 'dashboard' | 'servers' }> = ({ children, message }) => {
+  const { authenticated, loading, error, status, login } = useAuth();
+  const location = useLocation();
   const loginStartedRef = useRef(false);
-  const exchangeStartedRef = useRef(false);
-  const [exchanging, setExchanging] = useState(false);
 
-  // Handle /auth/callback: exchange token for session cookie
   useEffect(() => {
-    if (pathname !== '/auth/callback') return;
+    if (location.pathname !== '/login') {
+      loginStartedRef.current = false;
+    }
+  }, [location.pathname]);
+
+  if (loading) {
+    return <StaticInfoPage title="Wird geladen..." description="Deine Sitzung wird überprüft." />;
+  }
+  if (!authenticated) {
+    if (message === 'dashboard') {
+      return (
+        <StaticInfoPage
+          title="Nicht angemeldet"
+          description="Du musst dich anmelden, um auf das Dashboard zuzugreifen."
+          showHomeActions
+        />
+      );
+    }
+    return (
+      <StaticInfoPage
+        title="Nicht angemeldet"
+        description="Du musst dich anmelden, um auf die Serverliste zuzugreifen."
+        showHomeActions
+      />
+    );
+  }
+  return <>{children}</>;
+};
+
+const AuthCallbackPage: React.FC = () => {
+  const exchangeStartedRef = useRef(false);
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     if (!token) {
       window.location.replace('/login?error=token_exchange_failed');
       return;
     }
-
-    // Guard against double execution (React StrictMode)
     if (exchangeStartedRef.current) return;
     exchangeStartedRef.current = true;
-    setExchanging(true);
-
-    apiClient.post('/auth/exchange', { token })
+    apiClient
+      .post('/auth/exchange', { token })
       .then(async (res) => {
         if (res.ok) {
-          // Session cookie is now set – navigate to dashboard via full reload
-          // so AuthContext re-checks /auth/me with the new cookie
           window.location.replace('/dashboard');
         } else {
           window.location.replace('/login?error=token_exchange_failed');
@@ -51,176 +87,176 @@ function App() {
       .catch(() => {
         window.location.replace('/login?error=token_exchange_failed');
       });
-  }, [pathname]);
+  }, []);
+  return <StaticInfoPage title="Anmeldung wird abgeschlossen..." description="Deine Sitzung wird eingerichtet." />;
+};
 
-  // Handle /login: auto-start OAuth if unauthenticated and no error
+const LoginRedirectPage: React.FC = () => {
+  const { authenticated, loading, error, status, login } = useAuth();
   useEffect(() => {
-    if (pathname !== '/login') {
-      loginStartedRef.current = false;
-      return;
-    }
-
-    if (loading || loginStartedRef.current) {
-      return;
-    }
-
+    if (loading) return;
     if (authenticated) {
       window.location.replace('/dashboard');
       return;
     }
-
     if (!error) {
-      loginStartedRef.current = true;
       login();
     }
-  }, [pathname, authenticated, loading, error, login]);
+  }, [authenticated, loading, error, login]);
 
-  const renderPage = () => {
-    if (pathname === '/auth/callback') {
-      return (
-        <StaticInfoPage
-          title="Anmeldung wird abgeschlossen..."
-          description="Deine Sitzung wird eingerichtet."
-        />
-      );
-    }
-
-    if (loading && (pathname === '/dashboard' || pathname === '/servers' || pathname === '/login')) {
-      return (
-        <StaticInfoPage
-          title="Wird geladen..."
-          description="Deine Sitzung wird überprüft."
-        />
-      );
-    }
-
-    if (pathname === '/dashboard') {
-      if (!authenticated) {
-        return (
-          <StaticInfoPage
-            title="Nicht angemeldet"
-            description="Du musst dich anmelden, um auf das Dashboard zuzugreifen."
-            showHomeActions
-          />
-        );
-      }
-      return (
-        <DashboardLayout>
-          <Dashboard />
-        </DashboardLayout>
-      );
-    }
-
-    if (pathname === '/servers' || pathname.startsWith('/servers/')) {
-      if (!authenticated) {
-        return (
-          <StaticInfoPage
-            title="Nicht angemeldet"
-            description="Du musst dich anmelden, um auf die Serverliste zuzugreifen."
-            showHomeActions
-          />
-        );
-      }
-      return (
-        <DashboardLayout>
-          <Servers />
-        </DashboardLayout>
-      );
-    }
-
-    if (pathname === '/login') {
-      if (error) {
-        return (
-          <StaticInfoPage
-            title="Login-Fehler"
-            description={error}
-            showHomeActions
-          />
-        );
-      }
-
-      if (status === 'unauthenticated') {
-        return (
-          <StaticInfoPage
-            title="Anmeldung wird gestartet..."
-            description="Du wirst zu Discord weitergeleitet. Falls nichts passiert, starte die Anmeldung erneut über die Homepage."
-            showHomeActions
-          />
-        );
-      }
-
-      return (
-        <StaticInfoPage
-          title="Anmeldung läuft..."
-          description="Du wirst zu Discord weitergeleitet."
-        />
-      );
-    }
-
-    if (pathname === '/docs' || pathname.startsWith('/docs/')) {
-      return <DocsPage />;
-    }
-
-    if (pathname === '/support') {
-      return <SupportPage />;
-    }
-
-    if (pathname.startsWith('/support/ticket/')) {
-      const idPart = pathname.replace('/support/ticket/', '').split('/')[0];
-      const id = Number(idPart);
-      if (!Number.isFinite(id)) {
-        return (
-          <StaticInfoPage
-            title="Ungültige Ticket-ID"
-            description="Die angeforderte Ticket-ID ist ungültig."
-            showHomeActions
-          />
-        );
-      }
-      return <TicketDetailPage ticketId={id} />;
-    }
-
-    if (pathname === '/dashboard/tickets') {
-      return <AdminTicketsPage />;
-    }
-
-    if (pathname === '/status') {
-      return <StatusPage />;
-    }
-
-    if (pathname === '/invite') {
-      window.location.replace(appConfig.botInviteUrl!);
-      return (
-        <StaticInfoPage
-          title="Weiterleitung..."
-          description="Du wirst zur Discord-Einladung weitergeleitet."
-        />
-      );
-    }
-
-    if (pathname === '/') {
-      return <LandingPage />;
-    }
-
+  if (error) {
+    return <StaticInfoPage title="Login-Fehler" description={error} showHomeActions />;
+  }
+  if (status === 'unauthenticated') {
     return (
+      <StaticInfoPage
+        title="Anmeldung wird gestartet..."
+        description="Du wirst zu Discord weitergeleitet. Falls nichts passiert, starte die Anmeldung erneut über die Homepage."
+        showHomeActions
+      />
+    );
+  }
+  return <StaticInfoPage title="Anmeldung läuft..." description="Du wirst zu Discord weitergeleitet." />;
+};
+
+const InviteRedirectPage: React.FC = () => {
+  useEffect(() => {
+    if (appConfig.botInviteUrl) {
+      window.location.replace(appConfig.botInviteUrl);
+    }
+  }, []);
+  return <StaticInfoPage title="Weiterleitung..." description="Du wirst zur Discord-Einladung weitergeleitet." />;
+};
+
+// Wrapper to reproduce ServerProvider usage on specific routes when authenticated
+const WithServerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { authenticated } = useAuth();
+  if (!authenticated) return <>{children}</>;
+  return <ServerProvider>{children}</ServerProvider>;
+};
+
+// Ticket detail element with ID parsing like before (declare before router usage)
+function TicketDetailRoute() {
+  const params = useParams();
+  const id = Number(params.id);
+  if (!Number.isFinite(id)) {
+    return (
+      <StaticInfoPage
+        title="Ungültige Ticket-ID"
+        description="Die angeforderte Ticket-ID ist ungültig."
+        showHomeActions
+      />
+    );
+  }
+  return <TicketDetailPage ticketId={id} />;
+}
+
+const GlobalLayoutOutlet: React.FC = () => (
+  <GlobalDashboardLayout>
+    <Outlet />
+  </GlobalDashboardLayout>
+);
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <LandingPage />,
+    errorElement: (
       <StaticInfoPage
         title="Seite nicht gefunden"
         description="Die gewünschte Seite existiert nicht. Nutze die Homepage oder das Dashboard."
         showHomeActions
       />
-    );
-  };
+    ),
+  },
+  {
+    path: '/',
+    element: (
+      <WithServerProvider>
+        <GlobalLayoutOutlet />
+      </WithServerProvider>
+    ),
+    children: [
+      {
+        path: 'dashboard',
+        element: (
+          <RequireAuth message="dashboard">
+            <Dashboard />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'servers',
+        element: (
+          <RequireAuth message="servers">
+            <Servers />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'support',
+        element: <SupportPage />,
+      },
+      {
+        path: 'support/ticket/:id',
+        element: <TicketDetailRoute />,
+      },
+      {
+        path: 'dashboard/tickets',
+        element: <AdminTicketsPage />,
+      },
+    ],
+  },
+  { path: '/docs', element: <DocsPage /> },
+  { path: '/status', element: <StatusPage /> },
+  { path: '/login', element: <LoginRedirectPage /> },
+  { path: '/auth/callback', element: <AuthCallbackPage /> },
+  { path: '/invite', element: <InviteRedirectPage /> },
+  // --- Serverbereich: Eigenständiges Layout und verschachtelte Routen ---
+  {
+    path: '/servers/:guildId',
+    element: (
+      <RequireAuth message="servers">
+        <WithServerProvider>
+          <ServerLayout />
+        </WithServerProvider>
+      </RequireAuth>
+    ),
+    children: [
+      { index: true, element: <ServerOverview /> },
+      { path: 'settings', element: <ServerSettingsPlaceholder /> },
+      { path: 'modules', element: <ModuleOverview /> },
+      {
+        path: 'modules/moderation',
+        element: <ModuleLayout moduleKey="moderation" />,
+        children: [
+          { index: true, element: <Navigate to="automod" replace /> },
+          { path: 'automod', element: <AutomodPage /> },
+          { path: 'warnings', element: <WarningsPage /> },
+          { path: 'modlog', element: <ModlogPage /> },
+        ],
+      },
+      { path: 'permissions', element: <ServerPermissionsPlaceholder /> },
+      { path: 'logs', element: <ServerLogsPlaceholder /> },
+      { path: 'stats', element: <ServerStatsPlaceholder /> },
+    ],
+  },
+  {
+    path: '*',
+    element: (
+      <StaticInfoPage
+        title="Seite nicht gefunden"
+        description="Die gewünschte Seite existiert nicht. Nutze die Homepage oder das Dashboard."
+        showHomeActions
+      />
+    ),
+  },
+]);
 
-  const isDashboardPage = pathname === '/dashboard' || pathname === '/servers' || pathname.startsWith('/servers/') || pathname === '/support' || pathname.startsWith('/support/ticket/') || pathname === '/dashboard/tickets';
-  const page = renderPage();
-
+function App() {
   return (
     <>
-      {isDashboardPage && authenticated ? (
-        <ServerProvider>{page}</ServerProvider>
-      ) : (
-        page
-      )}
+      <RouterProvider router={router} />
       <CookieSettingsModal />
       <CookieConsentBanner />
     </>
