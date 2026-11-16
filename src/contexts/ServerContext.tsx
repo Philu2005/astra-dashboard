@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { serverApi, ServerApiError } from '@/services/server-api';
 import type { AstraServer, ServerLoadingState } from '@/types/server';
 
@@ -107,25 +108,19 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Die Auswahl wird explizit durch Nutzeraktionen (z. B. Sidebar/Verwalten) gesetzt.
 
   // Route-basiertes Synchronisieren der aktiven Serverauswahl
+  const location = useLocation();
   useEffect(() => {
-    function syncFromPath() {
-      const path = window.location.pathname.replace(/\/+$/, '');
-      // Erkenne auch Unterpfade wie /servers/{id}/settings
-      const m = path.match(/^\/servers\/([^/]+)(?:\/.*)?$/);
-      if (m && m[1]) {
-        const id = decodeURIComponent(m[1]);
-        if (servers.some((s) => s.id === id)) {
-          setSelectedServerId(id);
-          return;
-        }
+    const path = location.pathname.replace(/\/+$/, '');
+    const m = path.match(/^\/servers\/([^/]+)(?:\/.*)?$/);
+    if (m && m[1]) {
+      const id = decodeURIComponent(m[1]);
+      if (servers.some((s) => s.id === id)) {
+        setSelectedServerId(id);
+        return;
       }
-      // Außerhalb einer Server-Verwaltungsroute: Auswahl zurücksetzen
-      setSelectedServerId(null);
     }
-    syncFromPath();
-    window.addEventListener('popstate', syncFromPath);
-    return () => window.removeEventListener('popstate', syncFromPath);
-  }, [servers]);
+    setSelectedServerId(null);
+  }, [location.pathname, servers]);
 
   const selectedServer = useMemo(
     () => servers.find((s) => s.id === selectedServerId) ?? null,

@@ -32,6 +32,7 @@ class AstraClient:
         path: str,
         *,
         params: Optional[dict[str, str]] = None,
+        json: Optional[dict[str, Any]] = None,
         authenticated: bool = True,
     ) -> Any:
         url = f"{self.base_url}{path}"
@@ -39,7 +40,7 @@ class AstraClient:
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.request(method, url, params=params, headers=headers)
+                response = await client.request(method, url, params=params, headers=headers, json=json)
         except httpx.ConnectError:
             logger.warning("Astra Bot API nicht erreichbar: %s", url)
             raise AstraApiError("Astra ist derzeit nicht erreichbar.", status_code=503)
@@ -143,6 +144,60 @@ class AstraClient:
                 raise AstraApiError("Ungültige Statistik-Antwort von Astra.", status_code=502)
 
         return {"period": period, "total": total, "data": days}
+
+    # --- Moderation: AutoMod ---
+    async def get_automod_config(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /moderation/automod/{guild_id}?user_id=<user_id>"""
+        return await self._request("GET", f"/moderation/automod/{guild_id}", params={"user_id": user_id})
+
+    async def put_automod_config(self, guild_id: str, user_id: str, config: dict[str, Any]) -> dict[str, Any]:
+        """PUT /moderation/automod/{guild_id}?user_id=<user_id> { json: config }"""
+        return await self._request(
+            "PUT",
+            f"/moderation/automod/{guild_id}",
+            params={"user_id": user_id},
+            json=config,
+        )
+
+    # --- Moderation: Modlog ---
+    async def get_modlog(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /moderation/modlog/{guild_id}?user_id=<user_id>"""
+        return await self._request("GET", f"/moderation/modlog/{guild_id}", params={"user_id": user_id})
+
+    async def put_modlog(self, guild_id: str, user_id: str, channel_id: str) -> dict[str, Any]:
+        """PUT /moderation/modlog/{guild_id}?user_id=<user_id> { json: { channel_id } }"""
+        return await self._request(
+            "PUT",
+            f"/moderation/modlog/{guild_id}",
+            params={"user_id": user_id},
+            json={"channel_id": channel_id},
+        )
+
+    async def delete_modlog(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """DELETE /moderation/modlog/{guild_id}?user_id=<user_id>"""
+        return await self._request("DELETE", f"/moderation/modlog/{guild_id}", params={"user_id": user_id})
+
+    # --- Moderation: Warns ---
+    async def get_warns(self, guild_id: str, member_id: str, user_id: str) -> dict[str, Any]:
+        """GET /moderation/warns/{guild_id}/{member_id}?user_id=<user_id>"""
+        return await self._request(
+            "GET",
+            f"/moderation/warns/{guild_id}/{member_id}",
+            params={"user_id": user_id},
+        )
+
+    async def delete_warn(self, guild_id: str, member_id: str, user_id: str, warn_id: Optional[str] = None, delete_all: bool = False) -> dict[str, Any]:
+        """DELETE /moderation/warns/{guild_id}/{member_id}?user_id=<user_id>&warn_id=... or &all=true"""
+        params: dict[str, str] = {"user_id": user_id}
+        if delete_all:
+            params["all"] = "true"
+        if warn_id:
+            params["warn_id"] = warn_id
+        return await self._request(
+            "DELETE",
+            f"/moderation/warns/{guild_id}/{member_id}",
+            params=params,
+        )
 
 
 astra_client = AstraClient()

@@ -63,6 +63,21 @@ export const apiClient = {
     return response;
   },
 
+  async put(endpoint: string, data?: unknown) {
+    assertNoDoubleApiPrefix(endpoint);
+    const base = resolveBase(endpoint);
+    const response = await fetch(`${base}${endpoint}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return response;
+  },
+
   async delete(endpoint: string) {
     assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);

@@ -3,7 +3,6 @@ import { supportApi } from '@/services/support-api';
 import type { TicketSummary, TicketCreate, TicketDetail } from '@/types/support';
 import { SUPPORT_CATEGORIES, STATUS_LABELS } from '@/types/support';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { cn } from '@/lib/utils';
 import { CharCounter } from '@/components/support/CharCounter';
@@ -175,7 +174,7 @@ export const SupportPage: React.FC = () => {
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1680px] h-full flex flex-col min-h-0">
         {/* Hero / Header */}
         <div className="mb-6 rounded-2xl border border-[#2a2f45] bg-[#0f1220] overflow-hidden shadow-[0_0_0_1px_rgba(104,97,225,0.08),0_30px_60px_-20px_rgba(0,0,0,0.45)] shrink-0">
@@ -404,7 +403,7 @@ export const SupportPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

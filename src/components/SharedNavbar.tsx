@@ -42,6 +42,7 @@ interface SharedNavbarProps {
 export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftContent, customRightContent, showBackButton, backTo = '/', backLabel = 'Zurück' }: SharedNavbarProps) => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const { authenticated, loading: authLoading, user } = useAuth();
   const isAdmin = user?.id === '789555434201677824';
 
@@ -55,8 +56,6 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
   const navItems: NavItem[] = [
     { label: 'Start', href: '/' },
     { label: 'Features', href: '/#features' },
-    { label: 'Dokumentation', href: '/docs' },
-    { label: 'Status', href: '/status' },
     { label: 'Support', href: '/support' },
   ];
 
@@ -116,18 +115,13 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
         <div className="hidden items-center gap-8 lg:flex">
           {navItems.map((item) => {
             const active = isLinkActive(item.href);
-            const href = (item.href === '/docs' || item.href === '/status')
-              ? withFrom(item.href, currentPath)
-              : item.href;
             return (
               <a
                 key={item.label}
-                href={href}
+                href={item.href}
                 className={cn(
                   'relative text-[0.96rem] font-medium transition-all duration-200 py-1 px-1',
-                  active
-                    ? 'text-white'
-                    : 'text-[#bcc3df] hover:text-white',
+                  active ? 'text-white' : 'text-[#bcc3df] hover:text-white',
                 )}
               >
                 {item.label}
@@ -137,6 +131,64 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
               </a>
             );
           })}
+
+          {/* Ressourcen-Dropdown */}
+          <div className="relative" onMouseLeave={() => setResourcesOpen(false)}>
+            {/* Toggle */}
+            <button
+              type="button"
+              className={cn(
+                'relative text-[0.96rem] font-medium transition-all duration-200 py-1 px-1 text-left',
+                'text-[#bcc3df] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4b46c8]/60 rounded-md'
+              )}
+              aria-haspopup="menu"
+              aria-expanded={resourcesOpen}
+              onClick={() => setResourcesOpen((v) => !v)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setResourcesOpen((v) => !v);
+                }
+                if (e.key === 'Escape') {
+                  setResourcesOpen(false);
+                }
+              }}
+            >
+              Ressourcen
+            </button>
+            {/* Panel */}
+            {resourcesOpen && (
+              <div
+                role="menu"
+                aria-label="Ressourcen"
+                className="absolute left-0 top-full mt-2 min-w-[220px] rounded-xl border border-[#2a2f45] bg-[#0f1220] shadow-[0_8px_28px_rgba(0,0,0,0.45)] p-1.5 z-50"
+              >
+                <a
+                  role="menuitem"
+                  href={withFrom('/docs', currentPath)}
+                  className="block rounded-lg px-3 py-2 text-[0.95rem] text-[#d7ddf2] hover:bg-[#131625] focus:bg-[#131625] focus:outline-none"
+                  onClick={() => setResourcesOpen(false)}
+                >
+                  Dokumentation
+                </a>
+                <a
+                  role="menuitem"
+                  href={withFrom('/status', currentPath)}
+                  className="block rounded-lg px-3 py-2 text-[0.95rem] text-[#d7ddf2] hover:bg-[#131625] focus:bg-[#131625] focus:outline-none"
+                  onClick={() => setResourcesOpen(false)}
+                >
+                  Status
+                </a>
+                <div
+                  role="menuitem"
+                  aria-disabled="true"
+                  className="block rounded-lg px-3 py-2 text-[0.95rem] text-[#9aa2c3] border border-dashed border-transparent hover:border-[#2a2f45] cursor-not-allowed"
+                >
+                  Updates (Demnächst)
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         )}
 
@@ -174,14 +226,10 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
       {variant === 'landing' && open && (
         <div className="border-t border-layout-divider bg-[#0f1220] px-4 pb-5 pt-4 lg:hidden">
           <div className="flex flex-col gap-2">
-              {navItems.map((item) => {
-                const href = (item.href === '/docs' || item.href === '/status')
-                  ? withFrom(item.href, currentPath)
-                  : item.href;
-                return (
+              {navItems.map((item) => (
                 <a
                   key={item.label}
-                  href={href}
+                  href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
                     'rounded-xl border px-4 py-2.5 text-[#d7ddf2] transition-colors',
@@ -192,8 +240,32 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
                 >
                   {item.label}
                 </a>
-              );
-            })}
+              ))}
+
+            {/* Ressourcen (mobil) */}
+            <div className="mt-2">
+              <div className="px-1.5 pb-1 text-[0.86rem] font-semibold text-[#cfd4ec]">Ressourcen</div>
+              <a
+                href={withFrom('/docs', currentPath)}
+                onClick={() => setOpen(false)}
+                className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]"
+              >
+                Dokumentation
+              </a>
+              <a
+                href={withFrom('/status', currentPath)}
+                onClick={() => setOpen(false)}
+                className="mt-2 block rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]"
+              >
+                Status
+              </a>
+              <div
+                aria-disabled="true"
+                className="mt-2 rounded-xl border border-dashed border-layout-divider bg-layout-topbar/50 px-4 py-2.5 text-[#9aa2c3]"
+              >
+                Updates (Demnächst)
+              </div>
+            </div>
             {!isAdmin && (
               <a href="/support" onClick={() => setOpen(false)} className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]">Support</a>
             )}

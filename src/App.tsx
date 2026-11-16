@@ -186,6 +186,22 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'dashboard/status',
+        element: (
+          <RequireAuth message="dashboard">
+            <StatusPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'dashboard/docs',
+        element: (
+          <RequireAuth message="dashboard">
+            <DocsPage />
+          </RequireAuth>
+        ),
+      },
+      {
         path: 'servers',
         element: (
           <RequireAuth message="servers">

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supportApi } from '@/services/support-api';
@@ -166,7 +165,7 @@ export const AdminTicketsPage: React.FC = () => {
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1800px] h-full grid grid-cols-1 gap-6 lg:grid-rows-[1fr] lg:min-h-0 lg:grid-cols-[320px_1fr_1.6fr] xl:grid-cols-[340px_1.1fr_1.8fr] 2xl:grid-cols-[360px_1.2fr_2fr]">
         {/* Linke Spalte: Kennzahlen + Filter */}
         <div className="space-y-5 lg:overflow-y-auto lg:h-full scrollbar-hide">
@@ -459,7 +458,7 @@ export const AdminTicketsPage: React.FC = () => {
         onCancel={() => { if (!deleting) setDeleteDialogOpen(false); }}
         onConfirm={confirmDelete}
       />
-    </DashboardLayout>
+    </>
   );
 };
 

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supportApi } from '@/services/support-api';
@@ -73,7 +72,7 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 2xl:max-w-[1600px] h-full flex flex-col min-h-0">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -171,7 +170,7 @@ export const TicketDetailPage: React.FC<{ ticketId: number }> = ({ ticketId }) =
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
