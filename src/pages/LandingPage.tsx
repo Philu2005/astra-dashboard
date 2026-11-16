@@ -7,6 +7,11 @@ import { SharedNavbar } from '@/components/SharedNavbar';
 import { AstraHeroProductDemo } from '@/components/landing/AstraHeroProductDemo';
 import { AstraHeroNebula } from '@/components/landing/AstraHeroNebula';
 import { SectionDivider } from '@/components/landing/SectionDivider';
+import { SceneComposition } from '@/components/landing/SceneComposition';
+import { ModerationScene } from '@/components/landing/scenes/ModerationScene';
+import { TicketsScene } from '@/components/landing/scenes/TicketsScene';
+import { AutomationScene } from '@/components/landing/scenes/AutomationScene';
+import { BackupsScene } from '@/components/landing/scenes/BackupsScene';
 import { CookieSettingsTrigger } from '@/components/consent/CookieSettingsTrigger';
 import { cn } from '@/lib/utils';
 import {
@@ -380,6 +385,74 @@ export const LandingPage = () => {
           <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <FeatureSection />
           <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" flip />
+          {/* Alternierende große Szenen – eigene SVGs + Textkompositionen */}
+          <ScrollReveal>
+            <SceneComposition
+              id="moderation"
+              eyebrow="Moderation"
+              title="Regeln, Übersicht, Kontrolle."
+              description="Definiere flexible Automoderations‑Regeln und behalte mit klaren Protokollen stets den Überblick. Von Sprachfiltern bis Spam‑Schutz – alles zentral steuerbar."
+              bullets={[
+                'Live‑Status der Regeln',
+                'Protokolle mit Filter',
+                'Schnelle Maßnahmen',
+              ]}
+              ctaLabel="Moderation konfigurieren"
+              ctaHref={ctaLinks.dashboard}
+              Illustration={ModerationScene}
+            />
+          </ScrollReveal>
+          <ScrollReveal>
+            <SceneComposition
+              id="tickets"
+              eyebrow="Support"
+              title="Tickets, die wirklich helfen."
+              description="Strukturiere Anfragen in klaren Kategorien, halte SLAs ein und löse Themen schneller. Dein Team arbeitet fokussiert – die Community bekommt Antworten."
+              bullets={[
+                'Kategorien & Vorlagen',
+                'SLA‑Indikatoren',
+                'Statistiken für Qualität',
+              ]}
+              reverse
+              ctaLabel="Tickets einrichten"
+              ctaHref={ctaLinks.dashboard}
+              Illustration={TicketsScene}
+            />
+          </ScrollReveal>
+          <ScrollReveal>
+            <SceneComposition
+              id="automation"
+              eyebrow="Automatisierung"
+              title="Abläufe, die von allein laufen."
+              description="Baue modulare Flows für wiederkehrende Aufgaben: Rollen verteilen, Logs verschicken, Benachrichtigungen posten. Stabil, nachvollziehbar, skalierbar."
+              bullets={[
+                'Visuelle Module',
+                'Zuverlässige Trigger',
+                'Wiederverwendbare Bausteine',
+              ]}
+              ctaLabel="Automationen erstellen"
+              ctaHref={ctaLinks.dashboard}
+              Illustration={AutomationScene}
+            />
+          </ScrollReveal>
+          <ScrollReveal>
+            <SceneComposition
+              id="backups"
+              eyebrow="Backups"
+              title="Sicher ist besser."
+              description="Automatische Sicherungen für wichtige Konfigurationen. Stelle Zustände in Sekunden wieder her und teste Änderungen ohne Risiko."
+              bullets={[
+                'Automatische Sicherungen',
+                'Wiederherstellung in Sekunden',
+                'Transparenter Verlauf',
+              ]}
+              reverse
+              ctaLabel="Backup‑Verlauf öffnen"
+              ctaHref={ctaLinks.dashboard}
+              Illustration={BackupsScene}
+            />
+          </ScrollReveal>
+          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <DashboardPreview />
           <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <StatisticsSection />
