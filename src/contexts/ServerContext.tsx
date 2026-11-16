@@ -106,6 +106,26 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Entfernt: kein automatisches Auswählen des ersten Servers
   // Die Auswahl wird explizit durch Nutzeraktionen (z. B. Sidebar/Verwalten) gesetzt.
 
+  // Route-basiertes Synchronisieren der aktiven Serverauswahl
+  useEffect(() => {
+    function syncFromPath() {
+      const path = window.location.pathname.replace(/\/+$/, '');
+      const m = path.match(/^\/servers\/(.+)$/);
+      if (m && m[1]) {
+        const id = decodeURIComponent(m[1]);
+        if (servers.some((s) => s.id === id)) {
+          setSelectedServerId(id);
+          return;
+        }
+      }
+      // Außerhalb einer Server-Einstellungsroute: Auswahl zurücksetzen
+      setSelectedServerId(null);
+    }
+    syncFromPath();
+    window.addEventListener('popstate', syncFromPath);
+    return () => window.removeEventListener('popstate', syncFromPath);
+  }, [servers]);
+
   const selectedServer = useMemo(
     () => servers.find((s) => s.id === selectedServerId) ?? null,
     [selectedServerId, servers]

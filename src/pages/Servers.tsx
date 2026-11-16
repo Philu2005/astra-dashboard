@@ -98,6 +98,11 @@ export const Servers = () => {
   const [filter, setFilter] = useState<FilterType>('all');
   const [managingServerId, setManagingServerId] = useState<string | null>(null);
 
+  // Route-parametrisierten Server ermitteln (Quelle der Wahrheit)
+  const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+  const routeMatch = path.match(/^\/servers\/(.+)$/);
+  const routeServerId = routeMatch && routeMatch[1] ? decodeURIComponent(routeMatch[1]) : null;
+
   // Öffne die Verwaltungsansicht nur nach expliziter Nutzeraktion (z. B. Button "Verwalten").
   // Keine automatische Synchronisierung von ausgewähltem Server → Liste soll zuerst sichtbar sein.
 
@@ -197,8 +202,8 @@ export const Servers = () => {
   }
 
   // --- Server Management View ---
-  const managingServer = managingServerId
-    ? servers.find((s) => s.id === managingServerId) ?? null
+  const managingServer = routeServerId
+    ? servers.find((s) => s.id === routeServerId) ?? null
     : null;
 
   if (managingServer) {
@@ -206,7 +211,7 @@ export const Servers = () => {
       <div className="space-y-5 lg:space-y-6 w-full">
         <section className="space-y-2 pt-2 lg:pt-3">
           <button
-            onClick={() => setManagingServerId(null)}
+            onClick={() => { window.location.href = '/servers'; }}
             className="text-[#9d94ff] hover:text-astra-cyan text-[1rem] font-medium transition-colors duration-300 mb-1 flex items-center gap-1.5"
           >
             ← Zurück zur Serverliste
@@ -339,7 +344,7 @@ export const Servers = () => {
               key={server.id}
               server={server}
               colorClass={iconColors[idx % iconColors.length]}
-              onManage={() => { selectServer(server.id); setManagingServerId(server.id); }}
+              onManage={() => { selectServer(server.id); window.location.href = `/servers/${server.id}`; }}
             />
           ))}
         </div>

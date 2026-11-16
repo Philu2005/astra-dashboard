@@ -111,7 +111,7 @@ function App() {
       );
     }
 
-    if (pathname === '/servers') {
+    if (pathname === '/servers' || pathname.startsWith('/servers/')) {
       if (!authenticated) {
         return (
           <StaticInfoPage
@@ -211,7 +211,7 @@ function App() {
     );
   };
 
-  const isDashboardPage = pathname === '/dashboard' || pathname === '/servers' || pathname === '/support' || pathname.startsWith('/support/ticket/') || pathname === '/dashboard/tickets';
+  const isDashboardPage = pathname === '/dashboard' || pathname === '/servers' || pathname.startsWith('/servers/') || pathname === '/support' || pathname.startsWith('/support/ticket/') || pathname === '/dashboard/tickets';
   const page = renderPage();
 
   return (

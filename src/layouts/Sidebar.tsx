@@ -230,8 +230,10 @@ export const Sidebar = () => {
                               selectServer(server.id);
                               setDropdownOpen(false);
                               setServerSearch('');
-                              if (window.location.pathname.replace(/\/+$/, '') !== '/servers') {
-                                window.location.href = '/servers';
+                              // Navigiere direkt zur Einstellungsroute dieses Servers
+                              const target = `/servers/${server.id}`;
+                              if (window.location.pathname.replace(/\/+$/, '') !== target) {
+                                window.location.href = target;
                               }
                             }}
                             className={cn(
