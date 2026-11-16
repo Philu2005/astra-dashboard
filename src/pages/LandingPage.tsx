@@ -5,6 +5,8 @@ import dashboardPreviewImage from '../../docs/design/astra-dashboard-preview-rou
 import { AstraLogo } from '@/components/AstraLogo';
 import { SharedNavbar } from '@/components/SharedNavbar';
 import { AstraHeroProductDemo } from '@/components/landing/AstraHeroProductDemo';
+import { AstraHeroNebula } from '@/components/landing/AstraHeroNebula';
+import { SectionDivider } from '@/components/landing/SectionDivider';
 import { CookieSettingsTrigger } from '@/components/consent/CookieSettingsTrigger';
 import { cn } from '@/lib/utils';
 import {
@@ -102,8 +104,13 @@ const HeroSection = ({ authenticated }: { authenticated: boolean }) => {
   const BadgeIcon = heroBadge.icon;
 
   return (
-    <section id="start" className="grid grid-cols-1 gap-8 border-b border-layout-divider pb-12 pt-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(410px,0.9fr)] lg:items-center">
-      <ScrollReveal className="space-y-6">
+    <section id="start" className="relative grid grid-cols-1 gap-8 border-b border-layout-divider pb-12 pt-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(410px,0.9fr)] lg:items-center">
+      {/* Decorative hero illustration */}
+      <div className="pointer-events-none absolute -right-10 -top-10 hidden h-[560px] w-[700px] lg:block">
+        <AstraHeroNebula className="h-full w-full" intensity={1} />
+      </div>
+
+      <ScrollReveal className="space-y-6 relative z-10">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#3e4370] bg-[#171a2d]/90 px-4 py-2 text-[0.86rem] text-[#d4daf2]">
           <BadgeIcon className="h-4 w-4 text-[#b085ff]" />
           {heroBadge.text}
@@ -128,8 +135,8 @@ const HeroSection = ({ authenticated }: { authenticated: boolean }) => {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={120} className="w-full">
-        <AstraHeroProductDemo className="max-w-[500px]" />
+      <ScrollReveal delay={120} className="w-full relative z-10">
+        <AstraHeroProductDemo className="max-w-[500px] drop-shadow-[0_20px_60px_rgba(80,70,200,0.55)]" />
       </ScrollReveal>
     </section>
   );
@@ -370,8 +377,11 @@ export const LandingPage = () => {
         <SharedNavbar activeRoute="/" />
         <main className="mx-auto w-full max-w-[1520px] px-4 pb-8 sm:px-5 lg:px-7">
           <HeroSection authenticated={authenticated} />
+          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <FeatureSection />
+          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" flip />
           <DashboardPreview />
+          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <StatisticsSection />
           <ScrollReveal>
             <CallToAction authenticated={authenticated} />
