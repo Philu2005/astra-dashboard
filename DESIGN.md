@@ -61,17 +61,3 @@ Basierend auf der forensischen Analyse der Referenzdatei:
 ## 5. Responsive-Verhalten
 - **Tablet (< 1024px):** Sidebar einklappbar, Stat-Cards 2-spaltig.
 - **Mobile (< 768px):** Vollständiges Stacking, Sidebar via Hamburger-Menü, reduzierte Paddings.
-
-## 7. Landingpage – Illustrationsstil & Szenen (Master-Guideline)
-- **Stilprinzipien:** Eigenständige, großflächige SVG‑Illustrationen mit Licht, Tiefe und mehrschichtigen Verläufen (Purple/Cyan). Keine Maskottchen oder fremde Figuren. Keine Stock‑Bilder.
-- **Hero‑Visual:** Abstrakte Nebula/Orb‑Komposition mit radialen Gradients, umlaufenden Ringen und feinem Sternfeld. Dezente Parallax‑Reaktion und langsame Float‑Animation (Keyframe `astra-float`).
-- **Szenen‑Kompositionen:** Abwechselndes Layout (links/rechts) aus
-  - großem SVG‑Visual (Tickets, Moderation, Automatisierung, Backups) und
-  - textlicher Spalte mit Titel, Beschreibung, Stichpunkten und CTA.
-  Die Illustrationen sind keine Icons, sondern eigenständige Bildelemente, die einen wesentlichen Teil der Sektion einnehmen.
-- **Motion‑Richtlinien:**
-  - Subtile, flüssige Bewegungen (Puls, Float, Scan‑Sweep, Flow‑Pulse), GPU‑freundlich (`transform`/`opacity`).
-  - Respektiere `prefers-reduced-motion`: Parallax/Animationen werden pausiert oder entkoppelt.
-  - Intersection‑basierte Reveals mit weicher Übersetzung/Opacity.
-- **Farbwelt:** `#4b46c8` (Purple) und `#7de3ff` (Cyan) bilden die Leitelemente der Gradients. Weiß/Blau‑Grautöne für UI‑Teile in den SVGs.
-- **Übergänge:** Wellenförmige Divider (SVG) zur rhythmischen Trennung der Sektionen, ohne den Seitenfluss zu unterbrechen.

@@ -5,13 +5,6 @@ import dashboardPreviewImage from '../../docs/design/astra-dashboard-preview-rou
 import { AstraLogo } from '@/components/AstraLogo';
 import { SharedNavbar } from '@/components/SharedNavbar';
 import { AstraHeroProductDemo } from '@/components/landing/AstraHeroProductDemo';
-import { AstraHeroNebula } from '@/components/landing/AstraHeroNebula';
-import { SectionDivider } from '@/components/landing/SectionDivider';
-import { SceneComposition } from '@/components/landing/SceneComposition';
-import { ModerationScene } from '@/components/landing/scenes/ModerationScene';
-import { TicketsScene } from '@/components/landing/scenes/TicketsScene';
-import { AutomationScene } from '@/components/landing/scenes/AutomationScene';
-import { BackupsScene } from '@/components/landing/scenes/BackupsScene';
 import { CookieSettingsTrigger } from '@/components/consent/CookieSettingsTrigger';
 import { cn } from '@/lib/utils';
 import {
@@ -109,13 +102,8 @@ const HeroSection = ({ authenticated }: { authenticated: boolean }) => {
   const BadgeIcon = heroBadge.icon;
 
   return (
-    <section id="start" className="relative grid grid-cols-1 gap-8 border-b border-layout-divider pb-12 pt-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(410px,0.9fr)] lg:items-center">
-      {/* Decorative hero illustration */}
-      <div className="pointer-events-none absolute -right-10 -top-10 hidden h-[560px] w-[700px] lg:block">
-        <AstraHeroNebula className="h-full w-full" intensity={1} />
-      </div>
-
-      <ScrollReveal className="space-y-6 relative z-10">
+    <section id="start" className="grid grid-cols-1 gap-8 border-b border-layout-divider pb-12 pt-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(410px,0.9fr)] lg:items-center">
+      <ScrollReveal className="space-y-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#3e4370] bg-[#171a2d]/90 px-4 py-2 text-[0.86rem] text-[#d4daf2]">
           <BadgeIcon className="h-4 w-4 text-[#b085ff]" />
           {heroBadge.text}
@@ -140,8 +128,8 @@ const HeroSection = ({ authenticated }: { authenticated: boolean }) => {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={120} className="w-full relative z-10">
-        <AstraHeroProductDemo className="max-w-[500px] drop-shadow-[0_20px_60px_rgba(80,70,200,0.55)]" />
+      <ScrollReveal delay={120} className="w-full">
+        <AstraHeroProductDemo className="max-w-[500px]" />
       </ScrollReveal>
     </section>
   );
@@ -382,79 +370,8 @@ export const LandingPage = () => {
         <SharedNavbar activeRoute="/" />
         <main className="mx-auto w-full max-w-[1520px] px-4 pb-8 sm:px-5 lg:px-7">
           <HeroSection authenticated={authenticated} />
-          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <FeatureSection />
-          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" flip />
-          {/* Alternierende große Szenen – eigene SVGs + Textkompositionen */}
-          <ScrollReveal>
-            <SceneComposition
-              id="moderation"
-              eyebrow="Moderation"
-              title="Regeln, Übersicht, Kontrolle."
-              description="Definiere flexible Automoderations‑Regeln und behalte mit klaren Protokollen stets den Überblick. Von Sprachfiltern bis Spam‑Schutz – alles zentral steuerbar."
-              bullets={[
-                'Live‑Status der Regeln',
-                'Protokolle mit Filter',
-                'Schnelle Maßnahmen',
-              ]}
-              ctaLabel="Moderation konfigurieren"
-              ctaHref={ctaLinks.dashboard}
-              Illustration={ModerationScene}
-            />
-          </ScrollReveal>
-          <ScrollReveal>
-            <SceneComposition
-              id="tickets"
-              eyebrow="Support"
-              title="Tickets, die wirklich helfen."
-              description="Strukturiere Anfragen in klaren Kategorien, halte SLAs ein und löse Themen schneller. Dein Team arbeitet fokussiert – die Community bekommt Antworten."
-              bullets={[
-                'Kategorien & Vorlagen',
-                'SLA‑Indikatoren',
-                'Statistiken für Qualität',
-              ]}
-              reverse
-              ctaLabel="Tickets einrichten"
-              ctaHref={ctaLinks.dashboard}
-              Illustration={TicketsScene}
-            />
-          </ScrollReveal>
-          <ScrollReveal>
-            <SceneComposition
-              id="automation"
-              eyebrow="Automatisierung"
-              title="Abläufe, die von allein laufen."
-              description="Baue modulare Flows für wiederkehrende Aufgaben: Rollen verteilen, Logs verschicken, Benachrichtigungen posten. Stabil, nachvollziehbar, skalierbar."
-              bullets={[
-                'Visuelle Module',
-                'Zuverlässige Trigger',
-                'Wiederverwendbare Bausteine',
-              ]}
-              ctaLabel="Automationen erstellen"
-              ctaHref={ctaLinks.dashboard}
-              Illustration={AutomationScene}
-            />
-          </ScrollReveal>
-          <ScrollReveal>
-            <SceneComposition
-              id="backups"
-              eyebrow="Backups"
-              title="Sicher ist besser."
-              description="Automatische Sicherungen für wichtige Konfigurationen. Stelle Zustände in Sekunden wieder her und teste Änderungen ohne Risiko."
-              bullets={[
-                'Automatische Sicherungen',
-                'Wiederherstellung in Sekunden',
-                'Transparenter Verlauf',
-              ]}
-              reverse
-              ctaLabel="Backup‑Verlauf öffnen"
-              ctaHref={ctaLinks.dashboard}
-              Illustration={BackupsScene}
-            />
-          </ScrollReveal>
-          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <DashboardPreview />
-          <SectionDivider className="-mx-4 sm:-mx-5 lg:-mx-7" />
           <StatisticsSection />
           <ScrollReveal>
             <CallToAction authenticated={authenticated} />
