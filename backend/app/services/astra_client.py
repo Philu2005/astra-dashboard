@@ -96,6 +96,21 @@ class AstraClient:
         """GET /servers/{guild_id}/roles?user_id=<user_id>"""
         return await self._request("GET", f"/servers/{guild_id}/roles", params={"user_id": user_id})
 
+    async def get_server_channels(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /servers/{guild_id}/channels?user_id=<user_id>
+
+        Liefert die Kanäle (inkl. Typ/Kategoriebezug) eines Discord‑Servers.
+        Die Antwortstruktur wird von der internen Astra‑API vorgegeben und ungeändert durchgereicht.
+        """
+        return await self._request("GET", f"/servers/{guild_id}/channels", params={"user_id": user_id})
+
+    async def get_server_categories(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /servers/{guild_id}/categories?user_id=<user_id>
+
+        Liefert die Kanal‑Kategorien eines Discord‑Servers.
+        """
+        return await self._request("GET", f"/servers/{guild_id}/categories", params={"user_id": user_id})
+
     async def get_dashboard_stats(self) -> dict[str, Any]:
         """GET /dashboard/stats – Globale Statistiken von der Bot-API."""
         data = await self._request("GET", "/dashboard/stats")

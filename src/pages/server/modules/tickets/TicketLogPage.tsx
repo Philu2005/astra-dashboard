@@ -7,6 +7,8 @@ import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { BookOpen, Hash, Info, Trash2 } from 'lucide-react';
+import { serversApi, type GuildChannel } from '@/services/servers-api';
+import DiscordSelect from '@/components/ui/DiscordSelect';
 
 const TicketLogPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
@@ -17,6 +19,9 @@ const TicketLogPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
+  const [channels, setChannels] = useState<GuildChannel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -37,6 +42,27 @@ const TicketLogPage: React.FC = () => {
       }
     }
     load();
+    return () => { active = false; };
+  }, [guildId]);
+
+  // Kanäle laden für Dropdown
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!guildId) return;
+      setChannelsLoading(true);
+      setChannelsError(null);
+      try {
+        const res = await serversApi.getChannels(guildId);
+        if (!active) return;
+        setChannels(res.channels || []);
+      } catch (e: any) {
+        if (!active) return;
+        setChannelsError(e?.message || 'Konnte Kanäle nicht laden.');
+      } finally {
+        if (active) setChannelsLoading(false);
+      }
+    })();
     return () => { active = false; };
   }, [guildId]);
 
@@ -131,15 +157,16 @@ const TicketLogPage: React.FC = () => {
             }>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Kanal-ID</label>
-                  <StyledInput
-                    placeholder="z.B. 1234567890123456789"
+                  <DiscordSelect
+                    label="Log-Kanal"
+                    kind="channel"
+                    items={channels.map(c => ({ id: c.id, name: c.name }))}
+                    loading={channelsLoading}
+                    error={channelsError}
                     value={channelId}
-                    onChange={e => setChannelId(e.target.value)}
+                    onChange={(id) => setChannelId(id)}
                   />
-                  <p className="text-[0.8rem] text-[#8b8fad]">
-                    Gib die ID des Discord-Kanals ein, in dem Ticket-Ereignisse protokolliert werden sollen.
-                  </p>
+                  <p className="text-[0.8rem] text-[#8b8fad]">Wähle den Kanal aus, in dem Ticket‑Ereignisse protokolliert werden.</p>
                 </div>
                 {isActive && (
                   <StyledButton onClick={onDelete} disabled={deleting} variant="danger">

@@ -127,6 +127,68 @@ async def get_server_roles(guild_id: str, request: Request):
 
 
 @router.get(
+    "/servers/{guild_id}/channels",
+    summary="Serverkanäle abrufen",
+    description=(
+        "Gibt die Kanäle eines Discord‑Servers zurück (Text/Voice/Forum etc.). "
+        "Antwortstruktur kommt direkt vom Astra Bot (Internal API)."
+    ),
+    responses={
+        200: {"description": "Kanalliste geladen.", "content": {"application/json": {"example": {"channels": [
+            {"id": "123", "name": "ticket-support", "type": 0, "parent_id": "999"}
+        ]}}}},
+        401: {"description": "Nicht angemeldet."},
+        403: {"description": "Kein Zugriff auf diesen Server (Upstream)."},
+        404: {"description": "Server/Kanäle nicht gefunden (Upstream)."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
+async def get_server_channels(guild_id: str, request: Request):
+    user_id = await _get_user_id_from_session(request)
+
+    try:
+        data = await astra_client.get_server_channels(guild_id, user_id)
+    except AstraApiError as exc:
+        logger.warning("Serverkanäle konnten nicht geladen werden (guild=%s): %s", guild_id, exc)
+        raise _handle_astra_error(exc)
+
+    return data
+
+
+@router.get(
+    "/servers/{guild_id}/categories",
+    summary="Serverkategorien abrufen",
+    description=(
+        "Gibt die Kanal‑Kategorien eines Discord‑Servers zurück. "
+        "Antwortstruktur kommt direkt vom Astra Bot (Internal API)."
+    ),
+    responses={
+        200: {"description": "Kategorien geladen.", "content": {"application/json": {"example": {"categories": [
+            {"id": "999", "name": "Support"}
+        ]}}}},
+        401: {"description": "Nicht angemeldet."},
+        403: {"description": "Kein Zugriff auf diesen Server (Upstream)."},
+        404: {"description": "Server/Kategorien nicht gefunden (Upstream)."},
+        502: {"description": "Interner Fehler bei der Upstream‑Kommunikation."},
+        503: {"description": "Upstream nicht verfügbar."},
+        504: {"description": "Upstream‑Timeout."},
+    },
+)
+async def get_server_categories(guild_id: str, request: Request):
+    user_id = await _get_user_id_from_session(request)
+
+    try:
+        data = await astra_client.get_server_categories(guild_id, user_id)
+    except AstraApiError as exc:
+        logger.warning("Serverkategorien konnten nicht geladen werden (guild=%s): %s", guild_id, exc)
+        raise _handle_astra_error(exc)
+
+    return data
+
+
+@router.get(
     "/dashboard/stats",
     summary="Dashboard‑Statistiken abrufen",
     description=(

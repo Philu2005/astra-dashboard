@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ticketsApi, type TicketPanel } from '@/services/tickets-api';
+import { ticketsApi, type TicketPanel, type TicketPanelStatusResponse } from '@/services/tickets-api';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import { LayoutPanelTop, Send, RefreshCw, Hash, Info, CheckCircle2, AlertTriangle, MessageSquare } from 'lucide-react';
+import { serversApi, type GuildChannel } from '@/services/servers-api';
+import DiscordSelect from '@/components/ui/DiscordSelect';
 
 const TicketPanelsPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
@@ -13,6 +15,8 @@ const TicketPanelsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [panels, setPanels] = useState<TicketPanel[]>([]);
+  // Status pro channel_id (aus separatem Status-Endpunkt)
+  const [panelStatusByChannel, setPanelStatusByChannel] = useState<Record<string, { status?: string; panel_message_id?: string | null }>>({});
 
   // Publish form
   const [publishChannelId, setPublishChannelId] = useState('');
@@ -26,13 +30,89 @@ const TicketPanelsPage: React.FC = () => {
   const [updateDescription, setUpdateDescription] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  // Channels for display and dropdowns
+  const [channels, setChannels] = useState<GuildChannel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!guildId) return;
+      setChannelsLoading(true);
+      setChannelsError(null);
+      try {
+        const res = await serversApi.getChannels(guildId);
+        if (!active) return;
+        setChannels(res.channels || []);
+      } catch (e: any) {
+        if (!active) return;
+        setChannelsError(e?.message || 'Konnte Kanäle nicht laden.');
+      } finally {
+        if (active) setChannelsLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [guildId]);
+
   const loadData = async () => {
     if (!guildId) return;
     setLoading(true);
     setError(null);
     try {
+      // Panels laden
       const panelsRes = await ticketsApi.getPanels(guildId);
       setPanels(panelsRes.panels);
+
+      // Separaten Veröffentlichungsstatus laden und normalisieren
+      try {
+        const statusRes: TicketPanelStatusResponse = await ticketsApi.getPanelsStatus(guildId);
+
+        // Defensive Normalisierung: Die interne API kann entweder
+        // - ein globales Objekt mit { status, panel_message_id } liefern, oder
+        // - ein Objekt mit { panels: [...] } wo jedes Element { channel_id, status, panel_message_id } enthält,
+        // - oder eine beliebige Map. Wir unterstützen alle sinnvollen Varianten.
+        const map: Record<string, { status?: string; panel_message_id?: string | null }> = {};
+
+        // Variante A: Array unter statusRes.status.panels
+        const anyStatus = statusRes?.status as any;
+        const maybePanelsArray: any[] | undefined = Array.isArray(anyStatus?.panels)
+          ? anyStatus.panels
+          : Array.isArray((statusRes as any)?.panels)
+            ? (statusRes as any).panels
+            : undefined;
+
+        if (maybePanelsArray) {
+          for (const item of maybePanelsArray) {
+            const ch = item?.channel_id ?? item?.channel ?? item?.id;
+            if (typeof ch === 'string' && ch) {
+              map[ch] = {
+                status: typeof item?.status === 'string' ? item.status : undefined,
+                panel_message_id: typeof item?.panel_message_id === 'string' ? item.panel_message_id : (item?.panel_message_id ?? undefined),
+              };
+            }
+          }
+        } else {
+          // Variante B: Einzelstatus ohne Kanalbezug – wir mappen ihn auf bekannte Panels (fallback)
+          // Dies deckt den beschriebenen Fall ab: { success: true, status: "not_published", panel_message_id: null }
+          const globalStatus: string | undefined = typeof anyStatus === 'string' ? anyStatus : anyStatus?.status;
+          const globalMsgId = (anyStatus?.panel_message_id ?? (statusRes as any)?.panel_message_id) as string | null | undefined;
+          if (globalStatus) {
+            for (const p of panelsRes.panels) {
+              const ch = p.channel_id;
+              if (typeof ch === 'string' && ch) {
+                map[ch] = { status: globalStatus, panel_message_id: typeof globalMsgId === 'string' ? globalMsgId : (globalMsgId ?? undefined) };
+              }
+            }
+          }
+        }
+
+        setPanelStatusByChannel(map);
+      } catch (e) {
+        // Wenn der Status-Endpunkt fehlschlägt oder nicht verfügbar ist, ignorieren wir das –
+        // Panels werden dennoch angezeigt, aber ohne expliziten Status.
+        // setPanelStatusByChannel({}); // bewusst nicht zurücksetzen, um bestehenden Status nicht zu verlieren
+      }
     } catch (e: any) {
       setError(e?.message || 'Fehler beim Laden der Panels.');
     } finally {
@@ -45,12 +125,49 @@ const TicketPanelsPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guildId]);
 
-  const hasPublishedPanel = panels.some(p => p.panel_message_id);
+  // Veröffentlicht gilt, wenn entweder expliziter Status „published“ o.Ä. vorliegt ODER eine panel_message_id existiert.
+  const hasPublishedPanel = useMemo(() => {
+    return panels.some(p => {
+      const ch = p.channel_id;
+      const st = ch ? panelStatusByChannel[ch]?.status : undefined;
+      const normalized = typeof st === 'string' ? st.toLowerCase() : undefined;
+      return Boolean(p.panel_message_id) || normalized === 'published' || normalized === 'published_updated' || normalized === 'published_exists';
+    });
+  }, [panels, panelStatusByChannel]);
+
+  const getPanelDisplay = (panel: TicketPanel) => {
+    const ch = panel.channel_id;
+    const st = ch ? panelStatusByChannel[ch]?.status : undefined;
+    const msgIdFromStatus = ch ? panelStatusByChannel[ch]?.panel_message_id : undefined;
+
+    // Priorität: expliziter Status vom Status-Endpunkt
+    const normalized = typeof st === 'string' ? st.toLowerCase() : undefined;
+    if (normalized) {
+      if (normalized === 'not_published') {
+        return { text: 'Nicht veröffentlicht', tone: 'warn' as const, messageId: msgIdFromStatus };
+      }
+      // Alle anderen bekannten Veröffentlichungszustände behandeln wir als veröffentlicht
+      return { text: 'Veröffentlicht', tone: 'ok' as const, messageId: msgIdFromStatus };
+    }
+
+    // Fallback: Heuristik über panel_message_id (darf expliziten Status NICHT überschreiben)
+    if (panel.panel_message_id) {
+      return { text: 'Veröffentlicht', tone: 'ok' as const, messageId: panel.panel_message_id };
+    }
+
+    return { text: 'Status unbekannt', tone: 'unknown' as const, messageId: undefined };
+  };
+
+  const channelNameById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of channels) map[c.id] = c.name || c.id;
+    return map;
+  }, [channels]);
 
   const onPublish = async () => {
     if (!guildId) return;
     const trimmed = publishChannelId.trim();
-    if (!trimmed) { setError('Bitte eine Kanal-ID eingeben.'); return; }
+    if (!trimmed) { setError('Bitte einen Kanal auswählen.'); return; }
     setPublishing(true);
     setError(null);
     setInfo(null);
@@ -76,7 +193,7 @@ const TicketPanelsPage: React.FC = () => {
   const onUpdate = async () => {
     if (!guildId) return;
     const trimmed = updateChannelId.trim();
-    if (!trimmed) { setError('Bitte die Kanal-ID des veröffentlichten Panels eingeben.'); return; }
+    if (!trimmed) { setError('Bitte ein bereits veröffentlichtes Panel auswählen.'); return; }
     setUpdating(true);
     setError(null);
     setInfo(null);
@@ -149,31 +266,53 @@ const TicketPanelsPage: React.FC = () => {
                       )}
                       <div className="flex flex-wrap items-center gap-3 text-[0.85rem] text-[#8b8fad]">
                         {panel.channel_id && (
-                          <span className="flex items-center gap-1">
-                            <Hash className="h-3.5 w-3.5" />
-                            {panel.channel_id}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <Hash className="h-4 w-4" />
+                            <div className="leading-tight">
+                              <div className="text-white">{channelNameById[panel.channel_id] || panel.channel_id}</div>
+                              <div className="text-[0.78rem] text-[#8b8fad]">ID: {panel.channel_id}</div>
+                            </div>
+                          </div>
                         )}
-                        {panel.panel_message_id && (
+                        {(() => {
+                          const disp = getPanelDisplay(panel);
+                          const mid = disp.messageId ?? panel.panel_message_id;
+                          if (!mid) return null;
+                          return (
                           <span className="flex items-center gap-1">
                             <MessageSquare className="h-3.5 w-3.5" />
-                            {panel.panel_message_id}
+                            {mid}
                           </span>
-                        )}
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {panel.panel_message_id ? (
-                        <span className="flex items-center gap-1 text-[0.8rem] text-emerald-400">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          Veröffentlicht
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[0.8rem] text-amber-400">
-                          <AlertTriangle className="h-3.5 w-3.5" />
-                          Status unbekannt
-                        </span>
-                      )}
+                      {(() => {
+                        const disp = getPanelDisplay(panel);
+                        if (disp.tone === 'ok') {
+                          return (
+                            <span className="flex items-center gap-1 text-[0.8rem] text-emerald-400">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {disp.text}
+                            </span>
+                          );
+                        }
+                        if (disp.tone === 'warn') {
+                          return (
+                            <span className="flex items-center gap-1 text-[0.8rem] text-amber-400">
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                              {disp.text}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="flex items-center gap-1 text-[0.8rem] text-amber-400">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Status unbekannt
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -198,11 +337,14 @@ const TicketPanelsPage: React.FC = () => {
                 </div>
               )}
               <div className="space-y-1.5">
-                <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Zielkanal-ID *</label>
-                <StyledInput
-                  placeholder="z.B. 1234567890123456789"
+                <DiscordSelect
+                  label="Zielkanal *"
+                  kind="channel"
+                  items={channels.map(c => ({ id: c.id, name: c.name }))}
+                  loading={channelsLoading}
+                  error={channelsError}
                   value={publishChannelId}
-                  onChange={e => setPublishChannelId(e.target.value)}
+                  onChange={(id) => setPublishChannelId(id)}
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -245,11 +387,14 @@ const TicketPanelsPage: React.FC = () => {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Kanal-ID des veröffentlichten Panels *</label>
-                <StyledInput
-                  placeholder="z.B. 1234567890123456789"
+                <DiscordSelect
+                  label="Veröffentlichtes Panel auswählen *"
+                  kind="channel"
+                  items={panels.filter(p => !!p.channel_id).map(p => ({ id: p.channel_id as string, name: channelNameById[p.channel_id as string] || (p.channel_id as string) }))}
+                  loading={channelsLoading}
+                  error={channelsError}
                   value={updateChannelId}
-                  onChange={e => setUpdateChannelId(e.target.value)}
+                  onChange={(id) => setUpdateChannelId(id)}
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
