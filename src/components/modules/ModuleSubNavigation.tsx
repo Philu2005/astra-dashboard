@@ -16,8 +16,8 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   const items = module.subpages ?? [];
 
   return (
-    <div className="mt-3 border-b border-layout-divider">
-      <nav className="-mb-px flex w-full gap-2 overflow-x-auto pb-1">
+    <div>
+      <nav className="flex w-full gap-1.5 overflow-x-auto">
         {items.map((sp) => {
           const href = `${base}/${sp.path}`;
           const active = location.pathname.startsWith(href);
@@ -27,10 +27,10 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
               key={sp.id}
               to={href}
               className={cn(
-                'inline-flex items-center gap-2 whitespace-nowrap rounded-t-md px-3 py-2 text-sm transition-colors',
+                'inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-[0.92rem] transition-colors',
                 active
-                  ? 'border-b-2 border-[#4b46c8] text-white'
-                  : 'text-foreground/70 hover:text-white hover:bg-white/5'
+                  ? 'bg-white/10 text-white'
+                  : 'text-foreground/80 hover:text-white hover:bg-white/5'
               )}
             >
               {Icon && <Icon className="h-4 w-4" />}

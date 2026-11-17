@@ -29,26 +29,36 @@ const ModuleLayout: React.FC<Props> = ({ moduleKey }) => {
   return (
     <div className="flex min-h-full flex-col">
       {/* Breadcrumbs */}
-      <div className="mb-4">
+      <div className="mb-3">
         <Breadcrumbs />
       </div>
 
-      {/* Module header */}
-      <header className="mb-2 flex items-start gap-3">
-        <div className="rounded-md bg-white/5 p-2">
-          <Icon className="h-5 w-5 text-[#7de3ff]" />
+      {/* Moderation header (kompakt, moderne Komposition) */}
+      <header className="mb-2">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-white/5 p-1.5">
+            <Icon className="h-5 w-5 text-[#7de3ff]" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-[1.1rem] font-semibold leading-tight tracking-tight text-white">
+              {module.name}
+            </h1>
+            <p className="mt-0.5 line-clamp-2 text-[0.9rem] text-foreground/70">
+              {module.description}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-white">{module.name}</h1>
-          <p className="mt-1 text-sm text-foreground/70">{module.description}</p>
-        </div>
+
+        {/* Integrierte, tab‑artige Navigation direkt unter Titelzeile */}
+        {module.subpages && module.subpages.length > 0 && (
+          <div className="mt-3">
+            <ModuleSubNavigation module={module} />
+          </div>
+        )}
       </header>
 
-      {/* Sub navigation */}
-      {module.subpages && module.subpages.length > 0 && <ModuleSubNavigation module={module} />}
-
       {/* Content */}
-      <section className="mt-4">
+      <section className="mt-2">
         <Outlet />
       </section>
     </div>
