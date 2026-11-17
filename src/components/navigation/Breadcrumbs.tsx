@@ -46,20 +46,20 @@ const Breadcrumbs: React.FC = () => {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-foreground/70">
-      <ol className="flex flex-wrap items-center gap-2">
+    <nav aria-label="Breadcrumb" className="text-sm text-foreground/70 min-w-0">
+      <ol className="flex flex-wrap items-center gap-1.5 sm:gap-2">
         {crumbs.map((c, i) => {
           const isLast = i === crumbs.length - 1;
           return (
-            <li key={i} className="inline-flex items-center gap-2">
+            <li key={i} className="inline-flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-full">
               {c.to && !isLast ? (
-                <Link to={c.to} className="hover:text-white transition-colors">
+                <Link to={c.to} className="hover:text-white transition-colors truncate max-w-[140px] sm:max-w-[200px]">
                   {c.label}
                 </Link>
               ) : (
-                <span className={isLast ? 'text-white' : undefined}>{c.label}</span>
+                <span className={`${isLast ? 'text-white' : ''} truncate max-w-[160px] sm:max-w-[240px]`}>{c.label}</span>
               )}
-              {!isLast && <ChevronRight className="h-4 w-4 opacity-60" />}
+              {!isLast && <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-60 shrink-0" />}
             </li>
           );
         })}

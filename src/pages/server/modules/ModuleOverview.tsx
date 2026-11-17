@@ -56,7 +56,7 @@ const ModuleOverview: React.FC = () => {
       </div>
 
       {/* Content layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside>
           <ModuleCategoryNavigation
             categories={categories}

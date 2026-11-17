@@ -32,18 +32,18 @@ export const SettingsSaveBar: React.FC<SettingsSaveBarProps> = ({
       )}
       {...props}
     >
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-5 py-3">
+      <div className="mx-auto flex max-w-[1200px] flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-4 sm:px-5 py-3">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-astra-purple shadow-[0_0_8px_rgba(75,70,200,0.6)]" />
-          <span className="text-[0.95rem] text-[#c1c7de]">
-            {saving ? 'Speichern läuft…' : 'Es gibt ungespeicherte Änderungen'}
+          <span className="text-[0.85rem] sm:text-[0.95rem] text-[#c1c7de]">
+            {saving ? 'Speichern läuft…' : 'Ungespeicherte Änderungen'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <StyledButton variant="ghost" onClick={onCancel} disabled={saving}>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <StyledButton variant="ghost" onClick={onCancel} disabled={saving} className="flex-1 sm:flex-none">
             {cancelLabel}
           </StyledButton>
-          <StyledButton variant="primary" onClick={onSave} loading={saving}>
+          <StyledButton variant="primary" onClick={onSave} loading={saving} className="flex-1 sm:flex-none">
             {saveLabel}
           </StyledButton>
         </div>

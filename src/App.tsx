@@ -27,6 +27,10 @@ import ModlogPage from '@/pages/server/modules/moderation/ModlogPage';
 import ServerPermissionsPlaceholder from '@/pages/server/ServerPermissionsPlaceholder';
 import ServerLogsPlaceholder from '@/pages/server/ServerLogsPlaceholder';
 import ServerStatsPlaceholder from '@/pages/server/ServerStatsPlaceholder';
+import TicketConfigPage from '@/pages/server/modules/tickets/TicketConfigPage';
+import TicketPanelsPage from '@/pages/server/modules/tickets/TicketPanelsPage';
+import TicketOpenPage from '@/pages/server/modules/tickets/TicketOpenPage';
+import TicketLogPage from '@/pages/server/modules/tickets/TicketLogPage';
 
 // --- Route Elements to preserve previous behaviors ---
 const RequireAuth: React.FC<{ children: React.ReactNode; message: 'dashboard' | 'servers' }> = ({ children, message }) => {
@@ -250,6 +254,17 @@ const router = createBrowserRouter([
           { path: 'automod', element: <AutomodPage /> },
           { path: 'warnings', element: <WarningsPage /> },
           { path: 'modlog', element: <ModlogPage /> },
+        ],
+      },
+      {
+        path: 'modules/tickets',
+        element: <ModuleLayout moduleKey="tickets" />,
+        children: [
+          { index: true, element: <Navigate to="config" replace /> },
+          { path: 'config', element: <TicketConfigPage /> },
+          { path: 'panels', element: <TicketPanelsPage /> },
+          { path: 'open', element: <TicketOpenPage /> },
+          { path: 'log', element: <TicketLogPage /> },
         ],
       },
       { path: 'permissions', element: <ServerPermissionsPlaceholder /> },

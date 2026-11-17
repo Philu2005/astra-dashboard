@@ -16,7 +16,7 @@
 - [x] Implementierung: Vollständiger Discord OAuth2 Login (Frontend & Backend)
 - [x] Serverauswahl und Übersicht
 - [ ] Entwicklung der Modlog- und Automod-Ansichten
-- [ ] Ticketsystem-Interface
+- [x] Ticketsystem-Interface (Ticket-Modul vollständig implementiert: Frontend + Backend + API-Doku)
 - [x] Statistiken und Aktivitätslogs (Mock-Daten & UI)
 - [x] Vollständige responsive Umsetzung der Dashboard-Seite
 

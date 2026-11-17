@@ -20,6 +20,7 @@ from app.monitoring.router import router as monitoring_router
 from app.docs_likes.router import router as docs_likes_router
 from app.monitoring.service import start_scheduler, stop_scheduler
 from app.moderation.router import router as moderation_router
+from app.tickets.router import router as tickets_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -117,7 +118,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "OPTIONS", "DELETE"],
     allow_headers=["Content-Type", "Accept"],
 )
 
@@ -133,6 +134,7 @@ app.include_router(support_router, prefix="/api")
 app.include_router(monitoring_router, prefix="/api")
 app.include_router(moderation_router)
 app.include_router(docs_likes_router, prefix="/api")
+app.include_router(tickets_router)
 
 
 # Health check – available at both /health (direct) and /api/health (via reverse proxy)

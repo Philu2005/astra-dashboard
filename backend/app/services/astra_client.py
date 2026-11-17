@@ -222,4 +222,47 @@ class AstraClient:
         )
 
 
+    # --- Tickets ---
+
+    async def get_ticket_config(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /tickets/config/{guild_id}?user_id=<user_id>"""
+        return await self._request("GET", f"/tickets/config/{guild_id}", params={"user_id": user_id})
+
+    async def put_ticket_config(self, guild_id: str, user_id: str, config: dict[str, Any]) -> dict[str, Any]:
+        """PUT /tickets/config/{guild_id}?user_id=<user_id>"""
+        return await self._request("PUT", f"/tickets/config/{guild_id}", params={"user_id": user_id}, json=config)
+
+    async def get_ticket_panels(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /tickets/panels/{guild_id}?user_id=<user_id>"""
+        return await self._request("GET", f"/tickets/panels/{guild_id}", params={"user_id": user_id})
+
+    async def publish_ticket_panel(self, guild_id: str, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """POST /tickets/panels/{guild_id}/publish?user_id=<user_id>"""
+        return await self._request("POST", f"/tickets/panels/{guild_id}/publish", params={"user_id": user_id}, json=payload)
+
+    async def update_ticket_panel(self, guild_id: str, channel_id: str, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """PUT /tickets/panels/{guild_id}/{channel_id}/update?user_id=<user_id>"""
+        return await self._request("PUT", f"/tickets/panels/{guild_id}/{channel_id}/update", params={"user_id": user_id}, json=payload)
+
+    async def get_ticket_panels_status(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /tickets/panels/{guild_id}/status?user_id=<user_id>"""
+        return await self._request("GET", f"/tickets/panels/{guild_id}/status", params={"user_id": user_id})
+
+    async def get_ticket_status(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /tickets/status/{guild_id}?user_id=<user_id>"""
+        return await self._request("GET", f"/tickets/status/{guild_id}", params={"user_id": user_id})
+
+    async def get_ticket_log(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /tickets/log/{guild_id}?user_id=<user_id>"""
+        return await self._request("GET", f"/tickets/log/{guild_id}", params={"user_id": user_id})
+
+    async def put_ticket_log(self, guild_id: str, user_id: str, channel_id: str) -> dict[str, Any]:
+        """PUT /tickets/log/{guild_id}?user_id=<user_id>"""
+        return await self._request("PUT", f"/tickets/log/{guild_id}", params={"user_id": user_id}, json={"channel_id": channel_id})
+
+    async def delete_ticket_log(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """DELETE /tickets/log/{guild_id}?user_id=<user_id>"""
+        return await self._request("DELETE", f"/tickets/log/{guild_id}", params={"user_id": user_id})
+
+
 astra_client = AstraClient()

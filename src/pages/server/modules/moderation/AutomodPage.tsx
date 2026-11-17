@@ -220,12 +220,12 @@ const AutomodPage: React.FC = () => {
             <div className="space-y-4">
               <SettingsCard
                 header={
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <span className="text-[#dbe3ff] font-medium">Moderationsregeln</span>
-                      <p className="text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
+                      <p className="text-[0.82rem] sm:text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
                     </div>
-                    <StyledButton variant="secondary" size="sm" onClick={addRule} leftIcon={<Plus className="w-4 h-4 shrink-0" />}>
+                    <StyledButton variant="secondary" size="sm" onClick={addRule} leftIcon={<Plus className="w-4 h-4 shrink-0" />} className="self-start sm:self-auto shrink-0">
                       Regel
                     </StyledButton>
                   </div>
@@ -239,9 +239,9 @@ const AutomodPage: React.FC = () => {
                   )}
                   {sortedRules.map((rule, idx) => (
                     <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-3 shadow-astra hover:border-astra-purple/40 transition-colors">
-                      <div className="flex flex-wrap items-end gap-3">
+                      <div className="flex flex-wrap items-end gap-2 sm:gap-3">
                         {/* Warnungen */}
-                        <div className="w-[100px] shrink-0">
+                        <div className="w-full sm:w-[100px] shrink-0">
                           <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                             Warnungen
                             <StyledTooltip content="Anzahl der Verwarnungen, ab der die festgelegte Moderationsaktion automatisch ausgeführt wird." side="top" className="w-56">
@@ -261,7 +261,7 @@ const AutomodPage: React.FC = () => {
                           />
                         </div>
                         {/* Aktion */}
-                        <div className="flex-1 min-w-[140px]">
+                        <div className="flex-1 min-w-0 sm:min-w-[140px]">
                           <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                             Aktion
                             <StyledTooltip content="Legt fest, welche Maßnahme bei Erreichen der Verwarnungsanzahl ausgeführt wird. Timeout: Mitglied kann für die festgelegte Dauer nicht kommunizieren. Kick: Mitglied wird vom Server entfernt. Ban: Mitglied wird dauerhaft ausgeschlossen." side="top" className="w-64">
@@ -286,7 +286,7 @@ const AutomodPage: React.FC = () => {
                         </div>
                         {/* Timeout-Dauer */}
                         {rule.action === 'timeout' && (
-                          <div className="w-[130px] shrink-0">
+                          <div className="w-full sm:w-[130px] shrink-0">
                             <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                               Dauer (Sek.)
                               <StyledTooltip content="Dauer des Timeouts in Sekunden. Das Mitglied kann für diese Zeit nicht kommunizieren." side="top" className="w-52">

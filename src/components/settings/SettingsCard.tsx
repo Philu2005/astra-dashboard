@@ -19,13 +19,13 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({ className, header, f
     >
       <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.03)_0%,rgba(255,255,255,0)_42%)] pointer-events-none" />
       {header && (
-        <div className="relative z-10 border-b border-[#2d3246]/80 px-5 py-4 text-[#c1c7de]">
+        <div className="relative z-10 border-b border-[#2d3246]/80 px-4 py-3 sm:px-5 sm:py-4 text-[#c1c7de]">
           {header}
         </div>
       )}
-      <div className="relative z-10 px-5 py-4">{children}</div>
+      <div className="relative z-10 px-4 py-3 sm:px-5 sm:py-4">{children}</div>
       {footer && (
-        <div className="relative z-10 border-t border-[#2d3246]/80 px-5 py-4">
+        <div className="relative z-10 border-t border-[#2d3246]/80 px-4 py-3 sm:px-5 sm:py-4">
           {footer}
         </div>
       )}

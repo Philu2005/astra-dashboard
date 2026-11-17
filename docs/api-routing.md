@@ -27,6 +27,13 @@
 | `/api/support/admin/tickets/{id}`         | support_router  | Admin: Ticket löschen         |
 | `/api/support/admin/tickets/{id}/user-info` | support_router| Admin: Benutzerinfo zum Ticket|
 | `/api/support/admin/tickets/{id}/user-history` | support_router | Admin: User-Ticket-Historie |
+| `/api/tickets/config/{guild_id}`              | tickets_router  | Ticket-Konfiguration laden (GET) / speichern (PUT) |
+| `/api/tickets/panels/{guild_id}`              | tickets_router  | Ticket-Panels auflisten (GET) |
+| `/api/tickets/panels/{guild_id}/publish`      | tickets_router  | Ticket-Panel veröffentlichen (POST) |
+| `/api/tickets/panels/{guild_id}/{channel_id}/update` | tickets_router | Veröffentlichtes Panel aktualisieren (PUT) |
+| `/api/tickets/panels/{guild_id}/status`       | tickets_router  | Veröffentlichungsstatus abrufen (GET) |
+| `/api/tickets/status/{guild_id}`              | tickets_router  | Offene Tickets abrufen (GET) |
+| `/api/tickets/log/{guild_id}`                 | tickets_router  | Ticket-Log laden (GET) / setzen (PUT) / entfernen (DELETE) |
 
 ### Frontend API-Client
 

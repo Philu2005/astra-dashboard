@@ -17,7 +17,7 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   return (
     <div className="rounded-xl border border-[#2d3246] bg-[#0f1220]/80 p-1 shadow-astra">
       <nav
-        className="flex w-full gap-1 overflow-x-auto"
+        className="flex w-full gap-1 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label={`${module.name} Unterseiten`}
         role="tablist"
       >

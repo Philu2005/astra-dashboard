@@ -84,7 +84,7 @@ const ServerLayout: React.FC = () => {
           <Topbar />
         </div>
         {/* Content with spacing and left margin on desktop */}
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10 lg:ml-[278px]">
+        <main className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5 lg:px-8 xl:px-10 lg:ml-[278px]">
           {/* Globale Breadcrumbs für alle Server-Unterseiten */}
           <div className="mb-3">
             <Breadcrumbs />

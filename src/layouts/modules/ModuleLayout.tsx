@@ -27,16 +27,16 @@ const ModuleLayout: React.FC<Props> = ({ moduleKey }) => {
   return (
     <div className="flex min-h-full flex-col">
       {/* Module header */}
-      <header className="mb-4">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1d2238] text-[#7de3ff] shadow-[0_12px_26px_-20px_rgba(75,70,200,0.95)] border border-[#353c56] shrink-0">
-            <Icon className="h-5 w-5" />
+      <header className="mb-3 sm:mb-4">
+        <div className="flex items-center gap-3 sm:gap-3.5">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-[#1d2238] text-[#7de3ff] shadow-[0_12px_26px_-20px_rgba(75,70,200,0.95)] border border-[#353c56] shrink-0">
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-[1.2rem] font-semibold leading-tight tracking-[-0.01em] text-white">
+            <h1 className="text-[1.05rem] sm:text-[1.2rem] font-semibold leading-tight tracking-[-0.01em] text-white">
               {module.name}
             </h1>
-            <p className="mt-0.5 line-clamp-2 text-[0.9rem] text-[#9ca2be]">
+            <p className="mt-0.5 line-clamp-2 text-[0.82rem] sm:text-[0.9rem] text-[#9ca2be]">
               {module.description}
             </p>
           </div>

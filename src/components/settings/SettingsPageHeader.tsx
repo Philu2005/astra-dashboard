@@ -15,7 +15,7 @@ export const SettingsPageHeader: React.FC<SettingsPageHeaderProps> = ({ classNam
   return (
     <div
       className={cn(
-        'mb-5 flex flex-col gap-3 rounded-[1.15rem] border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-5 shadow-astra relative overflow-hidden',
+        'mb-4 sm:mb-5 flex flex-col gap-2 sm:gap-3 rounded-xl sm:rounded-[1.15rem] border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-4 sm:p-5 shadow-astra relative overflow-hidden',
         className,
       )}
       {...props}
@@ -31,12 +31,12 @@ export const SettingsPageHeader: React.FC<SettingsPageHeaderProps> = ({ classNam
           <span>{backLabel || 'Zurück'}</span>
         </Link>
       )}
-      <div className="relative z-10 flex items-start justify-between gap-4">
-        <div className="space-y-1.5">
-          <h1 className="text-[1.45rem] font-semibold leading-6 tracking-[-0.015em] text-white">{heading}</h1>
-          {description && <p className="text-[0.98rem] leading-6 text-[#9ca2be]">{description}</p>}
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="space-y-1 sm:space-y-1.5 min-w-0">
+          <h1 className="text-[1.15rem] sm:text-[1.3rem] lg:text-[1.45rem] font-semibold leading-tight tracking-[-0.015em] text-white">{heading}</h1>
+          {description && <p className="text-[0.88rem] sm:text-[0.95rem] lg:text-[0.98rem] leading-relaxed text-[#9ca2be]">{description}</p>}
         </div>
-        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        {actions && <div className="flex shrink-0 items-center gap-2 self-start">{actions}</div>}
       </div>
     </div>
   );

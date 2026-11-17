@@ -1,8 +1,8 @@
-import { ShieldCheck, Settings2, FileWarning, NotebookPen } from 'lucide-react';
+import { ShieldCheck, Settings2, FileWarning, NotebookPen, Ticket, LayoutPanelTop, Inbox, BookOpen } from 'lucide-react';
 
 // Module categories are derived from actually available functionality.
 // Per project constraints, only "Moderation" is guaranteed and verified.
-export type ModuleCategory = 'Moderation';
+export type ModuleCategory = 'Moderation' | 'Verwaltung';
 
 export type ModuleSubpage = {
   id: string; // stable id within the module
@@ -29,6 +29,41 @@ export type ModuleMeta = {
 // IMPORTANT: Do not add speculative entries here; only modules
 // that are present/approved in the codebase.
 export const modulesRegistry: ModuleMeta[] = [
+  {
+    key: 'tickets',
+    name: 'Ticket-System',
+    description:
+      'Erstelle und verwalte ein Ticket-System mit Panels, Log-Kanälen und offenen Tickets.',
+    category: 'Verwaltung',
+    buildPath: (guildId: string) => `/servers/${guildId}/modules/tickets`,
+    icon: Ticket,
+    subpages: [
+      {
+        id: 'config',
+        name: 'Konfiguration',
+        path: 'config',
+        icon: Settings2,
+      },
+      {
+        id: 'panels',
+        name: 'Panels',
+        path: 'panels',
+        icon: LayoutPanelTop,
+      },
+      {
+        id: 'open',
+        name: 'Offene Tickets',
+        path: 'open',
+        icon: Inbox,
+      },
+      {
+        id: 'log',
+        name: 'Ticket-Log',
+        path: 'log',
+        icon: BookOpen,
+      },
+    ],
+  },
   {
     key: 'moderation',
     name: 'Moderation',

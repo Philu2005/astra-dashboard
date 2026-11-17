@@ -12,7 +12,7 @@ const ModuleCard: React.FC<Props> = ({ module, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col rounded-[1.1rem] border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-5 text-left shadow-astra transition-all duration-300 hover:-translate-y-[2px] hover:border-astra-purple/50 hover:shadow-[0_20px_40px_-20px_rgba(75,70,200,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:#4b46c8]"
+      className="group flex flex-col rounded-[1.1rem] border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-4 sm:p-5 text-left shadow-astra transition-all duration-300 hover:-translate-y-[2px] hover:border-astra-purple/50 hover:shadow-[0_20px_40px_-20px_rgba(75,70,200,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:#4b46c8]"
     >
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
