@@ -33,7 +33,7 @@ export const moderationApi = {
     const res = await apiClient.get(`/moderation/automod/${guildId}`);
     return handleResponse<AutomodResponse>(res);
   },
-  async putAutomod(guildId: string, config: AutomodConfig): Promise<AutomodResponse> {
+  async putAutomod(guildId: string, config: AutomodConfig | Record<string, unknown>): Promise<AutomodResponse> {
     const res = await apiClient.put(`/moderation/automod/${guildId}`, config);
     return handleResponse<AutomodResponse>(res);
   },

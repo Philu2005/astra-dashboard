@@ -40,6 +40,8 @@ const ModuleOverview: React.FC = () => {
       <SettingsPageHeader
         heading="Module"
         description="Verwalte die Funktionen dieses Servers. Module erweitern Astra um zusätzliche Fähigkeiten wie automatische Moderation, Verwarnungen und Protokollierung. Wähle ein Modul aus, um es zu konfigurieren."
+        backTo={`/servers/${guildId}`}
+        backLabel="Serverübersicht"
         actions={
           <StyledBadge variant="default">
             <Layers className="w-3.5 h-3.5 mr-1" />

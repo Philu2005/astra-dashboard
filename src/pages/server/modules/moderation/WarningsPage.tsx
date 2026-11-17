@@ -94,6 +94,8 @@ const WarningsPage: React.FC = () => {
       <SettingsPageHeader
         heading="Verwarnungen"
         description="Zeigt alle aktiven Verwarnungen dieses Servers an. Verwarnungen werden durch Moderatoren oder automatisch durch AutoMod-Regeln vergeben. Bei Erreichen einer konfigurierten Warnstufe wird die zugehörige Moderationsaktion ausgelöst."
+        backTo={`/servers/${guildId}/modules`}
+        backLabel="Modulübersicht"
         actions={<StyledBadge variant="default">{count} Ergebnis(se)</StyledBadge>}
       />
 

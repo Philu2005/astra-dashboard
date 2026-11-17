@@ -83,6 +83,8 @@ const ModlogPage: React.FC = () => {
       <SettingsPageHeader
         heading="Modlog"
         description="Das Modlog protokolliert automatisch Moderationsereignisse in einem festgelegten Discord-Kanal. So behältst du den Überblick über alle Moderationsaktionen auf deinem Server."
+        backTo={`/servers/${guildId}/modules`}
+        backLabel="Modulübersicht"
       />
 
       {loading && (

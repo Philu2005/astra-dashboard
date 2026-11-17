@@ -38,7 +38,10 @@ const AutomodPage: React.FC = () => {
     [],
   );
 
-  const buildConfig = useCallback((): AutomodConfig => {
+  const buildConfig = useCallback((): Record<string, any> => {
+    // Sende sowohl verschachtelte als auch flache Felder, um Kompatibilität
+    // mit verschiedenen internen API-Formaten sicherzustellen.
+    const capsPercentNum = capsPercent === '' ? undefined : Number(capsPercent);
     return {
       rules: rules
         .filter((r) => Number.isFinite(r.warns) && r.action)
@@ -50,11 +53,14 @@ const AutomodPage: React.FC = () => {
         })),
       capslock: {
         enabled: capsEnabled,
-        percent: capsPercent === '' ? undefined : Number(capsPercent),
+        percent: capsPercentNum,
       },
+      capslock_enabled: capsEnabled,
+      capslock_percent: capsPercentNum,
       profanity: {
         enabled: Boolean(profanityEnabled),
       },
+      profanity_enabled: Boolean(profanityEnabled),
     };
   }, [rules, capsEnabled, capsPercent, profanityEnabled]);
 
@@ -84,11 +90,21 @@ const AutomodPage: React.FC = () => {
     return nextRules.sort((a, b) => a.warns - b.warns);
   };
 
+  const toBool = (v: any): boolean => {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v !== 0;
+    if (typeof v === 'string') return v === 'true' || v === '1';
+    return Boolean(v);
+  };
+
   const applyConfig = (cfg: any) => {
     setRules(parseRules(cfg));
-    setCapsEnabled(Boolean(cfg?.capslock?.enabled));
-    setCapsPercent(cfg?.capslock?.percent ?? '');
-    setProfanityEnabled(Boolean(cfg?.profanity?.enabled ?? cfg?.profanity_enabled ?? false));
+    // Unterstütze verschachtelte und flache Felder sowie numerische Werte (0/1)
+    const capsEn = cfg?.capslock?.enabled ?? cfg?.capslock_enabled ?? false;
+    setCapsEnabled(toBool(capsEn));
+    setCapsPercent(cfg?.capslock?.percent ?? cfg?.capslock_percent ?? '');
+    const profEn = cfg?.profanity?.enabled ?? cfg?.profanity_enabled ?? cfg?.blacklist_settings?.status ?? false;
+    setProfanityEnabled(toBool(profEn));
   };
 
   useEffect(() => {
@@ -125,11 +141,14 @@ const AutomodPage: React.FC = () => {
         const fresh = await moderationApi.getAutomod(guildId);
         const cfg = fresh.config || {};
         applyConfig(cfg);
+        // Snapshot muss dieselbe Logik wie applyConfig verwenden
+        const capsEn = cfg?.capslock?.enabled ?? (cfg as any)?.capslock_enabled ?? false;
+        const profEn = (cfg as any)?.profanity?.enabled ?? (cfg as any)?.profanity_enabled ?? (cfg as any)?.blacklist_settings?.status ?? false;
         const snap = JSON.stringify({
           rules: parseRules(cfg),
-          capsEnabled: Boolean(cfg.capslock?.enabled),
-          capsPercent: cfg.capslock?.percent ?? '',
-          profanityEnabled: Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false),
+          capsEnabled: toBool(capsEn),
+          capsPercent: cfg?.capslock?.percent ?? (cfg as any)?.capslock_percent ?? '',
+          profanityEnabled: toBool(profEn),
         });
         setInitialSnapshot(snap);
       } catch {
@@ -172,6 +191,8 @@ const AutomodPage: React.FC = () => {
       <SettingsPageHeader
         heading="AutoMod"
         description="Konfiguriere die automatischen Moderationsfunktionen für deinen Server. Regeln legen fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen ausgeführt wird."
+        backTo={`/servers/${guildId}/modules`}
+        backLabel="Modulübersicht"
         actions={
           <StyledBadge variant={isDirty ? 'purple' : 'default'}>{isDirty ? 'Änderungen nicht gespeichert' : 'Aktuell'}</StyledBadge>
         }

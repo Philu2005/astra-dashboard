@@ -1,6 +1,6 @@
 import React from 'react';
-import { Layers, FileText, BarChart3, Shield, Home, Cog } from 'lucide-react';
-import { NavLink, useParams } from 'react-router-dom';
+import { Layers, FileText, BarChart3, Shield, Home, Cog, ArrowLeft } from 'lucide-react';
+import { NavLink, useParams, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { categories, modulesRegistry } from '@/modules/registry';
 import { AstraLogo } from '@/components/AstraLogo';
@@ -48,15 +48,16 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
       )}
     >
       {/* Branding – identisch zur GlobalSidebar */}
-      <div className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider">
+      <Link to="/dashboard" className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider group hover:bg-layout-hover/40 transition-colors">
         <div className="relative flex items-center justify-center w-[56px] h-[56px] bg-[#463fb9] rounded-2xl shadow-astra-glow border border-[#4f4ab6]/45 overflow-hidden shrink-0">
           <AstraLogo size={56} glow="soft" fill className="scale-[1.18]" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-white font-bold text-[2.1rem] leading-none tracking-[-0.02em]">Astra</h1>
           <p className="text-[#a0a6c3] text-[1.12rem] font-medium leading-none -mt-0.5">Dashboard</p>
         </div>
-      </div>
+        <ArrowLeft className="w-4 h-4 text-[#7f89aa] group-hover:text-white transition-colors shrink-0 opacity-0 group-hover:opacity-100" />
+      </Link>
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-4 space-y-7 pt-3 pb-6">
