@@ -12,7 +12,8 @@ import { StyledSelect } from '@/components/ui/StyledSelect';
 import { StyledButton } from '@/components/ui/StyledButton';
 import { StyledBadge } from '@/components/ui/StyledBadge';
 import { StatCard } from '@/components/StatCard';
-import { CaseSensitive, ListChecks, ShieldAlert, Plus, Trash2 } from 'lucide-react';
+import { CaseSensitive, ListChecks, ShieldAlert, Plus, Trash2, HelpCircle } from 'lucide-react';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
@@ -224,9 +225,9 @@ const AutomodPage: React.FC = () => {
                       <span className="text-[#dbe3ff] font-medium">Moderationsregeln</span>
                       <p className="text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
                     </div>
-                    <StyledButton variant="secondary" size="sm" onClick={addRule}>
-                      <Plus className="w-4 h-4 mr-1" />
-                      Regel
+                    <StyledButton variant="secondary" size="sm" onClick={addRule} className="inline-flex items-center whitespace-nowrap gap-1.5">
+                      <Plus className="w-4 h-4 shrink-0" />
+                      <span>Regel</span>
                     </StyledButton>
                   </div>
                 }
@@ -242,7 +243,12 @@ const AutomodPage: React.FC = () => {
                       <div className="flex flex-wrap items-end gap-3">
                         {/* Warnungen */}
                         <div className="w-[100px] shrink-0">
-                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium">Warnungen</div>
+                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                            Warnungen
+                            <StyledTooltip content="Anzahl der Verwarnungen, ab der die festgelegte Moderationsaktion automatisch ausgeführt wird." side="top" className="w-56">
+                              <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
+                            </StyledTooltip>
+                          </div>
                           <StyledNumberInput
                             value={rule.warns as any}
                             onChange={(e) => {
@@ -257,7 +263,12 @@ const AutomodPage: React.FC = () => {
                         </div>
                         {/* Aktion */}
                         <div className="flex-1 min-w-[140px]">
-                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium">Aktion</div>
+                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                            Aktion
+                            <StyledTooltip content="Legt fest, welche Maßnahme bei Erreichen der Verwarnungsanzahl ausgeführt wird. Timeout: Mitglied kann für die festgelegte Dauer nicht kommunizieren. Kick: Mitglied wird vom Server entfernt. Ban: Mitglied wird dauerhaft ausgeschlossen." side="top" className="w-64">
+                              <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
+                            </StyledTooltip>
+                          </div>
                           <StyledSelect
                             value={rule.action}
                             onChange={(val) => {
@@ -277,7 +288,12 @@ const AutomodPage: React.FC = () => {
                         {/* Timeout-Dauer */}
                         {rule.action === 'timeout' && (
                           <div className="w-[130px] shrink-0">
-                            <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium">Dauer (Sek.)</div>
+                            <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                              Dauer (Sek.)
+                              <StyledTooltip content="Dauer des Timeouts in Sekunden. Das Mitglied kann für diese Zeit nicht kommunizieren." side="top" className="w-52">
+                                <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
+                              </StyledTooltip>
+                            </div>
                             <StyledNumberInput
                               value={(rule.timeout_seconds ?? '') as any}
                               onChange={(e) =>
