@@ -21,6 +21,7 @@ import { withFrom } from '@/lib/returnTo';
 import { appConfig } from '@/lib/app-config';
 import { AstraLogo } from '@/components/AstraLogo';
 import { useServerContext, iconColors } from '@/contexts/ServerContext';
+import { modulesRegistry } from '@/modules/registry';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -268,11 +269,57 @@ export const Sidebar = () => {
               )}
             </div>
             <div className="space-y-1">
-              <NavItem icon={Cog} label="Konfiguration" onClick={() => setIsOpen(false)} />
-              <NavItem icon={Layers} label="Module" onClick={() => setIsOpen(false)} />
-              <NavItem icon={Shield} label="Berechtigungen" onClick={() => setIsOpen(false)} />
-              <NavItem icon={FileText} label="Logs" onClick={() => setIsOpen(false)} />
-              <NavItem icon={BarChart3} label="Statistiken" onClick={() => setIsOpen(false)} />
+              <NavItem
+                icon={Cog}
+                label="Konfiguration"
+                active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/settings`}
+                href={selectedServer ? `/servers/${selectedServer.id}/settings` : undefined}
+                onClick={() => setIsOpen(false)}
+              />
+              <div className="mt-2 mb-1 px-4 text-[0.72rem] sm:text-[0.68rem] font-semibold text-[#7f89aa] uppercase tracking-[0.08em]">
+                Module
+              </div>
+              {/* Modulnavigation aus Registry: direkter Wechsel zwischen registrierten Modulen je Server */}
+              {selectedServer && (
+                <div className="space-y-1">
+                  {modulesRegistry.map((m) => {
+                    const base = m.buildPath(selectedServer.id).replace(/\/+$/, '');
+                    const isActive = pathname.startsWith(base);
+                    const Icon = m.icon as any;
+                    return (
+                      <NavItem
+                        key={m.key}
+                        icon={Icon}
+                        label={m.name}
+                        active={isActive}
+                        href={base}
+                        onClick={() => setIsOpen(false)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+              <NavItem
+                icon={Shield}
+                label="Berechtigungen"
+                active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/permissions`}
+                href={selectedServer ? `/servers/${selectedServer.id}/permissions` : undefined}
+                onClick={() => setIsOpen(false)}
+              />
+              <NavItem
+                icon={FileText}
+                label="Logs"
+                active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/logs`}
+                href={selectedServer ? `/servers/${selectedServer.id}/logs` : undefined}
+                onClick={() => setIsOpen(false)}
+              />
+              <NavItem
+                icon={BarChart3}
+                label="Statistiken"
+                active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/stats`}
+                href={selectedServer ? `/servers/${selectedServer.id}/stats` : undefined}
+                onClick={() => setIsOpen(false)}
+              />
             </div>
           </div>
 
