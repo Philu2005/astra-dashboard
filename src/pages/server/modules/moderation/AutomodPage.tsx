@@ -225,9 +225,8 @@ const AutomodPage: React.FC = () => {
                       <span className="text-[#dbe3ff] font-medium">Moderationsregeln</span>
                       <p className="text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
                     </div>
-                    <StyledButton variant="secondary" size="sm" onClick={addRule} className="inline-flex items-center whitespace-nowrap gap-1.5">
-                      <Plus className="w-4 h-4 shrink-0" />
-                      <span>Regel</span>
+                    <StyledButton variant="secondary" size="sm" onClick={addRule} leftIcon={<Plus className="w-4 h-4 shrink-0" />}>
+                      Regel
                     </StyledButton>
                   </div>
                 }
