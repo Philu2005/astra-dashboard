@@ -58,6 +58,15 @@ const ServerLayout: React.FC = () => {
         <div className="absolute right-[24%] top-[38%] w-1.5 h-1.5 rounded-full bg-[#9b93ff]/40 animate-[astra-float_20s_ease-in-out_infinite]" />
       </div>
 
+      {/* Mobile Hamburger Button – fixed position, always visible on mobile */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-[70] p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md"
+        aria-label={sidebarOpen ? 'Sidebar schließen' : 'Sidebar öffnen'}
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -71,18 +80,8 @@ const ServerLayout: React.FC = () => {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        <div className="lg:ml-[278px] flex items-center">
-          {/* Mobile Hamburger Button */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-full border border-layout-divider bg-layout-hover/60 text-[#a2a8c2] hover:text-white hover:border-[#5f58d8] transition-all shrink-0 ml-3"
-            aria-label="Sidebar öffnen"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <Topbar />
-          </div>
+        <div className="lg:ml-[278px]">
+          <Topbar />
         </div>
         {/* Content with spacing and left margin on desktop */}
         <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10 lg:ml-[278px]">

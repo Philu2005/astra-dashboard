@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, FileText, BarChart3, Shield, Home, Cog, LayoutDashboard, X } from 'lucide-react';
+import { Layers, FileText, BarChart3, Shield, Home, Cog, LayoutDashboard } from 'lucide-react';
 import { NavLink, useParams, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { categories, modulesRegistry } from '@/modules/registry';
@@ -47,8 +47,8 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
         open ? 'translate-x-0' : '-translate-x-full'
       )}
     >
-      {/* Branding */}
-      <div className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider">
+      {/* Branding – on mobile, add left padding to make room for the fixed hamburger button */}
+      <div className="pl-[68px] lg:pl-8 pr-6 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider">
         <div className="relative flex items-center justify-center w-[56px] h-[56px] bg-[#463fb9] rounded-2xl shadow-astra-glow border border-[#4f4ab6]/45 overflow-hidden shrink-0">
           <AstraLogo size={56} glow="soft" fill className="scale-[1.18]" />
         </div>
@@ -56,16 +56,6 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
           <h1 className="text-white font-bold text-[2.1rem] leading-none tracking-[-0.02em]">Astra</h1>
           <p className="text-[#a0a6c3] text-[1.12rem] font-medium leading-none -mt-0.5">Dashboard</p>
         </div>
-        {/* Mobile close button – same position as hamburger */}
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-full border border-layout-divider bg-layout-hover/60 text-[#a2a8c2] hover:text-white hover:border-[#5f58d8] transition-all shrink-0"
-            aria-label="Sidebar schließen"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
       </div>
 
       {/* Navigation */}
