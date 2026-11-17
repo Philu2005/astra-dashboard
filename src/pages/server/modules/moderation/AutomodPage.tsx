@@ -39,8 +39,8 @@ const AutomodPage: React.FC = () => {
   );
 
   const buildConfig = useCallback((): Record<string, any> => {
-    // Sende sowohl verschachtelte als auch flache Felder, um Kompatibilität
-    // mit verschiedenen internen API-Formaten sicherzustellen.
+    // Payload-Struktur entspricht der internen Astra-API:
+    // { rules, capslock: {enabled, percent}, blacklist: {enabled} }
     const capsPercentNum = capsPercent === '' ? undefined : Number(capsPercent);
     return {
       rules: rules
@@ -55,12 +55,9 @@ const AutomodPage: React.FC = () => {
         enabled: capsEnabled,
         percent: capsPercentNum,
       },
-      capslock_enabled: capsEnabled,
-      capslock_percent: capsPercentNum,
-      profanity: {
+      blacklist: {
         enabled: Boolean(profanityEnabled),
       },
-      profanity_enabled: Boolean(profanityEnabled),
     };
   }, [rules, capsEnabled, capsPercent, profanityEnabled]);
 
@@ -99,11 +96,12 @@ const AutomodPage: React.FC = () => {
 
   const applyConfig = (cfg: any) => {
     setRules(parseRules(cfg));
-    // Unterstütze verschachtelte und flache Felder sowie numerische Werte (0/1)
-    const capsEn = cfg?.capslock?.enabled ?? cfg?.capslock_enabled ?? false;
+    // capslock: { enabled, percent } aus der internen API
+    const capsEn = cfg?.capslock?.enabled ?? false;
     setCapsEnabled(toBool(capsEn));
-    setCapsPercent(cfg?.capslock?.percent ?? cfg?.capslock_percent ?? '');
-    const profEn = cfg?.profanity?.enabled ?? cfg?.profanity_enabled ?? cfg?.blacklist_settings?.status ?? false;
+    setCapsPercent(cfg?.capslock?.percent ?? '');
+    // blacklist: { enabled } aus der internen API
+    const profEn = cfg?.blacklist?.enabled ?? false;
     setProfanityEnabled(toBool(profEn));
   };
 
@@ -141,14 +139,11 @@ const AutomodPage: React.FC = () => {
         const fresh = await moderationApi.getAutomod(guildId);
         const cfg = fresh.config || {};
         applyConfig(cfg);
-        // Snapshot muss dieselbe Logik wie applyConfig verwenden
-        const capsEn = cfg?.capslock?.enabled ?? (cfg as any)?.capslock_enabled ?? false;
-        const profEn = (cfg as any)?.profanity?.enabled ?? (cfg as any)?.profanity_enabled ?? (cfg as any)?.blacklist_settings?.status ?? false;
         const snap = JSON.stringify({
           rules: parseRules(cfg),
-          capsEnabled: toBool(capsEn),
-          capsPercent: cfg?.capslock?.percent ?? (cfg as any)?.capslock_percent ?? '',
-          profanityEnabled: toBool(profEn),
+          capsEnabled: toBool(cfg?.capslock?.enabled ?? false),
+          capsPercent: cfg?.capslock?.percent ?? '',
+          profanityEnabled: toBool(cfg?.blacklist?.enabled ?? false),
         });
         setInitialSnapshot(snap);
       } catch {

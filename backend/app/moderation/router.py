@@ -38,18 +38,39 @@ def _handle_astra_error(exc: AstraApiError) -> HTTPException:
 async def get_automod(guild_id: str, request: Request) -> dict[str, Any]:
     user_id = await _get_user_id_from_session(request)
     try:
-        return await astra_client.get_automod_config(guild_id, user_id)
+        data = await astra_client.get_automod_config(guild_id, user_id)
     except AstraApiError as exc:
         raise _handle_astra_error(exc)
+
+    # Die interne API liefert {rules, capslock, blacklist, ...} flach.
+    # Das Frontend erwartet {success, config: {rules, capslock, blacklist}}.
+    if isinstance(data, dict) and "config" not in data:
+        return {"success": True, "config": data}
+    return data
 
 
 @router.put("/automod/{guild_id}")
 async def put_automod(guild_id: str, request: Request, body: dict[str, Any]) -> dict[str, Any]:
     user_id = await _get_user_id_from_session(request)
+
+    # Nur die von der internen API unterstützten Felder weiterleiten.
+    # Interne API erwartet: rules, capslock: {enabled, percent}, blacklist: {enabled}
+    payload: dict[str, Any] = {}
+    if "rules" in body:
+        payload["rules"] = body["rules"]
+    if "capslock" in body:
+        payload["capslock"] = body["capslock"]
+    if "blacklist" in body:
+        payload["blacklist"] = body["blacklist"]
+
     try:
-        return await astra_client.put_automod_config(guild_id, user_id, body)
+        data = await astra_client.put_automod_config(guild_id, user_id, payload)
     except AstraApiError as exc:
         raise _handle_astra_error(exc)
+
+    if isinstance(data, dict) and "config" not in data:
+        return {"success": True, "config": data}
+    return data
 
 
 # --- Modlog ---

@@ -14,14 +14,11 @@ export type AutomodCapslock = {
 };
 
 export type AutomodConfig = {
-  // Ab sofort als Liste von Regeln. Für Rückwärtskompatibilität kann das Frontend
-  // weiterhin ein einzelnes Objekt in eine 1‑Element‑Liste umwandeln.
   rules?: AutomodRules;
   capslock?: AutomodCapslock;
-  // Optionaler Profanity‑Block: Aktivierung des Beleidigungsfilters (wird in der Bot‑API über
-  // blacklist_settings.status aktiviert/deaktiviert). Weitere interne Details werden NICHT
-  // im Dashboard konfiguriert.
-  profanity?: {
+  // Beleidigungsfilter – entspricht dem Feld "blacklist" der internen Astra-API.
+  // Nur enabled wird im Dashboard gesteuert. Keine Wortverwaltung.
+  blacklist?: {
     enabled?: boolean;
   };
 };
