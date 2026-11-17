@@ -38,8 +38,8 @@ export const ServerHeader: React.FC<ServerHeaderProps> = ({ onOpenSidebar }) => 
   }, [servers]);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#131522]/90 backdrop-blur supports-[backdrop-filter]:bg-[#131522]/70 border-b border-layout-divider">
-      <div className="px-4 sm:px-6 lg:px-8 h-[68px] flex items-center gap-3">
+    <header className="h-[78px] flex items-center sticky top-0 z-40 bg-layout-topbar/88 backdrop-blur-md border-b border-layout-divider px-4 sm:px-6 lg:px-8 xl:px-10">
+      <div className="flex items-center gap-3 w-full">
         {/* Mobile menu button */}
         <button onClick={onOpenSidebar} className="lg:hidden p-2 rounded-xl border border-layout-divider text-white bg-layout-topbar/70">
           <Menu className="w-5 h-5" />

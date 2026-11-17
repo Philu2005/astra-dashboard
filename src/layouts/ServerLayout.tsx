@@ -47,11 +47,20 @@ const ServerLayout: React.FC = () => {
 
   return (
     <div className="h-dvh bg-[#070912] text-white overflow-hidden relative flex">
+      {/* Globale Hintergrund-Gradients wie im GlobalDashboardLayout */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_8%,rgba(75,70,200,0.34)_0%,rgba(75,70,200,0.14)_18%,rgba(75,70,200,0)_44%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_86%_20%,rgba(125,227,255,0.2)_0%,rgba(125,227,255,0.08)_14%,rgba(125,227,255,0)_36%)]" />
+        <div className="absolute right-[12%] top-[14%] w-[220px] h-[220px] rounded-full bg-[radial-gradient(circle,rgba(125,227,255,0.2)_0%,rgba(125,227,255,0)_72%)] animate-[astra-float_14s_ease-in-out_infinite]" />
+        <div className="absolute right-[36%] top-[26%] w-2 h-2 rounded-full bg-[#8ddcff]/35 animate-[astra-shift_18s_ease-in-out_infinite]" />
+        <div className="absolute right-[24%] top-[38%] w-1.5 h-1.5 rounded-full bg-[#9b93ff]/40 animate-[astra-float_20s_ease-in-out_infinite]" />
+      </div>
+
       {/* Server Sidebar */}
       <ServerSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
         <div className="lg:ml-[278px]">
           <ServerHeader onOpenSidebar={() => setSidebarOpen(true)} />
         </div>
