@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, FileText, BarChart3, Shield, Home, Cog, ArrowLeft } from 'lucide-react';
+import { Layers, FileText, BarChart3, Shield, Home, Cog, LayoutDashboard, X } from 'lucide-react';
 import { NavLink, useParams, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { categories, modulesRegistry } from '@/modules/registry';
@@ -47,8 +47,8 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
         open ? 'translate-x-0' : '-translate-x-full'
       )}
     >
-      {/* Branding – identisch zur GlobalSidebar */}
-      <Link to="/dashboard" className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider group hover:bg-layout-hover/40 transition-colors">
+      {/* Branding */}
+      <div className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider">
         <div className="relative flex items-center justify-center w-[56px] h-[56px] bg-[#463fb9] rounded-2xl shadow-astra-glow border border-[#4f4ab6]/45 overflow-hidden shrink-0">
           <AstraLogo size={56} glow="soft" fill className="scale-[1.18]" />
         </div>
@@ -56,8 +56,17 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
           <h1 className="text-white font-bold text-[2.1rem] leading-none tracking-[-0.02em]">Astra</h1>
           <p className="text-[#a0a6c3] text-[1.12rem] font-medium leading-none -mt-0.5">Dashboard</p>
         </div>
-        <ArrowLeft className="w-4 h-4 text-[#7f89aa] group-hover:text-white transition-colors shrink-0 opacity-0 group-hover:opacity-100" />
-      </Link>
+        {/* Mobile close button – same position as hamburger */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-full border border-layout-divider bg-layout-hover/60 text-[#a2a8c2] hover:text-white hover:border-[#5f58d8] transition-all shrink-0"
+            aria-label="Sidebar schließen"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-4 space-y-7 pt-3 pb-6">
@@ -112,7 +121,19 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
         </div>
       </div>
 
-      {/* Footer – identisch zur GlobalSidebar */}
+      {/* Zur Übersicht */}
+      <div className="px-4 pb-3">
+        <Link
+          to="/dashboard"
+          onClick={onClose}
+          className="flex items-center gap-3 px-4 h-11 rounded-xl transition-all duration-200 border border-transparent text-[#acb3cf] hover:text-[#f0f2ff] hover:bg-layout-hover hover:border-layout-divider"
+        >
+          <LayoutDashboard className="w-5 h-5 text-[#9ea7c6]" strokeWidth={2} />
+          <span className="text-[1rem] sm:text-[1.06rem] lg:text-[1.12rem] font-medium leading-none">Zur Übersicht</span>
+        </Link>
+      </div>
+
+      {/* Footer */}
       <div className="px-5 py-5 border-t border-layout-divider space-y-4 bg-[linear-gradient(180deg,rgba(15,15,27,0)_0%,rgba(15,15,27,0.52)_100%)]">
         <a
           href={inviteUrl || '#'}

@@ -75,10 +75,10 @@ const ServerLayout: React.FC = () => {
           {/* Mobile Hamburger Button */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden flex items-center justify-center w-12 h-[78px] text-[#a2a8c2] hover:text-white transition-colors shrink-0 ml-2"
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-full border border-layout-divider bg-layout-hover/60 text-[#a2a8c2] hover:text-white hover:border-[#5f58d8] transition-all shrink-0 ml-3"
             aria-label="Sidebar öffnen"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1 min-w-0">
             <Topbar />
