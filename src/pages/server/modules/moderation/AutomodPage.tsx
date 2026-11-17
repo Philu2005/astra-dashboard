@@ -228,151 +228,152 @@ const AutomodPage: React.FC = () => {
       )}
 
       {!loading && (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,68fr)_minmax(380px,32fr)]">
-          <div className="space-y-5">
-            {/* Übersicht */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <StatCard title="Regeln" value={String(rules.length)} icon={ListChecks} />
-              <StatCard title="Capslock" value={capsEnabled ? 'Aktiv' : 'Inaktiv'} icon={CaseSensitive} />
-              <StatCard title="Blacklist" value={blEnabled ? `${(blList.length || blWords.split(/\r?\n|,/).filter((w)=>w.trim()).length)} Wörter` : 'Inaktiv'} icon={Ban} />
-            </div>
+        <>
+          {/* Statistik: volle Breite, kompakter Abstand */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <StatCard title="Regeln" value={String(rules.length)} icon={ListChecks} />
+            <StatCard title="Capslock" value={capsEnabled ? 'Aktiv' : 'Inaktiv'} icon={CaseSensitive} />
+            <StatCard title="Blacklist" value={blEnabled ? `${(blList.length || blWords.split(/\r?\n|,/).filter((w)=>w.trim()).length)} Wörter` : 'Inaktiv'} icon={Ban} />
+          </div>
 
-            {/* Regeln */}
-            <SettingsCard
-              header={<div className="flex items-center justify-between"><span className="text-[#dbe3ff]">Moderationsregeln</span><StyledButton variant="secondary" size="sm" onClick={addRule}>+ Regel hinzufügen</StyledButton></div>}
-            >
-              <div className="space-y-3">
-                {sortedRules.length === 0 && (
-                  <div className="rounded-md border border-dashed border-border bg-secondary p-4 text-[0.95rem] text-muted-foreground">
-                    Noch keine Regeln. Füge oben deine erste Regel hinzu.
-                  </div>
-                )}
-                {sortedRules.map((rule, idx) => (
-                  <div key={`${rule.warns}-${idx}`} className="rounded-[0.9rem] border border-border bg-secondary p-3 shadow-astra hover:border-astra-purple/40 transition-colors">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_1fr_200px_auto] md:items-end">
-                      <div>
-                        <div className="mb-1 text-[0.9rem] text-muted-foreground">Warnungen</div>
-                        <StyledNumberInput
-                          value={rule.warns as any}
-                          onChange={(e) => updateRule(idx, { warns: Math.max(0, Number((e.target as any).value || 0)) })}
-                          min={0}
-                          className="w-24"
-                        />
-                      </div>
-                      <div>
-                        <div className="mb-1 text-[0.9rem] text-muted-foreground">Aktion</div>
-                        <StyledSelect
-                          value={rule.action}
-                          onChange={(val) => updateRule(idx, { action: val })}
-                          options={ACTION_OPTIONS}
-                          placeholder="— auswählen —"
-                        />
-                      </div>
-                      <div>
-                        <div className="mb-1 text-[0.9rem] text-muted-foreground">Timeout (Sek.)</div>
-                        <StyledNumberInput
-                          value={(rule.timeout_seconds ?? '') as any}
-                          onChange={(e) => updateRule(idx, { timeout_seconds: (e.target as any).value === '' ? undefined : Math.max(0, Number((e.target as any).value)) })}
-                          min={0}
-                          disabled={rule.action !== 'timeout'}
-                          className="w-28"
-                        />
-                      </div>
-                      <div className="flex justify-end md:justify-start">
-                        <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)}>
-                          Entfernen
-                        </StyledButton>
+          {/* Hauptlayout: 2 Spalten, rechte Spalte nutzt freie Fläche */}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,60%)_1fr]">
+            {/* Linke Spalte: Regeln */}
+            <div className="space-y-4">
+              <SettingsCard
+                header={<div className="flex items-center justify-between"><span className="text-[#dbe3ff]">Moderationsregeln</span><StyledButton variant="secondary" size="sm" onClick={addRule}>+ Regel hinzufügen</StyledButton></div>}
+              >
+                <div className="space-y-2">
+                  {sortedRules.length === 0 && (
+                    <div className="rounded-md border border-dashed border-border bg-secondary p-3 text-[0.95rem] text-muted-foreground">
+                      Noch keine Regeln. Füge oben deine erste Regel hinzu.
+                    </div>
+                  )}
+                  {sortedRules.map((rule, idx) => (
+                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-2.5 shadow-astra hover:border-astra-purple/40 transition-colors">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[120px_1fr_180px_auto] md:items-end">
+                        <div>
+                          <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Warnungen</div>
+                          <StyledNumberInput
+                            value={rule.warns as any}
+                            onChange={(e) => updateRule(idx, { warns: Math.max(0, Number((e.target as any).value || 0)) })}
+                            min={0}
+                            className="w-20"
+                          />
+                        </div>
+                        <div>
+                          <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Aktion</div>
+                          <StyledSelect
+                            value={rule.action}
+                            onChange={(val) => updateRule(idx, { action: val })}
+                            options={ACTION_OPTIONS}
+                            placeholder="— auswählen —"
+                          />
+                        </div>
+                        <div>
+                          <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Timeout (Sek.)</div>
+                          <StyledNumberInput
+                            value={(rule.timeout_seconds ?? '') as any}
+                            onChange={(e) => updateRule(idx, { timeout_seconds: (e.target as any).value === '' ? undefined : Math.max(0, Number((e.target as any).value)) })}
+                            min={0}
+                            disabled={rule.action !== 'timeout'}
+                            className="w-24"
+                          />
+                        </div>
+                        <div className="flex justify-end md:justify-start">
+                          <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)}>
+                            Entfernen
+                          </StyledButton>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </SettingsCard>
-
-            {/* Blacklist */}
-            <SettingsCard header={<span className="text-[#dbe3ff]">Blacklist</span>}>
-              <SettingsSection
-                heading={<span className="text-[#dbe3ff]">Blacklist aktivieren</span>}
-                description="Wenn aktiviert, werden Nachrichten mit gelisteten Wörtern moderiert."
-              >
-                <StyledSwitch checked={blEnabled} onChange={(v) => setBlEnabled(v)} />
-              </SettingsSection>
-              <div className="h-3" />
-              <SettingsSection heading={<span className="text-[#dbe3ff]">Wörter</span>} description="Einzeln hinzufügen und entfernen.">
-                <div className="flex flex-wrap gap-2">
-                  {(blList.length ? blList : blWords.split(/\r?\n|,/).map((w)=>w.trim()).filter(Boolean)).map((w, i) => (
-                    <span
-                      key={`${w}-${i}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-[0.88rem] text-foreground shadow-astra transition-colors hover:border-astra-purple/40"
-                    >
-                      {w}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const list = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
-                          const next = list.filter((_, j) => j !== i);
-                          setBlList(next);
-                          setBlWords(next.join('\n'));
-                        }}
-                        className="ml-1 rounded-full border border-border bg-secondary px-1.5 py-0.5 text-muted-foreground hover:border-astra-purple/40"
-                        aria-label={`Wort ${w} entfernen`}
-                      >
-                        ×
-                      </button>
-                    </span>
                   ))}
                 </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <StyledInput
-                    placeholder="Wort hinzufügen"
-                    value={blNew}
-                    onChange={(e) => setBlNew(e.target.value)}
-                    className="w-56"
-                  />
-                  <StyledButton
-                    variant="secondary"
-                    onClick={() => {
-                      const added = blNew
-                        .split(/\r?\n|,/) 
-                        .map((w) => w.trim())
-                        .filter(Boolean);
-                      if (!added.length) return;
-                      const base = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
-                      const combined = Array.from(new Set([...base, ...added]));
-                      setBlList(combined);
-                      setBlWords(combined.join('\n'));
-                      setBlNew('');
-                    }}
-                  >
-                    Hinzufügen
-                  </StyledButton>
-                </div>
-              </SettingsSection>
-            </SettingsCard>
-          </div>
+              </SettingsCard>
+            </div>
 
-          {/* rechte Spalte: Capslock */}
-          <div className="space-y-5">
-            <SettingsCard header={<span className="text-[#dbe3ff]">Capslock</span>}>
-              <div className="flex flex-col gap-3 md:flex-row md:items-end">
-                <div className="flex items-center gap-3">
-                  <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
-                  <div className="text-[0.9rem] text-muted-foreground">Erkennung aktivieren</div>
+            {/* Rechte Spalte: Capslock oben, Blacklist darunter */}
+            <div className="space-y-4">
+              <SettingsCard header={<span className="text-[#dbe3ff]">Capslock</span>}>
+                <div className="flex flex-col gap-2 md:flex-row md:items-end">
+                  <div className="flex items-center gap-2.5">
+                    <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
+                    <div className="text-[0.9rem] text-muted-foreground">Erkennung aktivieren</div>
+                  </div>
+                  <div className="md:ml-auto">
+                    <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Prozent‑Schwelle</div>
+                    <StyledNumberInput
+                      value={(capsPercent as any)}
+                      onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
+                      min={0}
+                      max={100}
+                      className="w-20"
+                    />
+                  </div>
                 </div>
-                <div className="md:ml-auto">
-                  <div className="mb-1 text-[0.9rem] text-muted-foreground">Prozent‑Schwelle</div>
-                  <StyledNumberInput
-                    value={(capsPercent as any)}
-                    onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
-                    min={0}
-                    max={100}
-                    className="w-24"
-                  />
+              </SettingsCard>
+
+              <SettingsCard header={<span className="text-[#dbe3ff]">Blacklist</span>}>
+                <div className="flex items-center justify-between">
+                  <div className="text-[0.9rem] text-muted-foreground">Aktivieren</div>
+                  <StyledSwitch checked={blEnabled} onChange={(v) => setBlEnabled(v)} />
                 </div>
-              </div>
-            </SettingsCard>
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-end gap-2">
+                    <StyledInput
+                      placeholder="Wort hinzufügen"
+                      value={blNew}
+                      onChange={(e) => setBlNew(e.target.value)}
+                      className="w-56"
+                    />
+                    <StyledButton
+                      variant="secondary"
+                      onClick={() => {
+                        const added = blNew
+                          .split(/\r?\n|,/) 
+                          .map((w) => w.trim())
+                          .filter(Boolean);
+                        if (!added.length) return;
+                        const base = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
+                        const combined = Array.from(new Set([...base, ...added]));
+                        setBlList(combined);
+                        setBlWords(combined.join('\n'));
+                        setBlNew('');
+                      }}
+                    >
+                      Hinzufügen
+                    </StyledButton>
+                  </div>
+                  <div className="max-h-56 overflow-auto rounded-md border border-border bg-secondary p-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {(blList.length ? blList : blWords.split(/\r?\n|,/).map((w)=>w.trim()).filter(Boolean)).map((w, i) => (
+                        <span
+                          key={`${w}-${i}`}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[0.82rem] text-foreground shadow-astra transition-colors hover:border-astra-purple/40"
+                        >
+                          {w}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
+                              const next = list.filter((_, j) => j !== i);
+                              setBlList(next);
+                              setBlWords(next.join('\n'));
+                            }}
+                            className="ml-1 rounded-full border border-border bg-secondary px-1.5 py-0.5 text-muted-foreground hover:border-astra-purple/40"
+                            aria-label={`Wort ${w} entfernen`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </SettingsCard>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       <SettingsSaveBar
