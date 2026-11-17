@@ -24,6 +24,12 @@ export type AutomodConfig = {
   rules?: AutomodRules;
   capslock?: AutomodCapslock;
   blacklist?: AutomodBlacklist;
+  // Optionaler Profanity‑Block: Aktivierung des Beleidigungsfilters (wird in der Bot‑API über
+  // blacklist_settings.status aktiviert/deaktiviert). Weitere interne Details werden NICHT
+  // im Dashboard konfiguriert.
+  profanity?: {
+    enabled?: boolean;
+  };
 };
 
 export type AutomodResponse = {

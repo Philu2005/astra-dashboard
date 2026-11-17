@@ -29,6 +29,9 @@ const AutomodPage: React.FC = () => {
   const [capsEnabled, setCapsEnabled] = useState<boolean>(false);
   const [capsPercent, setCapsPercent] = useState<number | ''>('');
 
+  // Beleidigungsfilter (Profinity) – nur Aktivierung sichtbar/änderbar
+  const [profanityEnabled, setProfanityEnabled] = useState<boolean>(false);
+
   const [blEnabled, setBlEnabled] = useState<boolean>(false);
   const [blWords, setBlWords] = useState<string>(''); // textarea fallback (kept for compatibility)
   const [blList, setBlList] = useState<string[]>([]);
@@ -65,12 +68,15 @@ const AutomodPage: React.FC = () => {
         enabled: capsEnabled,
         percent: capsPercent === '' ? undefined : Number(capsPercent),
       },
+      profanity: {
+        enabled: Boolean(profanityEnabled),
+      },
       blacklist: {
         enabled: blEnabled,
         words: words.length ? words : undefined,
       },
     };
-  }, [rules, capsEnabled, capsPercent, blEnabled, blWords]);
+  }, [rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords]);
 
   useEffect(() => {
     let active = true;
@@ -108,6 +114,8 @@ const AutomodPage: React.FC = () => {
         setRules(nextRules);
         setCapsEnabled(Boolean(cfg.capslock?.enabled));
         setCapsPercent(cfg.capslock?.percent ?? '');
+        // Profanity: tolerant lesen (optional)
+        setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
         setBlEnabled(Boolean(cfg.blacklist?.enabled));
         const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
         setBlList(words);
@@ -157,6 +165,7 @@ const AutomodPage: React.FC = () => {
         setRules((nextRules || []).sort((a, b) => a.warns - b.warns));
         setCapsEnabled(Boolean(cfg.capslock?.enabled));
         setCapsPercent(cfg.capslock?.percent ?? '');
+        setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
         setBlEnabled(Boolean(cfg.blacklist?.enabled));
         const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
         setBlList(words);
@@ -166,6 +175,7 @@ const AutomodPage: React.FC = () => {
           rules: (nextRules || []).sort((a, b) => a.warns - b.warns),
           capsEnabled: Boolean(cfg.capslock?.enabled),
           capsPercent: cfg.capslock?.percent ?? '',
+          profanityEnabled: Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false),
           blEnabled: Boolean(cfg.blacklist?.enabled),
           blWords: words.join('\n'),
         } as any);
@@ -183,16 +193,16 @@ const AutomodPage: React.FC = () => {
   useEffect(() => {
     // Set initial snapshot, sobald erste Ladung fertig ist
     if (!loading) {
-      const snap = JSON.stringify({ rules, capsEnabled, capsPercent, blEnabled, blWords });
+      const snap = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords });
       if (!initialSnapshot) setInitialSnapshot(snap);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
   const isDirty = useMemo(() => {
-    const current = JSON.stringify({ rules, capsEnabled, capsPercent, blEnabled, blWords });
+    const current = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords });
     return current !== initialSnapshot;
-  }, [rules, capsEnabled, capsPercent, blEnabled, blWords, initialSnapshot]);
+  }, [rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords, initialSnapshot]);
 
   const addRule = () => {
     const next: AutomodRule = { warns: Math.max(1, (rules.at(-1)?.warns || 0) + 1), action: 'timeout', timeout_seconds: 60 };
@@ -292,8 +302,46 @@ const AutomodPage: React.FC = () => {
               </SettingsCard>
             </div>
 
-            {/* Rechte Spalte: Capslock oben, Blacklist darunter */}
+            {/* Rechte Spalte: Beleidigungsfilter oben, Capslock darunter, dann Blacklist */}
             <div className="space-y-4">
+              {/* Beleidigungsfilter */}
+              <SettingsCard header={<span className="text-[#dbe3ff]">Beleidigungsfilter</span>}>
+                <div className="mb-2 text-[0.95rem] text-muted-foreground">
+                  Erkennt Beleidigungen automatisch und berücksichtigt den Zusammenhang einer Nachricht, um harmlose Aussagen nicht unnötig zu bestrafen.
+                </div>
+                <SettingsSection
+                  heading="Beleidigungsfilter aktivieren"
+                  description="Schützt deinen Server automatisch vor Beleidigungen und Schimpfwörtern."
+                >
+                  <div className="flex items-center justify-end">
+                    <StyledSwitch checked={profanityEnabled} onChange={(v) => setProfanityEnabled(v)} />
+                  </div>
+                </SettingsSection>
+
+                <div className="mt-3 rounded-md border border-border bg-secondary p-3">
+                  <div className="mb-1.5 text-[0.95rem] font-medium text-[#dbe3ff]">Wie funktioniert die Erkennung?</div>
+                  <div className="text-[0.92rem] text-muted-foreground">Der Filter erkennt Beleidigungen in mehreren Sprachen und berücksichtigt den Kontext, in dem sie verwendet werden.</div>
+                  <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-3">
+                    <div className="rounded-md border border-border bg-background/40 p-2">
+                      <div className="text-[0.9rem] font-medium text-foreground">Automatisch moderieren</div>
+                      <div className="text-[0.88rem] text-muted-foreground">Eindeutige Beleidigungen werden automatisch behandelt.</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-background/40 p-2">
+                      <div className="text-[0.9rem] font-medium text-foreground">Manuell überprüfen</div>
+                      <div className="text-[0.88rem] text-muted-foreground">Unklare Nachrichten werden Moderatoren zur Prüfung vorgelegt.</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-background/40 p-2">
+                      <div className="text-[0.9rem] font-medium text-foreground">Ignorieren</div>
+                      <div className="text-[0.88rem] text-muted-foreground">Harmlose oder nicht beleidigend gemeinte Aussagen bleiben unbeachtet.</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[0.85rem] text-muted-foreground">
+                    <span className="font-medium text-foreground">Mehrsprachige Erkennung</span>
+                    <span className="ml-1">· Unterstützt Deutsch, Englisch und weitere Sprachen sowie unterschiedliche Schreibweisen.</span>
+                  </div>
+                </div>
+              </SettingsCard>
+
               <SettingsCard header={<span className="text-[#dbe3ff]">Capslock</span>}>
                 <div className="flex flex-col gap-2 md:flex-row md:items-end">
                   <div className="flex items-center gap-2.5">
@@ -313,7 +361,7 @@ const AutomodPage: React.FC = () => {
                 </div>
               </SettingsCard>
 
-              <SettingsCard header={<span className="text-[#dbe3ff]">Blacklist</span>}>
+              <SettingsCard header={<span className="text-[#dbe3ff]">Manuelle AutoMod‑Blacklist</span>}>
                 <div className="flex items-center justify-between">
                   <div className="text-[0.9rem] text-muted-foreground">Aktivieren</div>
                   <StyledSwitch checked={blEnabled} onChange={(v) => setBlEnabled(v)} />
@@ -321,7 +369,7 @@ const AutomodPage: React.FC = () => {
                 <div className="mt-3 space-y-2">
                   <div className="flex items-end gap-2">
                     <StyledInput
-                      placeholder="Wort hinzufügen"
+                      placeholder="Wort hinzufügen (manuelle Sperrliste)"
                       value={blNew}
                       onChange={(e) => setBlNew(e.target.value)}
                       className="w-56"
@@ -411,6 +459,7 @@ const AutomodPage: React.FC = () => {
               setRules(nextRules);
               setCapsEnabled(Boolean(cfg.capslock?.enabled));
               setCapsPercent(cfg.capslock?.percent ?? '');
+              setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
               setBlEnabled(Boolean(cfg.blacklist?.enabled));
               const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
               setBlList(words);
