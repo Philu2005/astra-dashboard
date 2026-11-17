@@ -7,7 +7,6 @@ type Props = {
   module: ModuleMeta;
 };
 
-// Compact tab-like sub navigation used inside a module
 const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   const { guildId } = useParams();
   const location = useLocation();
@@ -16,7 +15,7 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   const items = module.subpages ?? [];
 
   return (
-    <div className="rounded-md border border-[#2a2f45] bg-[#0f1220]/80 p-1">
+    <div className="rounded-xl border border-[#2d3246] bg-[#0f1220]/80 p-1 shadow-astra">
       <nav
         className="flex w-full gap-1 overflow-x-auto"
         aria-label={`${module.name} Unterseiten`}
@@ -31,16 +30,16 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
               key={sp.id}
               to={href}
               className={cn(
-                'inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-[0.92rem] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
+                'inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-[0.92rem] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
                 active
-                  ? 'bg-white/10 text-white'
-                  : 'text-foreground/80 hover:text-white hover:bg-white/5'
+                  ? 'bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white border border-[#5f58d8]/50 shadow-[0_8px_20px_-14px_rgba(75,70,200,0.8)]'
+                  : 'text-[#9ca2be] border border-transparent hover:text-white hover:bg-white/5 hover:border-[#373c53]'
               )}
               aria-current={active ? 'page' : undefined}
               role="tab"
               aria-selected={active}
             >
-              {Icon && <Icon className="h-4 w-4" />}
+              {Icon && <Icon className={cn('h-4 w-4', active ? 'text-[#7de3ff]' : '')} />}
               <span>{sp.name}</span>
             </Link>
           );

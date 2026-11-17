@@ -26,31 +26,31 @@ const ModuleLayout: React.FC<Props> = ({ moduleKey }) => {
 
   return (
     <div className="flex min-h-full flex-col">
-      {/* Moderation header */}
-      <header className="mb-2">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-white/5 p-1.5">
-            <Icon className="h-5 w-5 text-[#7de3ff]" />
+      {/* Module header */}
+      <header className="mb-4">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1d2238] text-[#7de3ff] shadow-[0_12px_26px_-20px_rgba(75,70,200,0.95)] border border-[#353c56] shrink-0">
+            <Icon className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-[1.1rem] font-semibold leading-tight tracking-tight text-white">
+            <h1 className="text-[1.2rem] font-semibold leading-tight tracking-[-0.01em] text-white">
               {module.name}
             </h1>
-            <p className="mt-0.5 line-clamp-2 text-[0.9rem] text-foreground/70">
+            <p className="mt-0.5 line-clamp-2 text-[0.9rem] text-[#9ca2be]">
               {module.description}
             </p>
           </div>
         </div>
 
         {module.subpages && module.subpages.length > 0 && (
-          <div className="mt-3">
+          <div className="mt-4">
             <ModuleSubNavigation module={module} />
           </div>
         )}
       </header>
 
       {/* Content */}
-      <section className="mt-2">
+      <section className="mt-1">
         <Outlet />
       </section>
     </div>

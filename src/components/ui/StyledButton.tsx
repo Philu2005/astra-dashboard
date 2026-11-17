@@ -35,8 +35,8 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
         ref={ref}
         disabled={isDisabled}
         className={cn(
-          'inline-flex items-center justify-center gap-2 border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
-          'shadow-astra select-none',
+          'inline-flex flex-row flex-nowrap items-center justify-center gap-2 border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
+          'shadow-astra select-none whitespace-nowrap shrink-0 w-fit',
           variantClasses[variant],
           sizeClasses[size],
           isDisabled && 'opacity-70 cursor-not-allowed',
@@ -51,7 +51,7 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
           </svg>
         )}
         {!loading && leftIcon}
-        <span className="truncate">{children}</span>
+        <span>{children}</span>
         {!loading && rightIcon}
       </button>
     );

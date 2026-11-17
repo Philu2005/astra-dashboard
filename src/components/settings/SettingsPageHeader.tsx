@@ -15,21 +15,23 @@ export const SettingsPageHeader: React.FC<SettingsPageHeaderProps> = ({ classNam
   return (
     <div
       className={cn(
-        'mb-5 flex flex-col gap-3 rounded-[1.1rem] border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-5 shadow-astra',
+        'mb-5 flex flex-col gap-3 rounded-[1.15rem] border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-5 shadow-astra relative overflow-hidden',
         className,
       )}
       {...props}
     >
+      <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.03)_0%,rgba(255,255,255,0)_42%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_95%_5%,rgba(75,70,200,0.08)_0%,rgba(75,70,200,0)_50%)] pointer-events-none" />
       {backTo && (
         <Link
           to={backTo}
-          className="inline-flex items-center gap-1.5 text-[0.85rem] text-[#9ca2be] hover:text-white transition-colors w-fit -mt-1 mb-1"
+          className="relative z-10 inline-flex items-center gap-1.5 text-[0.85rem] text-[#9ca2be] hover:text-astra-cyan transition-colors w-fit -mt-1 mb-1 group"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
           <span>{backLabel || 'Zurück'}</span>
         </Link>
       )}
-      <div className="flex items-start justify-between gap-4">
+      <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="space-y-1.5">
           <h1 className="text-[1.45rem] font-semibold leading-6 tracking-[-0.015em] text-white">{heading}</h1>
           {description && <p className="text-[0.98rem] leading-6 text-[#9ca2be]">{description}</p>}
