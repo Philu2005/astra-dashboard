@@ -123,19 +123,25 @@ const WarningsPage: React.FC = () => {
         {!loading && warns.length > 0 && (
           <ul className="divide-y divide-[#2d3246] text-[0.95rem]">
             {warns.map((w) => (
-              <li key={`${w.userId}-${w.warnId}`} className="flex items-center justify-between gap-4 py-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[0.82rem] text-foreground">
-                      {w.userId}
+              <li key={`${w.userId}-${w.warnId}`} className="flex items-start justify-between gap-4 py-3">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
+                      <span className="opacity-70">Benutzer‑ID:</span>
+                      <span className="font-medium">{w.userId}</span>
                     </span>
-                    <span className="truncate font-medium text-white">{w.warnId}</span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
+                      <span className="opacity-70">Warnungs‑ID:</span>
+                      <span className="font-medium">{w.warnId}</span>
+                    </span>
                   </div>
-                  <div className="truncate text-[#9ca2be]">{w.reason || '—'}</div>
+                  <div className="text-[#dbe3ff]">{w.reason || '—'}</div>
                 </div>
-                <StyledButton onClick={() => onDeleteOne(w.warnId)} disabled={loading} size="sm" variant="danger">
-                  Entfernen
-                </StyledButton>
+                <div className="shrink-0 pt-1">
+                  <StyledButton onClick={() => onDeleteOne(w.warnId)} disabled={loading} size="sm" variant="danger">
+                    Entfernen
+                  </StyledButton>
+                </div>
               </li>
             ))}
           </ul>

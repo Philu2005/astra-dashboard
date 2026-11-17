@@ -17,7 +17,7 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
 
   return (
     <div>
-      <nav className="flex w-full gap-1.5 overflow-x-auto">
+      <nav className="flex w-full gap-1.5 overflow-x-auto" aria-label={`${module.name} Unterseiten`} role="tablist">
         {items.map((sp) => {
           const href = `${base}/${sp.path}`;
           const active = location.pathname.startsWith(href);
@@ -27,11 +27,14 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
               key={sp.id}
               to={href}
               className={cn(
-                'inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-[0.92rem] transition-colors',
+                'inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-[0.92rem] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
                 active
                   ? 'bg-white/10 text-white'
                   : 'text-foreground/80 hover:text-white hover:bg-white/5'
               )}
+              aria-current={active ? 'page' : undefined}
+              role="tab"
+              aria-selected={active}
             >
               {Icon && <Icon className="h-4 w-4" />}
               <span>{sp.name}</span>

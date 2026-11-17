@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface StyledNumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -8,14 +8,22 @@ export interface StyledNumberInputProps extends Omit<React.InputHTMLAttributes<H
   min?: number;
   max?: number;
   controls?: boolean; // eigene +/- Controls einblenden
+  selectOnFocus?: boolean; // bei erstem Fokus gesamten Wert markieren
 }
 
 // Nummernfeld ohne native Spinner. Optional mit eigenen +/- Controls.
 export const StyledNumberInput = React.forwardRef<HTMLInputElement, StyledNumberInputProps>(
   (
-    { className, error, hint, controls = false, step = 1, min, max, disabled, value, onChange, ...props },
+    { className, error, hint, controls = false, step = 1, min, max, disabled, value, onChange, onBlur, onFocus, selectOnFocus = true, ...props },
     ref,
   ) => {
+    const internalRef = useRef<HTMLInputElement | null>(null);
+    const setRefs = (node: HTMLInputElement | null) => {
+      internalRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+    };
+
     const clamp = useCallback(
       (v: number) => {
         if (typeof min === 'number') v = Math.max(v, min);
@@ -39,10 +47,34 @@ export const StyledNumberInput = React.forwardRef<HTMLInputElement, StyledNumber
       onChange(evt);
     };
 
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      if (selectOnFocus) {
+        // Auswahl nach dem nächsten Tick, damit Browser den Fokus gesetzt hat
+        requestAnimationFrame(() => internalRef.current?.select());
+      }
+      onFocus?.(e);
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      // Keine harten Resets während der Eingabe; nur Min/Max-Clamp anwenden, falls es eine Zahl ist
+      const raw = (e.target as HTMLInputElement).value;
+      if (raw !== '' && onChange) {
+        const n = parse(raw);
+        if (Number.isFinite(n)) {
+          const clamped = clamp(n);
+          if (String(clamped) !== raw) {
+            const evt = { target: { value: String(clamped) } } as unknown as React.ChangeEvent<HTMLInputElement>;
+            onChange(evt);
+          }
+        }
+      }
+      onBlur?.(e);
+    };
+
     return (
       <div className={cn('relative inline-flex w-full items-stretch', disabled && 'opacity-60')}>
         <input
-          ref={ref}
+          ref={setRefs}
           inputMode="decimal"
           pattern="[0-9]*"
           disabled={disabled}
@@ -51,7 +83,7 @@ export const StyledNumberInput = React.forwardRef<HTMLInputElement, StyledNumber
             controls ? 'pr-12' : 'pr-3',
             'text-[0.95rem] text-white',
             'border-[#2a2f45] placeholder:text-[#7f86a8]',
-            'focus:outline-none focus:border-astra-purple/40 focus:ring-0',
+            'focus:outline-none focus-visible:border-astra-purple/40 focus:ring-0',
             'hover:border-astra-purple/25',
             'transition-colors duration-150 motion-reduce:transition-none',
             // Native Spinner entfernen (WebKit/Firefox)
@@ -61,6 +93,8 @@ export const StyledNumberInput = React.forwardRef<HTMLInputElement, StyledNumber
           )}
           value={value as any}
           onChange={onChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...props}
           type="text"
         />
