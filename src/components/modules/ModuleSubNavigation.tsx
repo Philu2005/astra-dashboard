@@ -16,8 +16,12 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   const items = module.subpages ?? [];
 
   return (
-    <div>
-      <nav className="flex w-full gap-1.5 overflow-x-auto" aria-label={`${module.name} Unterseiten`} role="tablist">
+    <div className="rounded-md border border-[#2a2f45] bg-[#0f1220]/80 p-1">
+      <nav
+        className="flex w-full gap-1 overflow-x-auto"
+        aria-label={`${module.name} Unterseiten`}
+        role="tablist"
+      >
         {items.map((sp) => {
           const href = `${base}/${sp.path}`;
           const active = location.pathname.startsWith(href);

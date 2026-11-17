@@ -261,13 +261,22 @@ const AutomodPage: React.FC = () => {
                   )}
                   {sortedRules.map((rule, idx) => (
                     <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-2.5 shadow-astra hover:border-astra-purple/40 transition-colors">
-                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[120px_1fr_180px_auto] md:items-end">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[120px_1fr_auto] md:items-end">
                         <div>
                           <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Warnungen</div>
                           <StyledNumberInput
                             value={rule.warns as any}
-                            onChange={(e) => updateRule(idx, { warns: Math.max(0, Number((e.target as any).value || 0)) })}
-                            min={0}
+                            onChange={(e) => {
+                              const raw = (e.target as any).value;
+                              // Leere Eingabe nicht sofort erzwingen – min. 1 bei gültiger Zahl
+                              if (raw === '') {
+                                // Nichts verändern; Auswahl + anschließende Eingabe überschreibt zuverlässig
+                                return;
+                              }
+                              const n = Number(raw);
+                              updateRule(idx, { warns: Number.isFinite(n) ? Math.max(1, n) : (rule.warns as any) });
+                            }}
+                            min={1}
                             className="w-20"
                           />
                         </div>
@@ -280,16 +289,24 @@ const AutomodPage: React.FC = () => {
                             placeholder="— auswählen —"
                           />
                         </div>
-                        <div>
-                          <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Timeout (Sek.)</div>
-                          <StyledNumberInput
-                            value={(rule.timeout_seconds ?? '') as any}
-                            onChange={(e) => updateRule(idx, { timeout_seconds: (e.target as any).value === '' ? undefined : Math.max(0, Number((e.target as any).value)) })}
-                            min={0}
-                            disabled={rule.action !== 'timeout'}
-                            className="w-24"
-                          />
-                        </div>
+                        {rule.action === 'timeout' && (
+                          <div className="md:col-span-1">
+                            <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Timeout‑Dauer (Sek.)</div>
+                            <StyledNumberInput
+                              value={(rule.timeout_seconds ?? '') as any}
+                              onChange={(e) =>
+                                updateRule(idx, {
+                                  timeout_seconds:
+                                    (e.target as any).value === ''
+                                      ? undefined
+                                      : Math.max(0, Number((e.target as any).value)),
+                                })
+                              }
+                              min={0}
+                              className="w-24"
+                            />
+                          </div>
+                        )}
                         <div className="flex justify-end md:justify-start">
                           <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)}>
                             Entfernen
