@@ -4,6 +4,9 @@ import { categories, modulesRegistry } from '@/modules/registry';
 import ModuleSearch from '@/components/modules/ModuleSearch';
 import ModuleCategoryNavigation from '@/components/modules/ModuleCategoryNavigation';
 import ModuleGrid from '@/components/modules/ModuleGrid';
+import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
+import { StyledBadge } from '@/components/ui/StyledBadge';
+import { Layers } from 'lucide-react';
 
 type CategoryId = typeof categories[number]['id'];
 
@@ -34,19 +37,25 @@ const ModuleOverview: React.FC = () => {
   return (
     <div className="flex h-full flex-col">
       {/* Page header */}
-      <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-white">Module</h1>
-          <p className="mt-1 text-sm text-foreground/70">
-            Verwalte die Funktionen dieses Servers. Wähle eine Kategorie oder suche nach einem Modul.
-          </p>
-        </div>
-        <ModuleSearch value={query} onChange={setQuery} className="sm:w-[320px]" />
+      <SettingsPageHeader
+        heading="Module"
+        description="Verwalte die Funktionen dieses Servers. Module erweitern Astra um zusätzliche Fähigkeiten wie automatische Moderation, Verwarnungen und Protokollierung. Wähle ein Modul aus, um es zu konfigurieren."
+        actions={
+          <StyledBadge variant="default">
+            <Layers className="w-3.5 h-3.5 mr-1" />
+            {modulesRegistry.length} {modulesRegistry.length === 1 ? 'Modul' : 'Module'}
+          </StyledBadge>
+        }
+      />
+
+      {/* Search */}
+      <div className="mb-5">
+        <ModuleSearch value={query} onChange={setQuery} className="max-w-md" />
       </div>
 
       {/* Content layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-[var(--server-header-offset,0px)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <aside>
           <ModuleCategoryNavigation
             categories={categories}
             active={activeCategory}
@@ -55,6 +64,13 @@ const ModuleOverview: React.FC = () => {
         </aside>
         <section>
           <ModuleGrid modules={filtered} onOpen={onOpen} />
+          {filtered.length > 0 && filtered.length === modulesRegistry.length && (
+            <div className="mt-6 rounded-lg border border-[#2d3246] bg-[#141728]/60 p-4">
+              <p className="text-[0.88rem] text-[#9ca2be]">
+                <span className="font-medium text-[#dbe3ff]">Tipp:</span> Weitere Module werden in zukünftigen Updates verfügbar sein. Die vorhandenen Module können bereits vollständig konfiguriert werden.
+              </p>
+            </div>
+          )}
         </section>
       </div>
     </div>

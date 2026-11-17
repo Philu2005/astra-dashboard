@@ -93,7 +93,7 @@ const WarningsPage: React.FC = () => {
     <div className="space-y-5">
       <SettingsPageHeader
         heading="Verwarnungen"
-        description="Alle Verwarnungen dieser Guild anzeigen und verwalten."
+        description="Zeigt alle aktiven Verwarnungen dieses Servers an. Verwarnungen werden durch Moderatoren oder automatisch durch AutoMod-Regeln vergeben. Bei Erreichen einer konfigurierten Warnstufe wird die zugehörige Moderationsaktion ausgelöst."
         actions={<StyledBadge variant="default">{count} Ergebnis(se)</StyledBadge>}
       />
 
@@ -106,7 +106,7 @@ const WarningsPage: React.FC = () => {
       <SettingsCard header={<span className="text-[#dbe3ff]">Aktionen</span>}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[0.9rem] text-[#9ca2be]">
-            Hinweis: Daten stammen direkt aus Astras API. Sortierung: Nutzer aufsteigend, Verwarnungen absteigend.
+            Die Verwarnungen werden direkt aus Astras API geladen und nach Benutzer gruppiert. Einzelne Verwarnungen können gezielt entfernt werden, um die Warnstufe eines Benutzers zu reduzieren.
           </div>
           <div className="flex gap-2">
             <StyledButton onClick={load} disabled={!canQuery || loading} variant="primary">

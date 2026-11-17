@@ -1,6 +1,5 @@
 import React from 'react';
 import { Outlet, useParams } from 'react-router-dom';
-import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import ModuleSubNavigation from '@/components/modules/ModuleSubNavigation';
 import { getModuleByKey } from '@/modules/registry';
 
@@ -15,7 +14,6 @@ const ModuleLayout: React.FC<Props> = ({ moduleKey }) => {
   if (!module) {
     return (
       <div className="space-y-4">
-        <Breadcrumbs />
         <h1 className="text-xl font-semibold tracking-tight text-white">Unbekanntes Modul</h1>
         <p className="text-sm text-foreground/70">
           Das angeforderte Modul ist nicht verfügbar. Kehre zur Modulübersicht zurück.
@@ -28,12 +26,7 @@ const ModuleLayout: React.FC<Props> = ({ moduleKey }) => {
 
   return (
     <div className="flex min-h-full flex-col">
-      {/* Breadcrumbs */}
-      <div className="mb-3">
-        <Breadcrumbs />
-      </div>
-
-      {/* Moderation header (kompakt, moderne Komposition) */}
+      {/* Moderation header */}
       <header className="mb-2">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-white/5 p-1.5">
@@ -49,7 +42,6 @@ const ModuleLayout: React.FC<Props> = ({ moduleKey }) => {
           </div>
         </div>
 
-        {/* Integrierte, tab‑artige Navigation direkt unter Titelzeile */}
         {module.subpages && module.subpages.length > 0 && (
           <div className="mt-3">
             <ModuleSubNavigation module={module} />

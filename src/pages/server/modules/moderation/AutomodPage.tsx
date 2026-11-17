@@ -9,11 +9,10 @@ import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { StyledSwitch } from '@/components/ui/StyledSwitch';
 import { StyledNumberInput } from '@/components/ui/StyledNumberInput';
 import { StyledSelect } from '@/components/ui/StyledSelect';
-// Entfernt: Textarea/Input für manuelle Blacklist
 import { StyledButton } from '@/components/ui/StyledButton';
 import { StyledBadge } from '@/components/ui/StyledBadge';
 import { StatCard } from '@/components/StatCard';
-import { CaseSensitive, ListChecks } from 'lucide-react';
+import { CaseSensitive, ListChecks, ShieldAlert, Plus, Trash2 } from 'lucide-react';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
@@ -28,10 +27,7 @@ const AutomodPage: React.FC = () => {
   const [capsEnabled, setCapsEnabled] = useState<boolean>(false);
   const [capsPercent, setCapsPercent] = useState<number | ''>('');
 
-  // Beleidigungsfilter (Profinity) – nur Aktivierung sichtbar/änderbar
   const [profanityEnabled, setProfanityEnabled] = useState<boolean>(false);
-
-  // Manuelle AutoMod‑Blacklist: vollständig entfernt (UI/State)
 
   const ACTION_OPTIONS = useMemo(
     () => [
@@ -62,6 +58,39 @@ const AutomodPage: React.FC = () => {
     };
   }, [rules, capsEnabled, capsPercent, profanityEnabled]);
 
+  const normalizeAction = (a: any): string => {
+    const v = String(a ?? '').toLowerCase();
+    return ['timeout', 'kick', 'ban'].includes(v) ? v : '';
+  };
+
+  const parseRules = (cfg: any): AutomodRule[] => {
+    const rawRules: any = cfg?.rules;
+    let nextRules: AutomodRule[] = [];
+    if (Array.isArray(rawRules)) {
+      nextRules = rawRules
+        .map((r: any) => ({
+          warns: Number(r?.warns ?? 0),
+          action: normalizeAction(r?.action),
+          ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
+        }))
+        .filter((r: AutomodRule) => r.warns > 0 && r.action);
+    } else if (rawRules && typeof rawRules === 'object') {
+      nextRules = [{
+        warns: Number(rawRules.warns ?? 0),
+        action: normalizeAction(rawRules.action),
+        ...(rawRules.timeout_seconds != null ? { timeout_seconds: Number(rawRules.timeout_seconds) } : {}),
+      }].filter((r) => r.warns > 0 && r.action);
+    }
+    return nextRules.sort((a, b) => a.warns - b.warns);
+  };
+
+  const applyConfig = (cfg: any) => {
+    setRules(parseRules(cfg));
+    setCapsEnabled(Boolean(cfg?.capslock?.enabled));
+    setCapsPercent(cfg?.capslock?.percent ?? '');
+    setProfanityEnabled(Boolean(cfg?.profanity?.enabled ?? cfg?.profanity_enabled ?? false));
+  };
+
   useEffect(() => {
     let active = true;
     async function load() {
@@ -71,36 +100,7 @@ const AutomodPage: React.FC = () => {
       try {
         const res = await moderationApi.getAutomod(guildId);
         if (!active) return;
-        const cfg = res.config || {};
-        // Regeln normalisieren: Array bevorzugt, einzelnes Objekt bleibt kompatibel
-        const rawRules: any = (cfg as any).rules;
-        let nextRules: AutomodRule[] = [];
-        const normalizeAction = (a: any): string => {
-          const v = String(a ?? '').toLowerCase();
-          return ['timeout', 'kick', 'ban'].includes(v) ? v : '';
-        };
-        if (Array.isArray(rawRules)) {
-          nextRules = rawRules
-            .map((r) => ({
-              warns: Number(r?.warns ?? 0),
-              action: normalizeAction(r?.action),
-              ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
-            }))
-            .filter((r) => r.warns > 0 && r.action);
-        } else if (rawRules && typeof rawRules === 'object') {
-          nextRules = [{
-            warns: Number(rawRules.warns ?? 0),
-            action: normalizeAction(rawRules.action),
-            ...(rawRules.timeout_seconds != null ? { timeout_seconds: Number(rawRules.timeout_seconds) } : {}),
-          }].filter((r) => r.warns > 0 && r.action);
-        }
-        nextRules.sort((a, b) => a.warns - b.warns);
-        setRules(nextRules);
-        setCapsEnabled(Boolean(cfg.capslock?.enabled));
-        setCapsPercent(cfg.capslock?.percent ?? '');
-        // Profanity: tolerant lesen (optional)
-        setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
-        // Blacklist-UI entfernt – Backend-Zustände werden nicht dargestellt
+        applyConfig(res.config || {});
       } catch (e: any) {
         if (!active) return;
         setError(e?.message || 'Fehler beim Laden der AutoMod‑Konfiguration.');
@@ -109,9 +109,7 @@ const AutomodPage: React.FC = () => {
       }
     }
     load();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [guildId]);
 
   const onSave = async () => {
@@ -122,41 +120,20 @@ const AutomodPage: React.FC = () => {
       const payload = buildConfig();
       await moderationApi.putAutomod(guildId, payload);
       setSaveState('success');
-      // Soft reset success state after short delay
       setTimeout(() => setSaveState('idle'), 1600);
-      // Nach erfolgreichem Speichern vom Server neu laden, um echten Zustand zu übernehmen
       try {
         const fresh = await moderationApi.getAutomod(guildId);
         const cfg = fresh.config || {};
-        const rawRules: any = (cfg as any).rules;
-        let nextRules: AutomodRule[] = [];
-        if (Array.isArray(rawRules)) {
-          nextRules = (rawRules as any[]).map((r) => ({
-            warns: Number(r?.warns ?? 0),
-            action: String(r?.action ?? '').toLowerCase(),
-            ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
-          }));
-        } else if (rawRules && typeof rawRules === 'object') {
-          nextRules = [{
-            warns: Number((rawRules as any).warns ?? 0),
-            action: String((rawRules as any).action ?? '').toLowerCase(),
-            ...(((rawRules as any).timeout_seconds != null) ? { timeout_seconds: Number((rawRules as any).timeout_seconds) } : {}),
-          }];
-        }
-        setRules((nextRules || []).sort((a, b) => a.warns - b.warns));
-        setCapsEnabled(Boolean(cfg.capslock?.enabled));
-        setCapsPercent(cfg.capslock?.percent ?? '');
-        setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
-        // Snapshot nach erfolgreichem Speichern auf neuen Serverzustand aktualisieren
+        applyConfig(cfg);
         const snap = JSON.stringify({
-          rules: (nextRules || []).sort((a, b) => a.warns - b.warns),
+          rules: parseRules(cfg),
           capsEnabled: Boolean(cfg.capslock?.enabled),
           capsPercent: cfg.capslock?.percent ?? '',
           profanityEnabled: Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false),
-        } as any);
+        });
         setInitialSnapshot(snap);
       } catch {
-        // still fine – Nutzer sieht success, erneutes Laden kann später erfolgen
+        // Nutzer sieht success
       }
     } catch (e: any) {
       setSaveState('error');
@@ -166,7 +143,6 @@ const AutomodPage: React.FC = () => {
 
   const [initialSnapshot, setInitialSnapshot] = useState<string>('');
   useEffect(() => {
-    // Set initial snapshot, sobald erste Ladung fertig ist
     if (!loading) {
       const snap = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled });
       if (!initialSnapshot) setInitialSnapshot(snap);
@@ -195,7 +171,7 @@ const AutomodPage: React.FC = () => {
     <div className="space-y-5">
       <SettingsPageHeader
         heading="AutoMod"
-        description="Konfiguriere die automatischen Moderationsfunktionen für deinen Server."
+        description="Konfiguriere die automatischen Moderationsfunktionen für deinen Server. Regeln legen fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen ausgeführt wird."
         actions={
           <StyledBadge variant={isDirty ? 'purple' : 'default'}>{isDirty ? 'Änderungen nicht gespeichert' : 'Aktuell'}</StyledBadge>
         }
@@ -214,58 +190,78 @@ const AutomodPage: React.FC = () => {
 
       {!loading && (
         <>
-          {/* Statistik: volle Breite, kompakter Abstand */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {/* Statistikkarten */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatCard title="Regeln" value={String(rules.length)} icon={ListChecks} />
             <StatCard title="Capslock" value={capsEnabled ? 'Aktiv' : 'Inaktiv'} icon={CaseSensitive} />
+            <StatCard title="Beleidigungsfilter" value={profanityEnabled ? 'Aktiv' : 'Inaktiv'} icon={ShieldAlert} />
           </div>
 
-          {/* Hauptlayout: 2 Spalten, rechte Spalte nutzt freie Fläche */}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,60%)_1fr]">
+          {/* Hauptlayout */}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,58%)_1fr]">
             {/* Linke Spalte: Regeln */}
             <div className="space-y-4">
               <SettingsCard
-                header={<div className="flex items-center justify-between"><span className="text-[#dbe3ff]">Moderationsregeln</span><StyledButton variant="secondary" size="sm" onClick={addRule}>+ Regel hinzufügen</StyledButton></div>}
+                header={
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[#dbe3ff] font-medium">Moderationsregeln</span>
+                      <p className="text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
+                    </div>
+                    <StyledButton variant="secondary" size="sm" onClick={addRule}>
+                      <Plus className="w-4 h-4 mr-1" />
+                      Regel
+                    </StyledButton>
+                  </div>
+                }
               >
                 <div className="space-y-2">
                   {sortedRules.length === 0 && (
-                    <div className="rounded-md border border-dashed border-border bg-secondary p-3 text-[0.95rem] text-muted-foreground">
-                      Noch keine Regeln. Füge oben deine erste Regel hinzu.
+                    <div className="rounded-md border border-dashed border-border bg-secondary p-4 text-[0.95rem] text-muted-foreground text-center">
+                      Noch keine Regeln vorhanden. Füge oben deine erste Regel hinzu, um automatische Moderationsaktionen zu aktivieren.
                     </div>
                   )}
                   {sortedRules.map((rule, idx) => (
-                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-2.5 shadow-astra hover:border-astra-purple/40 transition-colors">
-                      <div className="grid grid-cols-1 gap-2 md:grid-cols-[120px_1fr_auto] md:items-end">
-                        <div>
-                          <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Warnungen</div>
+                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-3 shadow-astra hover:border-astra-purple/40 transition-colors">
+                      <div className="flex flex-wrap items-end gap-3">
+                        {/* Warnungen */}
+                        <div className="w-[100px] shrink-0">
+                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium">Warnungen</div>
                           <StyledNumberInput
                             value={rule.warns as any}
                             onChange={(e) => {
                               const raw = (e.target as any).value;
-                              // Leere Eingabe nicht sofort erzwingen – min. 1 bei gültiger Zahl
-                              if (raw === '') {
-                                // Nichts verändern; Auswahl + anschließende Eingabe überschreibt zuverlässig
-                                return;
-                              }
+                              if (raw === '') return;
                               const n = Number(raw);
                               updateRule(idx, { warns: Number.isFinite(n) ? Math.max(1, n) : (rule.warns as any) });
                             }}
                             min={1}
-                            className="w-20"
+                            className="w-full"
                           />
                         </div>
-                        <div>
-                          <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Aktion</div>
+                        {/* Aktion */}
+                        <div className="flex-1 min-w-[140px]">
+                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium">Aktion</div>
                           <StyledSelect
                             value={rule.action}
-                            onChange={(val) => updateRule(idx, { action: val })}
+                            onChange={(val) => {
+                              const patch: Partial<AutomodRule> = { action: val };
+                              if (val === 'timeout' && !rule.timeout_seconds) {
+                                patch.timeout_seconds = 60;
+                              }
+                              if (val !== 'timeout') {
+                                patch.timeout_seconds = undefined;
+                              }
+                              updateRule(idx, patch);
+                            }}
                             options={ACTION_OPTIONS}
                             placeholder="— auswählen —"
                           />
                         </div>
+                        {/* Timeout-Dauer */}
                         {rule.action === 'timeout' && (
-                          <div className="md:col-span-1">
-                            <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Timeout‑Dauer (Sek.)</div>
+                          <div className="w-[130px] shrink-0">
+                            <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium">Dauer (Sek.)</div>
                             <StyledNumberInput
                               value={(rule.timeout_seconds ?? '') as any}
                               onChange={(e) =>
@@ -277,13 +273,14 @@ const AutomodPage: React.FC = () => {
                                 })
                               }
                               min={0}
-                              className="w-24"
+                              className="w-full"
                             />
                           </div>
                         )}
-                        <div className="flex justify-end md:justify-start">
-                          <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)}>
-                            Entfernen
+                        {/* Entfernen-Button – immer rechts */}
+                        <div className="shrink-0 ml-auto">
+                          <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)} title="Regel entfernen">
+                            <Trash2 className="w-4 h-4" />
                           </StyledButton>
                         </div>
                       </div>
@@ -293,54 +290,67 @@ const AutomodPage: React.FC = () => {
               </SettingsCard>
             </div>
 
-            {/* Rechte Spalte: Beleidigungsfilter oben, Capslock darunter */}
+            {/* Rechte Spalte */}
             <div className="space-y-4">
-              {/* Beleidigungsfilter */}
-              <SettingsCard header={<span className="text-[#dbe3ff]">Beleidigungsfilter</span>}>
-                <div className="mb-2 text-[0.95rem] text-muted-foreground">
-                  Erkennt Beleidigungen automatisch und berücksichtigt den Zusammenhang einer Nachricht, um harmlose Aussagen nicht unnötig zu bestrafen.
+              {/* Profanity Status Card */}
+              <SettingsCard>
+                <div className="flex items-start gap-4">
+                  <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ${profanityEnabled ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' : 'bg-[#1d2238] border-[#353c56] text-[#9b95ff]'} transition-colors`}>
+                    <ShieldAlert className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-[1rem] font-semibold text-white">Beleidigungsfilter</h3>
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.75rem] font-semibold ${profanityEnabled ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-[#1d2238] text-[#9ca2be] border border-[#353c56]'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${profanityEnabled ? 'bg-emerald-400' : 'bg-[#6b7194]'}`} />
+                        {profanityEnabled ? 'Aktiv' : 'Inaktiv'}
+                      </span>
+                    </div>
+                    <p className="text-[0.88rem] text-muted-foreground mb-3">
+                      Erkennt Beleidigungen automatisch und berücksichtigt den Zusammenhang einer Nachricht, um harmlose Aussagen nicht unnötig zu bestrafen.
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[0.85rem] text-[#9ca2be]">Filter aktivieren</span>
+                      <StyledSwitch checked={profanityEnabled} onChange={(v) => setProfanityEnabled(v)} />
+                    </div>
+                  </div>
                 </div>
-                <SettingsSection
-                  heading="Beleidigungsfilter aktivieren"
-                  description="Schützt deinen Server automatisch vor Beleidigungen und Schimpfwörtern."
-                >
-                  <div className="flex items-center justify-end">
-                    <StyledSwitch checked={profanityEnabled} onChange={(v) => setProfanityEnabled(v)} />
-                  </div>
-                </SettingsSection>
-
-                <div className="mt-3 rounded-md border border-border bg-secondary p-3">
-                  <div className="mb-1.5 text-[0.95rem] font-medium text-[#dbe3ff]">Wie funktioniert die Erkennung?</div>
-                  <div className="text-[0.92rem] text-muted-foreground">Der Filter erkennt Beleidigungen in mehreren Sprachen und berücksichtigt den Kontext, in dem sie verwendet werden.</div>
-                  <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-3">
+                <div className="mt-4 pt-3 border-t border-border">
+                  <div className="text-[0.82rem] font-medium text-[#dbe3ff] mb-2">Erkennungsmöglichkeiten</div>
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                     <div className="rounded-md border border-border bg-background/40 p-2">
-                      <div className="text-[0.9rem] font-medium text-foreground">Automatisch moderieren</div>
-                      <div className="text-[0.88rem] text-muted-foreground">Eindeutige Beleidigungen werden automatisch behandelt.</div>
+                      <div className="text-[0.82rem] font-medium text-foreground">Automatisch</div>
+                      <div className="text-[0.78rem] text-muted-foreground">Eindeutige Beleidigungen werden sofort behandelt.</div>
                     </div>
                     <div className="rounded-md border border-border bg-background/40 p-2">
-                      <div className="text-[0.9rem] font-medium text-foreground">Manuell überprüfen</div>
-                      <div className="text-[0.88rem] text-muted-foreground">Unklare Nachrichten werden Moderatoren zur Prüfung vorgelegt.</div>
+                      <div className="text-[0.82rem] font-medium text-foreground">Manuell prüfen</div>
+                      <div className="text-[0.78rem] text-muted-foreground">Unklare Fälle werden Moderatoren vorgelegt.</div>
                     </div>
                     <div className="rounded-md border border-border bg-background/40 p-2">
-                      <div className="text-[0.9rem] font-medium text-foreground">Ignorieren</div>
-                      <div className="text-[0.88rem] text-muted-foreground">Harmlose oder nicht beleidigend gemeinte Aussagen bleiben unbeachtet.</div>
+                      <div className="text-[0.82rem] font-medium text-foreground">Ignorieren</div>
+                      <div className="text-[0.78rem] text-muted-foreground">Harmlose Aussagen bleiben unbeachtet.</div>
                     </div>
                   </div>
-                  <div className="mt-2 text-[0.85rem] text-muted-foreground">
-                    <span className="font-medium text-foreground">Mehrsprachige Erkennung</span>
-                    <span className="ml-1">· Unterstützt Deutsch, Englisch und weitere Sprachen sowie unterschiedliche Schreibweisen.</span>
-                  </div>
+                  <p className="mt-2 text-[0.8rem] text-muted-foreground">
+                    <span className="font-medium text-foreground">Mehrsprachig</span> · Unterstützt Deutsch, Englisch und weitere Sprachen.
+                  </p>
                 </div>
               </SettingsCard>
 
-              <SettingsCard header={<span className="text-[#dbe3ff]">Capslock</span>}>
-                <div className="flex flex-col gap-2 md:flex-row md:items-end">
-                  <div className="flex items-center gap-2.5">
+              {/* Capslock */}
+              <SettingsCard header={
+                <div>
+                  <span className="text-[#dbe3ff] font-medium">Capslock-Erkennung</span>
+                  <p className="text-[0.85rem] text-muted-foreground mt-0.5">Erkennt Nachrichten, die überwiegend in Großbuchstaben geschrieben wurden. Ab dem festgelegten Prozentwert kann die konfigurierte Moderationsregel greifen.</p>
+                </div>
+              }>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
                     <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
-                    <div className="text-[0.9rem] text-muted-foreground">Erkennung aktivieren</div>
+                    <span className="text-[0.9rem] text-muted-foreground">Erkennung aktivieren</span>
                   </div>
-                  <div className="md:ml-auto">
-                    <div className="mb-0.5 text-[0.88rem] text-muted-foreground">Prozent‑Schwelle</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.85rem] text-muted-foreground whitespace-nowrap">Schwelle (%)</span>
                     <StyledNumberInput
                       value={(capsPercent as any)}
                       onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
@@ -351,8 +361,6 @@ const AutomodPage: React.FC = () => {
                   </div>
                 </div>
               </SettingsCard>
-
-              {/* Blacklist-UI vollständig entfernt gemäß Anforderungen */}
             </div>
           </div>
         </>
@@ -363,37 +371,10 @@ const AutomodPage: React.FC = () => {
         saving={saveState === 'saving'}
         onSave={onSave}
         onCancel={() => {
-          // Reset auf Initialzustand durch Neuladen
           if (guildId) {
             setLoading(true);
             moderationApi.getAutomod(guildId).then((res) => {
-              const cfg = res.config || {};
-              const rawRules: any = (cfg as any).rules;
-              const normalizeAction = (a: any): string => {
-                const v = String(a ?? '').toLowerCase();
-                return ['timeout', 'kick', 'ban'].includes(v) ? v : '';
-              };
-              let nextRules: AutomodRule[] = [];
-              if (Array.isArray(rawRules)) {
-                nextRules = rawRules
-                  .map((r) => ({
-                    warns: Number(r?.warns ?? 0),
-                    action: normalizeAction(r?.action),
-                    ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
-                  }))
-                  .filter((r) => r.warns > 0 && r.action);
-              } else if (rawRules && typeof rawRules === 'object') {
-                nextRules = [{
-                  warns: Number(rawRules.warns ?? 0),
-                  action: normalizeAction(rawRules.action),
-                  ...(rawRules.timeout_seconds != null ? { timeout_seconds: Number(rawRules.timeout_seconds) } : {}),
-                }].filter((r) => r.warns > 0 && r.action);
-              }
-              nextRules.sort((a, b) => a.warns - b.warns);
-              setRules(nextRules);
-              setCapsEnabled(Boolean(cfg.capslock?.enabled));
-              setCapsPercent(cfg.capslock?.percent ?? '');
-              setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
+              applyConfig(res.config || {});
             }).finally(() => setLoading(false));
           }
         }}
