@@ -13,7 +13,7 @@ export interface StyledNumberInputProps extends Omit<React.InputHTMLAttributes<H
 // Nummernfeld ohne native Spinner. Optional mit eigenen +/- Controls.
 export const StyledNumberInput = React.forwardRef<HTMLInputElement, StyledNumberInputProps>(
   (
-    { className, error, hint, controls = true, step = 1, min, max, disabled, value, onChange, ...props },
+    { className, error, hint, controls = false, step = 1, min, max, disabled, value, onChange, ...props },
     ref,
   ) => {
     const clamp = useCallback(
@@ -47,7 +47,9 @@ export const StyledNumberInput = React.forwardRef<HTMLInputElement, StyledNumber
           pattern="[0-9]*"
           disabled={disabled}
           className={cn(
-            'h-10 w-full rounded-md border bg-[#0f1220] pl-3 pr-12 text-[0.95rem] text-white',
+            'h-10 w-full rounded-md border bg-[#0f1220] pl-3',
+            controls ? 'pr-12' : 'pr-3',
+            'text-[0.95rem] text-white',
             'border-[#2a2f45] placeholder:text-[#7f86a8]',
             'focus:outline-none focus:border-astra-purple/40 focus:ring-0',
             'hover:border-astra-purple/25',

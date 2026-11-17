@@ -4,29 +4,28 @@ import { moderationApi } from '@/services/moderation-api';
 import type { WarnItem } from '@/types/moderation';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
-import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import { StyledBadge } from '@/components/ui/StyledBadge';
 
 const WarningsPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
-  const [memberId, setMemberId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warns, setWarns] = useState<WarnItem[]>([]);
   const [count, setCount] = useState<number>(0);
   const [confirmAll, setConfirmAll] = useState(false);
 
-  const canQuery = useMemo(() => Boolean(guildId && memberId.trim()), [guildId, memberId]);
+  const canQuery = useMemo(() => Boolean(guildId), [guildId]);
 
   const load = async () => {
     if (!canQuery || !guildId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await moderationApi.getWarns(guildId, memberId.trim());
-      setWarns(res.warns || []);
-      setCount(res.count || 0);
+      const res = await moderationApi.getGuildWarns(guildId);
+      const items = (res.warns || []).map((w) => ({ ...w }));
+      setWarns(items);
+      setCount(res.count || items.length || 0);
     } catch (e: any) {
       setError(e?.message || 'Fehler beim Laden der Verwarnungen.');
       setWarns([]);
@@ -41,14 +40,21 @@ const WarningsPage: React.FC = () => {
     setCount(0);
     setError(null);
     setConfirmAll(false);
-  }, [memberId]);
+    // Beim Öffnen/Wechsel der Guild laden
+    if (guildId) void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guildId]);
 
   const onDeleteOne = async (warnId: string) => {
     if (!guildId || !canQuery) return;
     setLoading(true);
     setError(null);
     try {
-      await moderationApi.deleteWarn(guildId, memberId.trim(), warnId);
+      // Einzel-Löschung setzt einen member-spezifischen Endpoint voraus.
+      // Wir ermitteln die userId aus dem Datensatz.
+      const warn = warns.find((w) => w.warnId === warnId);
+      if (!warn) throw new Error('Verwarnung nicht gefunden.');
+      await moderationApi.deleteWarn(guildId, warn.userId, warnId);
       await load();
     } catch (e: any) {
       setError(e?.message || 'Löschen fehlgeschlagen.');
@@ -65,7 +71,7 @@ const WarningsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      await moderationApi.deleteAllWarns(guildId, memberId.trim());
+      await moderationApi.deleteAllWarnsGuild(guildId);
       await load();
       setConfirmAll(false);
     } catch (e: any) {
@@ -78,7 +84,7 @@ const WarningsPage: React.FC = () => {
     <div className="space-y-5">
       <SettingsPageHeader
         heading="Verwarnungen"
-        description="Verwarnungen für ein ausgewähltes Mitglied anzeigen und verwalten."
+        description="Alle Verwarnungen dieser Guild anzeigen und verwalten."
         actions={<StyledBadge variant="default">{count} Ergebnis(se)</StyledBadge>}
       />
 
@@ -88,20 +94,14 @@ const WarningsPage: React.FC = () => {
         </SettingsCard>
       )}
 
-      <SettingsCard header={<span className="text-[#dbe3ff]">Suche</span>}>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <div className="mb-1 text-[0.9rem] text-[#9ca2be]">Discord‑Mitglieds‑ID</div>
-            <StyledInput
-              placeholder="z. B. 123456789012345678"
-              inputMode="numeric"
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-            />
+      <SettingsCard header={<span className="text-[#dbe3ff]">Aktionen</span>}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="text-[0.9rem] text-[#9ca2be]">
+            Hinweis: Daten stammen direkt aus Astras API. Sortierung: Nutzer aufsteigend, Verwarnungen absteigend.
           </div>
           <div className="flex gap-2">
             <StyledButton onClick={load} disabled={!canQuery || loading} variant="primary">
-              {loading ? 'Laden…' : 'Laden'}
+              {loading ? 'Aktualisiere…' : 'Aktualisieren'}
             </StyledButton>
             <StyledButton
               onClick={onDeleteAll}
@@ -113,10 +113,6 @@ const WarningsPage: React.FC = () => {
             </StyledButton>
           </div>
         </div>
-        <p className="mt-2 text-[0.86rem] text-[#9ca2be]">
-          Hinweis: Es gibt keinen API‑Endpunkt zum Erstellen oder globalen Durchsuchen von Verwarnungen. Bitte gib eine
-          konkrete Mitglieds‑ID ein.
-        </p>
       </SettingsCard>
 
       <SettingsCard header={<span className="text-[#dbe3ff]">Ergebnisse ({count})</span>}>
@@ -127,9 +123,14 @@ const WarningsPage: React.FC = () => {
         {!loading && warns.length > 0 && (
           <ul className="divide-y divide-[#2d3246] text-[0.95rem]">
             {warns.map((w) => (
-              <li key={w.warnId} className="flex items-center justify-between py-2">
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-white">{w.warnId}</div>
+              <li key={`${w.userId}-${w.warnId}`} className="flex items-center justify-between gap-4 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[0.82rem] text-foreground">
+                      {w.userId}
+                    </span>
+                    <span className="truncate font-medium text-white">{w.warnId}</span>
+                  </div>
                   <div className="truncate text-[#9ca2be]">{w.reason || '—'}</div>
                 </div>
                 <StyledButton onClick={() => onDeleteOne(w.warnId)} disabled={loading} size="sm" variant="danger">

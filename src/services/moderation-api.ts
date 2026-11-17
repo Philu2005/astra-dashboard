@@ -53,12 +53,20 @@ export const moderationApi = {
   },
 
   // Warns
+  async getGuildWarns(guildId: string): Promise<WarnsResponse> {
+    const res = await apiClient.get(`/moderation/warns/${guildId}`);
+    return handleResponse<WarnsResponse>(res);
+  },
   async getWarns(guildId: string, memberId: string): Promise<WarnsResponse> {
     const res = await apiClient.get(`/moderation/warns/${guildId}/${memberId}`);
     return handleResponse<WarnsResponse>(res);
   },
   async deleteWarn(guildId: string, memberId: string, warnId: string): Promise<WarnsResponse> {
     const res = await apiClient.delete(`/moderation/warns/${guildId}/${memberId}?warn_id=${encodeURIComponent(warnId)}`);
+    return handleResponse<WarnsResponse>(res);
+  },
+  async deleteAllWarnsGuild(guildId: string): Promise<WarnsResponse> {
+    const res = await apiClient.delete(`/moderation/warns/${guildId}`);
     return handleResponse<WarnsResponse>(res);
   },
   async deleteAllWarns(guildId: string, memberId: string): Promise<WarnsResponse> {

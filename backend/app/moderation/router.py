@@ -84,6 +84,22 @@ async def delete_modlog(guild_id: str, request: Request) -> dict[str, Any]:
 
 
 # --- Warns ---
+@router.get("/warns/{guild_id}")
+async def get_guild_warns(guild_id: str, request: Request) -> dict[str, Any]:
+    user_id = await _get_user_id_from_session(request)
+    try:
+        return await astra_client.get_warns_guild(guild_id, user_id)
+    except AstraApiError as exc:
+        raise _handle_astra_error(exc)
+
+@router.delete("/warns/{guild_id}")
+async def delete_guild_warns(guild_id: str, request: Request) -> dict[str, Any]:
+    user_id = await _get_user_id_from_session(request)
+    try:
+        return await astra_client.delete_warns_guild(guild_id, user_id)
+    except AstraApiError as exc:
+        raise _handle_astra_error(exc)
+
 @router.get("/warns/{guild_id}/{member_id}")
 async def get_warns(guild_id: str, member_id: str, request: Request) -> dict[str, Any]:
     user_id = await _get_user_id_from_session(request)

@@ -10,6 +10,7 @@ import { StyledSwitch } from '@/components/ui/StyledSwitch';
 import { StyledNumberInput } from '@/components/ui/StyledNumberInput';
 import { StyledSelect } from '@/components/ui/StyledSelect';
 import { StyledTextarea } from '@/components/ui/StyledTextarea';
+import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import { StyledBadge } from '@/components/ui/StyledBadge';
 import { StatCard } from '@/components/StatCard';
@@ -248,13 +249,14 @@ const AutomodPage: React.FC = () => {
                 )}
                 {sortedRules.map((rule, idx) => (
                   <div key={`${rule.warns}-${idx}`} className="rounded-[0.9rem] border border-border bg-secondary p-3 shadow-astra hover:border-astra-purple/40 transition-colors">
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-[160px_1fr_220px_auto] md:items-end">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_1fr_200px_auto] md:items-end">
                       <div>
                         <div className="mb-1 text-[0.9rem] text-muted-foreground">Warnungen</div>
                         <StyledNumberInput
                           value={rule.warns as any}
                           onChange={(e) => updateRule(idx, { warns: Math.max(0, Number((e.target as any).value || 0)) })}
                           min={0}
+                          className="w-24"
                         />
                       </div>
                       <div>
@@ -273,6 +275,7 @@ const AutomodPage: React.FC = () => {
                           onChange={(e) => updateRule(idx, { timeout_seconds: (e.target as any).value === '' ? undefined : Math.max(0, Number((e.target as any).value)) })}
                           min={0}
                           disabled={rule.action !== 'timeout'}
+                          className="w-28"
                         />
                       </div>
                       <div className="flex justify-end md:justify-start">
@@ -320,12 +323,11 @@ const AutomodPage: React.FC = () => {
                   ))}
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <StyledTextarea
-                    placeholder="Wörter hier einfügen (Zeilenumbruch oder Komma)"
+                  <StyledInput
+                    placeholder="Wort hinzufügen"
                     value={blNew}
                     onChange={(e) => setBlNew(e.target.value)}
-                    rows={2 as any}
-                    className="flex-1"
+                    className="w-56"
                   />
                   <StyledButton
                     variant="secondary"
@@ -352,24 +354,22 @@ const AutomodPage: React.FC = () => {
           {/* rechte Spalte: Capslock */}
           <div className="space-y-5">
             <SettingsCard header={<span className="text-[#dbe3ff]">Capslock</span>}>
-              <SettingsSection
-                heading={<span className="text-[#dbe3ff]">Capslock‑Erkennung aktivieren</span>}
-                description="Erkennt Nachrichten mit hohem Großbuchstaben‑Anteil."
-              >
-                <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
-              </SettingsSection>
-              <div className="h-3" />
-              <SettingsSection
-                heading={<span className="text-[#dbe3ff]">Prozent‑Schwelle</span>}
-                description="Ab diesem Großbuchstaben‑Anteil greift die Regel."
-              >
-                <StyledNumberInput
-                  value={(capsPercent as any)}
-                  onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
-                  min={0}
-                  max={100}
-                />
-              </SettingsSection>
+              <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                <div className="flex items-center gap-3">
+                  <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
+                  <div className="text-[0.9rem] text-muted-foreground">Erkennung aktivieren</div>
+                </div>
+                <div className="md:ml-auto">
+                  <div className="mb-1 text-[0.9rem] text-muted-foreground">Prozent‑Schwelle</div>
+                  <StyledNumberInput
+                    value={(capsPercent as any)}
+                    onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
+                    min={0}
+                    max={100}
+                    className="w-24"
+                  />
+                </div>
+              </div>
             </SettingsCard>
           </div>
         </div>

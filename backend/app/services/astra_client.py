@@ -199,5 +199,27 @@ class AstraClient:
             params=params,
         )
 
+    async def get_warns_guild(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """GET /moderation/warns/{guild_id}?user_id=<user_id>
+
+        Liefert alle Verwarnungen einer Guild (userID ASC, warnID DESC sortiert lt. Bot‑API).
+        """
+        return await self._request(
+            "GET",
+            f"/moderation/warns/{guild_id}",
+            params={"user_id": user_id},
+        )
+
+    async def delete_warns_guild(self, guild_id: str, user_id: str) -> dict[str, Any]:
+        """DELETE /moderation/warns/{guild_id}?user_id=<user_id>
+
+        Löscht alle Verwarnungen einer Guild transaktional.
+        """
+        return await self._request(
+            "DELETE",
+            f"/moderation/warns/{guild_id}",
+            params={"user_id": user_id},
+        )
+
 
 astra_client = AstraClient()
