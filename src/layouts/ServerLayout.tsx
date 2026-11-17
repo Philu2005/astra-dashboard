@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useParams } from 'react-router-dom';
-// Ersetze den individuellen ServerHeader durch die globale Topbar, um die Designtreue zur Dashboard‑Übersicht sicherzustellen
+import { Menu } from 'lucide-react';
 import { Topbar } from '@/layouts/Topbar';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import ServerSidebar from '@/layouts/ServerSidebar';
@@ -58,13 +58,31 @@ const ServerLayout: React.FC = () => {
         <div className="absolute right-[24%] top-[38%] w-1.5 h-1.5 rounded-full bg-[#9b93ff]/40 animate-[astra-float_20s_ease-in-out_infinite]" />
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Server Sidebar */}
       <ServerSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        <div className="lg:ml-[278px]">
-          <Topbar />
+        <div className="lg:ml-[278px] flex items-center">
+          {/* Mobile Hamburger Button */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden flex items-center justify-center w-12 h-[78px] text-[#a2a8c2] hover:text-white transition-colors shrink-0 ml-2"
+            aria-label="Sidebar öffnen"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <Topbar />
+          </div>
         </div>
         {/* Content with spacing and left margin on desktop */}
         <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10 lg:ml-[278px]">
