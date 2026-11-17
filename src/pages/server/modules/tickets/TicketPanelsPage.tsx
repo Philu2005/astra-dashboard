@@ -74,7 +74,7 @@ const TicketPanelsPage: React.FC = () => {
         // - oder eine beliebige Map. Wir unterstützen alle sinnvollen Varianten.
         const map: Record<string, { status?: string; panel_message_id?: string | null }> = {};
 
-        // Variante A: Array unter statusRes.status.panels
+        // Variante A: Array unter statusRes.status.panels ODER top-level panels-Array
         const anyStatus = statusRes?.status as any;
         const maybePanelsArray: any[] | undefined = Array.isArray(anyStatus?.panels)
           ? anyStatus.panels
@@ -84,8 +84,9 @@ const TicketPanelsPage: React.FC = () => {
 
         if (maybePanelsArray) {
           for (const item of maybePanelsArray) {
-            const ch = item?.channel_id ?? item?.channel ?? item?.id;
-            if (typeof ch === 'string' && ch) {
+            const chRaw = item?.channel_id ?? item?.channel ?? item?.id;
+            const ch = chRaw != null ? String(chRaw) : '';
+            if (ch) {
               map[ch] = {
                 status: typeof item?.status === 'string' ? item.status : undefined,
                 panel_message_id: typeof item?.panel_message_id === 'string' ? item.panel_message_id : (item?.panel_message_id ?? undefined),
@@ -93,18 +94,36 @@ const TicketPanelsPage: React.FC = () => {
             }
           }
         } else {
+          // Variante B: panels ist ein Objekt/Map: { "channel_id": { status, panel_message_id } }
+          const maybePanelsObject: any = anyStatus?.panels && !Array.isArray(anyStatus.panels) && typeof anyStatus.panels === 'object'
+            ? anyStatus.panels
+            : (typeof (statusRes as any)?.panels === 'object' && !Array.isArray((statusRes as any)?.panels))
+              ? (statusRes as any).panels
+              : undefined;
+
+          if (maybePanelsObject) {
+            for (const [key, val] of Object.entries(maybePanelsObject)) {
+              const ch = String(key);
+              const v: any = val ?? {};
+              map[ch] = {
+                status: typeof v?.status === 'string' ? v.status : undefined,
+                panel_message_id: typeof v?.panel_message_id === 'string' ? v.panel_message_id : (v?.panel_message_id ?? undefined),
+              };
+            }
+          } else {
           // Variante B: Einzelstatus ohne Kanalbezug – wir mappen ihn auf bekannte Panels (fallback)
           // Dies deckt den beschriebenen Fall ab: { success: true, status: "not_published", panel_message_id: null }
           const globalStatus: string | undefined = typeof anyStatus === 'string' ? anyStatus : anyStatus?.status;
           const globalMsgId = (anyStatus?.panel_message_id ?? (statusRes as any)?.panel_message_id) as string | null | undefined;
           if (globalStatus) {
             for (const p of panelsRes.panels) {
-              const ch = p.channel_id;
-              if (typeof ch === 'string' && ch) {
+              const ch = p.channel_id != null ? String(p.channel_id) : '';
+              if (ch) {
                 map[ch] = { status: globalStatus, panel_message_id: typeof globalMsgId === 'string' ? globalMsgId : (globalMsgId ?? undefined) };
               }
             }
           }
+        }
         }
 
         setPanelStatusByChannel(map);
