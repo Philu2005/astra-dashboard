@@ -2,6 +2,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { moderationApi } from '@/services/moderation-api';
 import type { AutomodConfig, AutomodRule } from '@/types/moderation';
+import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
+import SettingsCard from '@/components/settings/SettingsCard';
+import SettingsSection from '@/components/settings/SettingsSection';
+import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
+import { StyledSwitch } from '@/components/ui/StyledSwitch';
+import { StyledNumberInput } from '@/components/ui/StyledNumberInput';
+import { StyledSelect } from '@/components/ui/StyledSelect';
+import { StyledTextarea } from '@/components/ui/StyledTextarea';
+import { StyledButton } from '@/components/ui/StyledButton';
+import { StyledBadge } from '@/components/ui/StyledBadge';
+import { StatCard } from '@/components/StatCard';
+import { Ban, CaseSensitive, ListChecks } from 'lucide-react';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
@@ -17,13 +29,27 @@ const AutomodPage: React.FC = () => {
   const [capsPercent, setCapsPercent] = useState<number | ''>('');
 
   const [blEnabled, setBlEnabled] = useState<boolean>(false);
-  const [blWords, setBlWords] = useState<string>('');
+  const [blWords, setBlWords] = useState<string>(''); // textarea fallback (kept for compatibility)
+  const [blList, setBlList] = useState<string[]>([]);
+  const [blNew, setBlNew] = useState<string>('');
+
+  const ACTION_OPTIONS = useMemo(
+    () => [
+      { value: 'timeout', label: 'Timeout' },
+      { value: 'kick', label: 'Kick' },
+      { value: 'ban', label: 'Ban' },
+    ],
+    [],
+  );
 
   const buildConfig = useCallback((): AutomodConfig => {
-    const words = blWords
-      .split(/\r?\n|,/) // allow comma or newline separated
-      .map((w) => w.trim())
-      .filter(Boolean);
+    const words = (blList.length
+      ? blList
+      : blWords
+          .split(/\r?\n|,/)
+          .map((w) => w.trim())
+          .filter(Boolean)
+    );
 
     return {
       rules: rules
@@ -58,18 +84,22 @@ const AutomodPage: React.FC = () => {
         // Regeln normalisieren: Array bevorzugt, einzelnes Objekt bleibt kompatibel
         const rawRules: any = (cfg as any).rules;
         let nextRules: AutomodRule[] = [];
+        const normalizeAction = (a: any): string => {
+          const v = String(a ?? '').toLowerCase();
+          return ['timeout', 'kick', 'ban'].includes(v) ? v : '';
+        };
         if (Array.isArray(rawRules)) {
           nextRules = rawRules
             .map((r) => ({
               warns: Number(r?.warns ?? 0),
-              action: String(r?.action ?? ''),
+              action: normalizeAction(r?.action),
               ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
             }))
             .filter((r) => r.warns > 0 && r.action);
         } else if (rawRules && typeof rawRules === 'object') {
           nextRules = [{
             warns: Number(rawRules.warns ?? 0),
-            action: String(rawRules.action ?? ''),
+            action: normalizeAction(rawRules.action),
             ...(rawRules.timeout_seconds != null ? { timeout_seconds: Number(rawRules.timeout_seconds) } : {}),
           }].filter((r) => r.warns > 0 && r.action);
         }
@@ -78,7 +108,9 @@ const AutomodPage: React.FC = () => {
         setCapsEnabled(Boolean(cfg.capslock?.enabled));
         setCapsPercent(cfg.capslock?.percent ?? '');
         setBlEnabled(Boolean(cfg.blacklist?.enabled));
-        setBlWords((cfg.blacklist?.words || []).join('\n'));
+        const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
+        setBlList(words);
+        setBlWords(words.join('\n'));
       } catch (e: any) {
         if (!active) return;
         setError(e?.message || 'Fehler beim Laden der AutoMod‑Konfiguration.');
@@ -109,15 +141,34 @@ const AutomodPage: React.FC = () => {
         const rawRules: any = (cfg as any).rules;
         let nextRules: AutomodRule[] = [];
         if (Array.isArray(rawRules)) {
-          nextRules = rawRules as AutomodRule[];
+          nextRules = (rawRules as any[]).map((r) => ({
+            warns: Number(r?.warns ?? 0),
+            action: String(r?.action ?? '').toLowerCase(),
+            ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
+          }));
         } else if (rawRules && typeof rawRules === 'object') {
-          nextRules = [rawRules as AutomodRule];
+          nextRules = [{
+            warns: Number((rawRules as any).warns ?? 0),
+            action: String((rawRules as any).action ?? '').toLowerCase(),
+            ...(((rawRules as any).timeout_seconds != null) ? { timeout_seconds: Number((rawRules as any).timeout_seconds) } : {}),
+          }];
         }
         setRules((nextRules || []).sort((a, b) => a.warns - b.warns));
         setCapsEnabled(Boolean(cfg.capslock?.enabled));
         setCapsPercent(cfg.capslock?.percent ?? '');
         setBlEnabled(Boolean(cfg.blacklist?.enabled));
-        setBlWords((cfg.blacklist?.words || []).join('\n'));
+        const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
+        setBlList(words);
+        setBlWords(words.join('\n'));
+        // Snapshot nach erfolgreichem Speichern auf neuen Serverzustand aktualisieren
+        const snap = JSON.stringify({
+          rules: (nextRules || []).sort((a, b) => a.warns - b.warns),
+          capsEnabled: Boolean(cfg.capslock?.enabled),
+          capsPercent: cfg.capslock?.percent ?? '',
+          blEnabled: Boolean(cfg.blacklist?.enabled),
+          blWords: words.join('\n'),
+        } as any);
+        setInitialSnapshot(snap);
       } catch {
         // still fine – Nutzer sieht success, erneutes Laden kann später erfolgen
       }
@@ -155,183 +206,218 @@ const AutomodPage: React.FC = () => {
   const sortedRules = useMemo(() => [...rules].sort((a, b) => a.warns - b.warns), [rules]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-white">AutoMod</h2>
-        <p className="text-sm text-foreground/70">Konfiguration der automatischen Moderationsfunktionen.</p>
-      </div>
+    <div className="space-y-5">
+      <SettingsPageHeader
+        heading="AutoMod"
+        description="Konfiguriere die automatischen Moderationsfunktionen für deinen Server."
+        actions={
+          <StyledBadge variant={isDirty ? 'purple' : 'default'}>{isDirty ? 'Änderungen nicht gespeichert' : 'Aktuell'}</StyledBadge>
+        }
+      />
 
       {loading && (
-        <div className="rounded-lg border border-layout-divider bg-black/20 p-4 text-sm text-foreground/70">Wird geladen…</div>
+        <SettingsCard>
+          <div className="text-[0.95rem] text-[#c1c7de]">Wird geladen…</div>
+        </SettingsCard>
       )}
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>
+        <SettingsCard>
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-[0.95rem] text-red-200">{error}</div>
+        </SettingsCard>
       )}
 
       {!loading && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Übersicht */}
-          <section className="rounded-lg border border-layout-divider bg-black/20 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-white">Übersicht</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-md border border-layout-divider bg-[#0b0e1a] p-3">
-                <div className="text-foreground/70">Regeln</div>
-                <div className="mt-1 text-lg font-semibold text-white">{rules.length}</div>
-              </div>
-              <div className="rounded-md border border-layout-divider bg-[#0b0e1a] p-3">
-                <div className="text-foreground/70">Capslock</div>
-                <div className="mt-1 text-lg font-semibold text-white">{capsEnabled ? 'Aktiv' : 'Inaktiv'}</div>
-              </div>
-              <div className="rounded-md border border-layout-divider bg-[#0b0e1a] p-3 col-span-2">
-                <div className="text-foreground/70">Blacklist</div>
-                <div className="mt-1 text-lg font-semibold text-white">{blEnabled ? `${blWords.split(/\r?\n|,/).filter((w)=>w.trim()).length} Wörter` : 'Inaktiv'}</div>
-              </div>
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,68fr)_minmax(380px,32fr)]">
+          <div className="space-y-5">
+            {/* Übersicht */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <StatCard title="Regeln" value={String(rules.length)} icon={ListChecks} />
+              <StatCard title="Capslock" value={capsEnabled ? 'Aktiv' : 'Inaktiv'} icon={CaseSensitive} />
+              <StatCard title="Blacklist" value={blEnabled ? `${(blList.length || blWords.split(/\r?\n|,/).filter((w)=>w.trim()).length)} Wörter` : 'Inaktiv'} icon={Ban} />
             </div>
-          </section>
 
-          {/* Capslock */}
-          <section className="rounded-lg border border-layout-divider bg-black/20 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-white">Capslock</h3>
-            <div className="space-y-3 text-sm">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={capsEnabled} onChange={(e) => setCapsEnabled(e.target.checked)} />
-                <span className="text-foreground/80">Capslock‑Erkennung aktivieren</span>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-foreground/70">Prozent‑Schwelle</span>
-                <input
-                  type="number"
-                  className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                  value={capsPercent}
-                  onChange={(e) => setCapsPercent(e.target.value === '' ? '' : Number(e.target.value))}
-                  min={0}
-                  max={100}
-                />
-              </label>
-            </div>
-          </section>
-
-          {/* Regeln */}
-          <section className="rounded-lg border border-layout-divider bg-black/20 p-4 lg:col-span-2">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Moderationsregeln</h3>
-              <button
-                type="button"
-                onClick={addRule}
-                className="inline-flex items-center rounded-md border border-layout-divider bg-[#101428] px-3 py-1.5 text-sm text-white hover:bg-[#151b34]"
-              >
-                + Regel hinzufügen
-              </button>
-            </div>
-            <div className="space-y-3">
-              {sortedRules.length === 0 && (
-                <div className="rounded-md border border-dashed border-layout-divider bg-[#0b0e1a] p-4 text-sm text-foreground/70">
-                  Noch keine Regeln. Füge oben deine erste Regel hinzu.
-                </div>
-              )}
-              {sortedRules.map((rule, idx) => (
-                <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-[#2a2f45] bg-[#0f1220] p-3">
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_1fr_200px_auto] md:items-end">
-                    <label className="block text-sm">
-                      <span className="mb-1 block text-foreground/70">Warnungen</span>
-                      <input
-                        type="number"
-                        className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                        value={rule.warns}
-                        onChange={(e) => updateRule(idx, { warns: Math.max(0, Number(e.target.value || 0)) })}
-                        min={0}
-                      />
-                    </label>
-                    <label className="block text-sm">
-                      <span className="mb-1 block text-foreground/70">Aktion</span>
-                      <select
-                        className="w-full appearance-none rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                        value={rule.action}
-                        onChange={(e) => updateRule(idx, { action: e.target.value })}
-                      >
-                        <option value="">— auswählen —</option>
-                        <option value="timeout">Timeout</option>
-                        <option value="kick">Kick</option>
-                        <option value="ban">Ban</option>
-                      </select>
-                    </label>
-                    <label className="block text-sm">
-                      <span className="mb-1 block text-foreground/70">Timeout (Sek.)</span>
-                      <input
-                        type="number"
-                        className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8] disabled:opacity-50"
-                        value={rule.timeout_seconds ?? ''}
-                        onChange={(e) => updateRule(idx, { timeout_seconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
-                        min={0}
-                        disabled={rule.action !== 'timeout'}
-                      />
-                    </label>
-                    <div className="flex justify-end md:justify-start">
-                      <button
-                        type="button"
-                        onClick={() => removeRule(idx)}
-                        className="inline-flex items-center rounded-md border border-[#3a2a31] bg-[#1a0f12] px-3 py-2 text-sm text-[#ffb4c0] hover:bg-[#2a151a]"
-                      >
-                        Entfernen
-                      </button>
+            {/* Regeln */}
+            <SettingsCard
+              header={<div className="flex items-center justify-between"><span className="text-[#dbe3ff]">Moderationsregeln</span><StyledButton variant="secondary" size="sm" onClick={addRule}>+ Regel hinzufügen</StyledButton></div>}
+            >
+              <div className="space-y-3">
+                {sortedRules.length === 0 && (
+                  <div className="rounded-md border border-dashed border-[#333a55] bg-[#0f1220] p-4 text-[0.95rem] text-[#9ca2be]">
+                    Noch keine Regeln. Füge oben deine erste Regel hinzu.
+                  </div>
+                )}
+                {sortedRules.map((rule, idx) => (
+                  <div key={`${rule.warns}-${idx}`} className="rounded-[0.9rem] border border-[#2a2f45] bg-[#0f1220] p-3 shadow-astra hover:border-astra-purple/40 transition-colors">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-[160px_1fr_220px_auto] md:items-end">
+                      <div>
+                        <div className="mb-1 text-[0.9rem] text-[#9ca2be]">Warnungen</div>
+                        <StyledNumberInput
+                          value={rule.warns as any}
+                          onChange={(e) => updateRule(idx, { warns: Math.max(0, Number((e.target as any).value || 0)) })}
+                          min={0}
+                        />
+                      </div>
+                      <div>
+                        <div className="mb-1 text-[0.9rem] text-[#9ca2be]">Aktion</div>
+                        <StyledSelect
+                          value={rule.action}
+                          onChange={(val) => updateRule(idx, { action: val })}
+                          options={ACTION_OPTIONS}
+                          placeholder="— auswählen —"
+                        />
+                      </div>
+                      <div>
+                        <div className="mb-1 text-[0.9rem] text-[#9ca2be]">Timeout (Sek.)</div>
+                        <StyledNumberInput
+                          value={(rule.timeout_seconds ?? '') as any}
+                          onChange={(e) => updateRule(idx, { timeout_seconds: (e.target as any).value === '' ? undefined : Math.max(0, Number((e.target as any).value)) })}
+                          min={0}
+                          disabled={rule.action !== 'timeout'}
+                        />
+                      </div>
+                      <div className="flex justify-end md:justify-start">
+                        <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)}>
+                          Entfernen
+                        </StyledButton>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </SettingsCard>
 
-          <section className="rounded-lg border border-layout-divider bg-black/20 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-white">Capslock</h3>
-            <div className="space-y-3 text-sm">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={capsEnabled} onChange={(e) => setCapsEnabled(e.target.checked)} />
-                <span className="text-foreground/80">Capslock‑Erkennung aktivieren</span>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-foreground/70">Prozent‑Schwelle</span>
-                <input
-                  type="number"
-                  className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                  value={capsPercent}
-                  onChange={(e) => setCapsPercent(e.target.value === '' ? '' : Number(e.target.value))}
+            {/* Blacklist */}
+            <SettingsCard header={<span className="text-[#dbe3ff]">Blacklist</span>}>
+              <SettingsSection
+                heading={<span className="text-[#dbe3ff]">Blacklist aktivieren</span>}
+                description="Wenn aktiviert, werden Nachrichten mit gelisteten Wörtern moderiert."
+              >
+                <StyledSwitch checked={blEnabled} onChange={(v) => setBlEnabled(v)} />
+              </SettingsSection>
+              <div className="h-3" />
+              <SettingsSection heading={<span className="text-[#dbe3ff]">Wörter</span>} description="Einzeln hinzufügen und entfernen.">
+                <div className="flex flex-wrap gap-2">
+                  {(blList.length ? blList : blWords.split(/\r?\n|,/).map((w)=>w.trim()).filter(Boolean)).map((w, i) => (
+                    <span
+                      key={`${w}-${i}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-[#333a55] bg-[#14182d] px-3 py-1 text-[0.88rem] text-[#dbe3ff] shadow-astra transition-colors hover:border-astra-purple/40"
+                    >
+                      {w}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const list = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
+                          const next = list.filter((_, j) => j !== i);
+                          setBlList(next);
+                          setBlWords(next.join('\n'));
+                        }}
+                        className="ml-1 rounded-full border border-[#3a2a31] bg-[#1a0f12] px-1.5 py-0.5 text-[#ffb4c0] hover:bg-[#2a151a]"
+                        aria-label={`Wort ${w} entfernen`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <StyledTextarea
+                    placeholder="Wörter hier einfügen (Zeilenumbruch oder Komma)"
+                    value={blNew}
+                    onChange={(e) => setBlNew(e.target.value)}
+                    rows={2 as any}
+                    className="flex-1"
+                  />
+                  <StyledButton
+                    variant="secondary"
+                    onClick={() => {
+                      const added = blNew
+                        .split(/\r?\n|,/) 
+                        .map((w) => w.trim())
+                        .filter(Boolean);
+                      if (!added.length) return;
+                      const base = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
+                      const combined = Array.from(new Set([...base, ...added]));
+                      setBlList(combined);
+                      setBlWords(combined.join('\n'));
+                      setBlNew('');
+                    }}
+                  >
+                    Hinzufügen
+                  </StyledButton>
+                </div>
+              </SettingsSection>
+            </SettingsCard>
+          </div>
+
+          {/* rechte Spalte: Capslock */}
+          <div className="space-y-5">
+            <SettingsCard header={<span className="text-[#dbe3ff]">Capslock</span>}>
+              <SettingsSection
+                heading={<span className="text-[#dbe3ff]">Capslock‑Erkennung aktivieren</span>}
+                description="Erkennt Nachrichten mit hohem Großbuchstaben‑Anteil."
+              >
+                <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
+              </SettingsSection>
+              <div className="h-3" />
+              <SettingsSection
+                heading={<span className="text-[#dbe3ff]">Prozent‑Schwelle</span>}
+                description="Ab diesem Großbuchstaben‑Anteil greift die Regel."
+              >
+                <StyledNumberInput
+                  value={(capsPercent as any)}
+                  onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
                   min={0}
                   max={100}
                 />
-              </label>
-            </div>
-          </section>
-
-          <section className="rounded-lg border border-layout-divider bg-black/20 p-4 lg:col-span-2">
-            <h3 className="mb-3 text-sm font-semibold text-white">Blacklist</h3>
-            <div className="space-y-3 text-sm">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={blEnabled} onChange={(e) => setBlEnabled(e.target.checked)} />
-                <span className="text-foreground/80">Blacklist aktivieren</span>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-foreground/70">Wörter (je Zeile oder mit Komma trennen)</span>
-                <textarea
-                  className="min-h-[120px] w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                  value={blWords}
-                  onChange={(e) => setBlWords(e.target.value)}
-                />
-              </label>
-            </div>
-          </section>
+              </SettingsSection>
+            </SettingsCard>
+          </div>
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onSave}
-          disabled={loading || saveState === 'saving' || !isDirty}
-          className="inline-flex items-center rounded-md bg-[#4b46c8] px-4 py-2 text-sm font-medium text-white hover:bg-[#3e39b0] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saveState === 'saving' ? 'Speichern…' : saveState === 'success' ? 'Gespeichert' : 'Änderungen speichern'}
-        </button>
-        {saveState === 'error' && <span className="text-sm text-red-300">Fehler beim Speichern.</span>}
-      </div>
+      <SettingsSaveBar
+        dirty={isDirty}
+        saving={saveState === 'saving'}
+        onSave={onSave}
+        onCancel={() => {
+          // Reset auf Initialzustand durch Neuladen
+          if (guildId) {
+            setLoading(true);
+            moderationApi.getAutomod(guildId).then((res) => {
+              const cfg = res.config || {};
+              const rawRules: any = (cfg as any).rules;
+              const normalizeAction = (a: any): string => {
+                const v = String(a ?? '').toLowerCase();
+                return ['timeout', 'kick', 'ban'].includes(v) ? v : '';
+              };
+              let nextRules: AutomodRule[] = [];
+              if (Array.isArray(rawRules)) {
+                nextRules = rawRules
+                  .map((r) => ({
+                    warns: Number(r?.warns ?? 0),
+                    action: normalizeAction(r?.action),
+                    ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
+                  }))
+                  .filter((r) => r.warns > 0 && r.action);
+              } else if (rawRules && typeof rawRules === 'object') {
+                nextRules = [{
+                  warns: Number(rawRules.warns ?? 0),
+                  action: normalizeAction(rawRules.action),
+                  ...(rawRules.timeout_seconds != null ? { timeout_seconds: Number(rawRules.timeout_seconds) } : {}),
+                }].filter((r) => r.warns > 0 && r.action);
+              }
+              nextRules.sort((a, b) => a.warns - b.warns);
+              setRules(nextRules);
+              setCapsEnabled(Boolean(cfg.capslock?.enabled));
+              setCapsPercent(cfg.capslock?.percent ?? '');
+              setBlEnabled(Boolean(cfg.blacklist?.enabled));
+              const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
+              setBlList(words);
+              setBlWords(words.join('\n'));
+            }).finally(() => setLoading(false));
+          }
+        }}
+      />
     </div>
   );
 };
