@@ -9,12 +9,11 @@ import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { StyledSwitch } from '@/components/ui/StyledSwitch';
 import { StyledNumberInput } from '@/components/ui/StyledNumberInput';
 import { StyledSelect } from '@/components/ui/StyledSelect';
-import { StyledTextarea } from '@/components/ui/StyledTextarea';
-import { StyledInput } from '@/components/ui/StyledInput';
+// Entfernt: Textarea/Input für manuelle Blacklist
 import { StyledButton } from '@/components/ui/StyledButton';
 import { StyledBadge } from '@/components/ui/StyledBadge';
 import { StatCard } from '@/components/StatCard';
-import { Ban, CaseSensitive, ListChecks } from 'lucide-react';
+import { CaseSensitive, ListChecks } from 'lucide-react';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
@@ -32,10 +31,7 @@ const AutomodPage: React.FC = () => {
   // Beleidigungsfilter (Profinity) – nur Aktivierung sichtbar/änderbar
   const [profanityEnabled, setProfanityEnabled] = useState<boolean>(false);
 
-  const [blEnabled, setBlEnabled] = useState<boolean>(false);
-  const [blWords, setBlWords] = useState<string>(''); // textarea fallback (kept for compatibility)
-  const [blList, setBlList] = useState<string[]>([]);
-  const [blNew, setBlNew] = useState<string>('');
+  // Manuelle AutoMod‑Blacklist: vollständig entfernt (UI/State)
 
   const ACTION_OPTIONS = useMemo(
     () => [
@@ -47,14 +43,6 @@ const AutomodPage: React.FC = () => {
   );
 
   const buildConfig = useCallback((): AutomodConfig => {
-    const words = (blList.length
-      ? blList
-      : blWords
-          .split(/\r?\n|,/)
-          .map((w) => w.trim())
-          .filter(Boolean)
-    );
-
     return {
       rules: rules
         .filter((r) => Number.isFinite(r.warns) && r.action)
@@ -71,12 +59,8 @@ const AutomodPage: React.FC = () => {
       profanity: {
         enabled: Boolean(profanityEnabled),
       },
-      blacklist: {
-        enabled: blEnabled,
-        words: words.length ? words : undefined,
-      },
     };
-  }, [rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords]);
+  }, [rules, capsEnabled, capsPercent, profanityEnabled]);
 
   useEffect(() => {
     let active = true;
@@ -116,10 +100,7 @@ const AutomodPage: React.FC = () => {
         setCapsPercent(cfg.capslock?.percent ?? '');
         // Profanity: tolerant lesen (optional)
         setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
-        setBlEnabled(Boolean(cfg.blacklist?.enabled));
-        const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
-        setBlList(words);
-        setBlWords(words.join('\n'));
+        // Blacklist-UI entfernt – Backend-Zustände werden nicht dargestellt
       } catch (e: any) {
         if (!active) return;
         setError(e?.message || 'Fehler beim Laden der AutoMod‑Konfiguration.');
@@ -166,18 +147,12 @@ const AutomodPage: React.FC = () => {
         setCapsEnabled(Boolean(cfg.capslock?.enabled));
         setCapsPercent(cfg.capslock?.percent ?? '');
         setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
-        setBlEnabled(Boolean(cfg.blacklist?.enabled));
-        const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
-        setBlList(words);
-        setBlWords(words.join('\n'));
         // Snapshot nach erfolgreichem Speichern auf neuen Serverzustand aktualisieren
         const snap = JSON.stringify({
           rules: (nextRules || []).sort((a, b) => a.warns - b.warns),
           capsEnabled: Boolean(cfg.capslock?.enabled),
           capsPercent: cfg.capslock?.percent ?? '',
           profanityEnabled: Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false),
-          blEnabled: Boolean(cfg.blacklist?.enabled),
-          blWords: words.join('\n'),
         } as any);
         setInitialSnapshot(snap);
       } catch {
@@ -193,16 +168,16 @@ const AutomodPage: React.FC = () => {
   useEffect(() => {
     // Set initial snapshot, sobald erste Ladung fertig ist
     if (!loading) {
-      const snap = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords });
+      const snap = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled });
       if (!initialSnapshot) setInitialSnapshot(snap);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
   const isDirty = useMemo(() => {
-    const current = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords });
+    const current = JSON.stringify({ rules, capsEnabled, capsPercent, profanityEnabled });
     return current !== initialSnapshot;
-  }, [rules, capsEnabled, capsPercent, profanityEnabled, blEnabled, blWords, initialSnapshot]);
+  }, [rules, capsEnabled, capsPercent, profanityEnabled, initialSnapshot]);
 
   const addRule = () => {
     const next: AutomodRule = { warns: Math.max(1, (rules.at(-1)?.warns || 0) + 1), action: 'timeout', timeout_seconds: 60 };
@@ -243,7 +218,6 @@ const AutomodPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <StatCard title="Regeln" value={String(rules.length)} icon={ListChecks} />
             <StatCard title="Capslock" value={capsEnabled ? 'Aktiv' : 'Inaktiv'} icon={CaseSensitive} />
-            <StatCard title="Blacklist" value={blEnabled ? `${(blList.length || blWords.split(/\r?\n|,/).filter((w)=>w.trim()).length)} Wörter` : 'Inaktiv'} icon={Ban} />
           </div>
 
           {/* Hauptlayout: 2 Spalten, rechte Spalte nutzt freie Fläche */}
@@ -319,7 +293,7 @@ const AutomodPage: React.FC = () => {
               </SettingsCard>
             </div>
 
-            {/* Rechte Spalte: Beleidigungsfilter oben, Capslock darunter, dann Blacklist */}
+            {/* Rechte Spalte: Beleidigungsfilter oben, Capslock darunter */}
             <div className="space-y-4">
               {/* Beleidigungsfilter */}
               <SettingsCard header={<span className="text-[#dbe3ff]">Beleidigungsfilter</span>}>
@@ -378,64 +352,7 @@ const AutomodPage: React.FC = () => {
                 </div>
               </SettingsCard>
 
-              <SettingsCard header={<span className="text-[#dbe3ff]">Manuelle AutoMod‑Blacklist</span>}>
-                <div className="flex items-center justify-between">
-                  <div className="text-[0.9rem] text-muted-foreground">Aktivieren</div>
-                  <StyledSwitch checked={blEnabled} onChange={(v) => setBlEnabled(v)} />
-                </div>
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-end gap-2">
-                    <StyledInput
-                      placeholder="Wort hinzufügen (manuelle Sperrliste)"
-                      value={blNew}
-                      onChange={(e) => setBlNew(e.target.value)}
-                      className="w-56"
-                    />
-                    <StyledButton
-                      variant="secondary"
-                      onClick={() => {
-                        const added = blNew
-                          .split(/\r?\n|,/) 
-                          .map((w) => w.trim())
-                          .filter(Boolean);
-                        if (!added.length) return;
-                        const base = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
-                        const combined = Array.from(new Set([...base, ...added]));
-                        setBlList(combined);
-                        setBlWords(combined.join('\n'));
-                        setBlNew('');
-                      }}
-                    >
-                      Hinzufügen
-                    </StyledButton>
-                  </div>
-                  <div className="max-h-56 overflow-auto rounded-md border border-border bg-secondary p-2">
-                    <div className="flex flex-wrap gap-1.5">
-                      {(blList.length ? blList : blWords.split(/\r?\n|,/).map((w)=>w.trim()).filter(Boolean)).map((w, i) => (
-                        <span
-                          key={`${w}-${i}`}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[0.82rem] text-foreground shadow-astra transition-colors hover:border-astra-purple/40"
-                        >
-                          {w}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const list = (blList.length ? blList : blWords.split(/\r?\n|,/).map((t)=>t.trim()).filter(Boolean));
-                              const next = list.filter((_, j) => j !== i);
-                              setBlList(next);
-                              setBlWords(next.join('\n'));
-                            }}
-                            className="ml-1 rounded-full border border-border bg-secondary px-1.5 py-0.5 text-muted-foreground hover:border-astra-purple/40"
-                            aria-label={`Wort ${w} entfernen`}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </SettingsCard>
+              {/* Blacklist-UI vollständig entfernt gemäß Anforderungen */}
             </div>
           </div>
         </>
@@ -477,10 +394,6 @@ const AutomodPage: React.FC = () => {
               setCapsEnabled(Boolean(cfg.capslock?.enabled));
               setCapsPercent(cfg.capslock?.percent ?? '');
               setProfanityEnabled(Boolean((cfg as any).profanity?.enabled ?? (cfg as any).profanity_enabled ?? false));
-              setBlEnabled(Boolean(cfg.blacklist?.enabled));
-              const words = (cfg.blacklist?.words || []).map((w: any) => String(w).trim()).filter(Boolean);
-              setBlList(words);
-              setBlWords(words.join('\n'));
             }).finally(() => setLoading(false));
           }
         }}

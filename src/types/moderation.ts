@@ -13,17 +13,11 @@ export type AutomodCapslock = {
   enabled?: boolean;
 };
 
-export type AutomodBlacklist = {
-  enabled?: boolean;
-  words?: string[];
-};
-
 export type AutomodConfig = {
   // Ab sofort als Liste von Regeln. Für Rückwärtskompatibilität kann das Frontend
   // weiterhin ein einzelnes Objekt in eine 1‑Element‑Liste umwandeln.
   rules?: AutomodRules;
   capslock?: AutomodCapslock;
-  blacklist?: AutomodBlacklist;
   // Optionaler Profanity‑Block: Aktivierung des Beleidigungsfilters (wird in der Bot‑API über
   // blacklist_settings.status aktiviert/deaktiviert). Weitere interne Details werden NICHT
   // im Dashboard konfiguriert.

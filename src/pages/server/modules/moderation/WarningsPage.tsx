@@ -14,6 +14,7 @@ const WarningsPage: React.FC = () => {
   const [warns, setWarns] = useState<WarnItem[]>([]);
   const [count, setCount] = useState<number>(0);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [confirmOne, setConfirmOne] = useState<string | null>(null);
 
   const canQuery = useMemo(() => Boolean(guildId), [guildId]);
 
@@ -47,6 +48,13 @@ const WarningsPage: React.FC = () => {
 
   const onDeleteOne = async (warnId: string) => {
     if (!guildId || !canQuery) return;
+    // Einzellöschung: kurze Bestätigung
+    if (confirmOne !== warnId) {
+      setConfirmOne(warnId);
+      // Reset nach kurzer Zeit, falls nicht bestätigt
+      setTimeout(() => setConfirmOne((curr) => (curr === warnId ? null : curr)), 3000);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -56,6 +64,7 @@ const WarningsPage: React.FC = () => {
       if (!warn) throw new Error('Verwarnung nicht gefunden.');
       await moderationApi.deleteWarn(guildId, warn.userId, warnId);
       await load();
+      setConfirmOne(null);
     } catch (e: any) {
       setError(e?.message || 'Löschen fehlgeschlagen.');
       setLoading(false);
@@ -121,30 +130,52 @@ const WarningsPage: React.FC = () => {
           <div className="text-[0.95rem] text-[#9ca2be]">Keine Verwarnungen vorhanden.</div>
         )}
         {!loading && warns.length > 0 && (
-          <ul className="divide-y divide-[#2d3246] text-[0.95rem]">
-            {warns.map((w) => (
-              <li key={`${w.userId}-${w.warnId}`} className="flex items-start justify-between gap-4 py-3">
-                <div className="min-w-0 flex-1 space-y-1">
+          <div className="space-y-4">
+            {Object.entries(
+              warns.reduce<Record<string, WarnItem[]>>((acc, w) => {
+                (acc[w.userId] ||= []).push(w);
+                return acc;
+              }, {})
+            ).map(([userId, list]) => (
+              <div key={userId} className="rounded-lg border border-[#2a2f45] bg-[#131625]">
+                <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-[#2d3246]">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
                       <span className="opacity-70">Benutzer‑ID:</span>
-                      <span className="font-medium">{w.userId}</span>
+                      <span className="font-medium">{userId}</span>
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
-                      <span className="opacity-70">Warnungs‑ID:</span>
-                      <span className="font-medium">{w.warnId}</span>
+                      <span className="opacity-70">Verwarnungen:</span>
+                      <span className="font-medium">{list.length}</span>
                     </span>
                   </div>
-                  <div className="text-[#dbe3ff]">{w.reason || '—'}</div>
                 </div>
-                <div className="shrink-0 pt-1">
-                  <StyledButton onClick={() => onDeleteOne(w.warnId)} disabled={loading} size="sm" variant="danger">
-                    Entfernen
-                  </StyledButton>
-                </div>
-              </li>
+                <ul className="divide-y divide-[#2d3246] text-[0.95rem]">
+                  {list
+                    .slice()
+                    .sort((a, b) => (a.warnId > b.warnId ? -1 : 1))
+                    .map((w) => (
+                      <li key={`${w.userId}-${w.warnId}`} className="flex items-start justify-between gap-4 px-3 py-2.5">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
+                              <span className="opacity-70">Warnungs‑ID:</span>
+                              <span className="font-medium">{w.warnId}</span>
+                            </span>
+                          </div>
+                          <div className="text-[#dbe3ff]">{w.reason || '—'}</div>
+                        </div>
+                        <div className="shrink-0 pt-1">
+                          <StyledButton onClick={() => onDeleteOne(w.warnId)} disabled={loading} size="sm" variant={confirmOne === w.warnId ? 'ghost' : 'danger'}>
+                            {confirmOne === w.warnId ? 'Wirklich löschen?' : 'Entfernen'}
+                          </StyledButton>
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </SettingsCard>
     </div>

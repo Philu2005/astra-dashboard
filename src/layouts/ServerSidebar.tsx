@@ -2,6 +2,7 @@ import React from 'react';
 import { Layers, FileText, BarChart3, Shield, Home, Cog } from 'lucide-react';
 import { NavLink, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { categories, modulesRegistry } from '@/modules/registry';
 
 interface ServerSidebarProps {
   open?: boolean;
@@ -55,6 +56,31 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
           <NavItem to={`${base}/permissions`} icon={Shield} label="Berechtigungen" onClick={onClose} />
           <NavItem to={`${base}/logs`} icon={FileText} label="Logs" onClick={onClose} />
           <NavItem to={`${base}/stats`} icon={BarChart3} label="Statistiken" onClick={onClose} />
+        </div>
+
+        {/* Module-Schnellauswahl aus Registry */}
+        <div className="space-y-2">
+          <p className="px-2 text-[0.72rem] font-semibold text-[#7f89aa] uppercase tracking-[0.08em]">Module</p>
+          {categories
+            .filter((c) => c.id !== 'all')
+            .map((cat) => {
+              const items = modulesRegistry.filter((m) => m.category === cat.id);
+              if (items.length === 0) return null;
+              return (
+                <div key={cat.id} className="space-y-1">
+                  <div className="px-2 text-[0.74rem] text-[#959ec1]">{cat.name}</div>
+                  {items.map((m) => (
+                    <NavItem
+                      key={m.key}
+                      to={m.buildPath(String(guildId))}
+                      icon={m.icon as any}
+                      label={m.name}
+                      onClick={onClose}
+                    />)
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
     </aside>

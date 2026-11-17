@@ -1,6 +1,8 @@
 import React from 'react';
 import { Outlet, useParams } from 'react-router-dom';
-import ServerHeader from '@/layouts/ServerHeader';
+// Ersetze den individuellen ServerHeader durch die globale Topbar, um die Designtreue zur Dashboard‑Übersicht sicherzustellen
+import { Topbar } from '@/layouts/Topbar';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import ServerSidebar from '@/layouts/ServerSidebar';
 import { useServerContext } from '@/contexts/ServerContext';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
@@ -62,11 +64,14 @@ const ServerLayout: React.FC = () => {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
         <div className="lg:ml-[278px]">
-          <ServerHeader onOpenSidebar={() => setSidebarOpen(true)} />
+          <Topbar />
         </div>
         {/* Content with spacing and left margin on desktop */}
         <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 xl:px-10 lg:ml-[278px]">
-          {/* Platz für zukünftige Breadcrumbs/PageHeader */}
+          {/* Globale Breadcrumbs für alle Server-Unterseiten */}
+          <div className="mb-3">
+            <Breadcrumbs />
+          </div>
           <div className="w-full h-full">
             <Outlet />
           </div>
