@@ -1,8 +1,12 @@
-export type AutomodRules = {
-  warns?: number;
-  action?: string;
-  timeout_seconds?: number;
+// Eine einzelne AutoMod-Regel
+export type AutomodRule = {
+  warns: number; // Anzahl Verwarnungen, bei der die Aktion ausgelöst wird
+  action: string; // z. B. "timeout" | "kick" | "ban" (Backend-Quelle maßgeblich)
+  timeout_seconds?: number; // nur relevant bei action === "timeout"
 };
+
+// Liste von Regeln
+export type AutomodRules = AutomodRule[];
 
 export type AutomodCapslock = {
   percent?: number;
@@ -15,6 +19,8 @@ export type AutomodBlacklist = {
 };
 
 export type AutomodConfig = {
+  // Ab sofort als Liste von Regeln. Für Rückwärtskompatibilität kann das Frontend
+  // weiterhin ein einzelnes Objekt in eine 1‑Element‑Liste umwandeln.
   rules?: AutomodRules;
   capslock?: AutomodCapslock;
   blacklist?: AutomodBlacklist;

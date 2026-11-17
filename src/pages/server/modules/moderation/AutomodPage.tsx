@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { moderationApi } from '@/services/moderation-api';
-import type { AutomodConfig } from '@/types/moderation';
+import type { AutomodConfig, AutomodRule } from '@/types/moderation';
 
 type SaveState = 'idle' | 'saving' | 'success' | 'error';
 
@@ -11,9 +11,7 @@ const AutomodPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
 
-  const [rulesWarns, setRulesWarns] = useState<number | ''>('');
-  const [rulesAction, setRulesAction] = useState<string>('');
-  const [rulesTimeout, setRulesTimeout] = useState<number | ''>('');
+  const [rules, setRules] = useState<AutomodRule[]>([]);
 
   const [capsEnabled, setCapsEnabled] = useState<boolean>(false);
   const [capsPercent, setCapsPercent] = useState<number | ''>('');
@@ -22,26 +20,30 @@ const AutomodPage: React.FC = () => {
   const [blWords, setBlWords] = useState<string>('');
 
   const buildConfig = useCallback((): AutomodConfig => {
+    const words = blWords
+      .split(/\r?\n|,/) // allow comma or newline separated
+      .map((w) => w.trim())
+      .filter(Boolean);
+
     return {
-      rules: {
-        warns: rulesWarns === '' ? undefined : Number(rulesWarns),
-        action: rulesAction || undefined,
-        timeout_seconds: rulesTimeout === '' ? undefined : Number(rulesTimeout),
-      },
+      rules: rules
+        .filter((r) => Number.isFinite(r.warns) && r.action)
+        .sort((a, b) => a.warns - b.warns)
+        .map((r) => ({
+          warns: Number(r.warns),
+          action: r.action,
+          ...(r.action === 'timeout' && r.timeout_seconds ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
+        })),
       capslock: {
         enabled: capsEnabled,
         percent: capsPercent === '' ? undefined : Number(capsPercent),
       },
       blacklist: {
         enabled: blEnabled,
-        words:
-          blWords
-            .split(/\r?\n|,/) // allow comma or newline separated
-            .map((w) => w.trim())
-            .filter(Boolean) || undefined,
+        words: words.length ? words : undefined,
       },
     };
-  }, [rulesWarns, rulesAction, rulesTimeout, capsEnabled, capsPercent, blEnabled, blWords]);
+  }, [rules, capsEnabled, capsPercent, blEnabled, blWords]);
 
   useEffect(() => {
     let active = true;
@@ -53,9 +55,26 @@ const AutomodPage: React.FC = () => {
         const res = await moderationApi.getAutomod(guildId);
         if (!active) return;
         const cfg = res.config || {};
-        setRulesWarns(cfg.rules?.warns ?? '');
-        setRulesAction(cfg.rules?.action ?? '');
-        setRulesTimeout(cfg.rules?.timeout_seconds ?? '');
+        // Regeln normalisieren: Array bevorzugt, einzelnes Objekt bleibt kompatibel
+        const rawRules: any = (cfg as any).rules;
+        let nextRules: AutomodRule[] = [];
+        if (Array.isArray(rawRules)) {
+          nextRules = rawRules
+            .map((r) => ({
+              warns: Number(r?.warns ?? 0),
+              action: String(r?.action ?? ''),
+              ...(r?.timeout_seconds != null ? { timeout_seconds: Number(r.timeout_seconds) } : {}),
+            }))
+            .filter((r) => r.warns > 0 && r.action);
+        } else if (rawRules && typeof rawRules === 'object') {
+          nextRules = [{
+            warns: Number(rawRules.warns ?? 0),
+            action: String(rawRules.action ?? ''),
+            ...(rawRules.timeout_seconds != null ? { timeout_seconds: Number(rawRules.timeout_seconds) } : {}),
+          }].filter((r) => r.warns > 0 && r.action);
+        }
+        nextRules.sort((a, b) => a.warns - b.warns);
+        setRules(nextRules);
         setCapsEnabled(Boolean(cfg.capslock?.enabled));
         setCapsPercent(cfg.capslock?.percent ?? '');
         setBlEnabled(Boolean(cfg.blacklist?.enabled));
@@ -83,13 +102,57 @@ const AutomodPage: React.FC = () => {
       setSaveState('success');
       // Soft reset success state after short delay
       setTimeout(() => setSaveState('idle'), 1600);
+      // Nach erfolgreichem Speichern vom Server neu laden, um echten Zustand zu übernehmen
+      try {
+        const fresh = await moderationApi.getAutomod(guildId);
+        const cfg = fresh.config || {};
+        const rawRules: any = (cfg as any).rules;
+        let nextRules: AutomodRule[] = [];
+        if (Array.isArray(rawRules)) {
+          nextRules = rawRules as AutomodRule[];
+        } else if (rawRules && typeof rawRules === 'object') {
+          nextRules = [rawRules as AutomodRule];
+        }
+        setRules((nextRules || []).sort((a, b) => a.warns - b.warns));
+        setCapsEnabled(Boolean(cfg.capslock?.enabled));
+        setCapsPercent(cfg.capslock?.percent ?? '');
+        setBlEnabled(Boolean(cfg.blacklist?.enabled));
+        setBlWords((cfg.blacklist?.words || []).join('\n'));
+      } catch {
+        // still fine – Nutzer sieht success, erneutes Laden kann später erfolgen
+      }
     } catch (e: any) {
       setSaveState('error');
       setError(e?.message || 'Speichern fehlgeschlagen.');
     }
   };
 
-  const isDirty = useMemo(() => true, [rulesWarns, rulesAction, rulesTimeout, capsEnabled, capsPercent, blEnabled, blWords]);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>('');
+  useEffect(() => {
+    // Set initial snapshot, sobald erste Ladung fertig ist
+    if (!loading) {
+      const snap = JSON.stringify({ rules, capsEnabled, capsPercent, blEnabled, blWords });
+      if (!initialSnapshot) setInitialSnapshot(snap);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
+  const isDirty = useMemo(() => {
+    const current = JSON.stringify({ rules, capsEnabled, capsPercent, blEnabled, blWords });
+    return current !== initialSnapshot;
+  }, [rules, capsEnabled, capsPercent, blEnabled, blWords, initialSnapshot]);
+
+  const addRule = () => {
+    const next: AutomodRule = { warns: Math.max(1, (rules.at(-1)?.warns || 0) + 1), action: 'timeout', timeout_seconds: 60 };
+    setRules((prev) => [...prev, next]);
+  };
+  const updateRule = (index: number, patch: Partial<AutomodRule>) => {
+    setRules((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  };
+  const removeRule = (index: number) => {
+    setRules((prev) => prev.filter((_, i) => i !== index));
+  };
+  const sortedRules = useMemo(() => [...rules].sort((a, b) => a.warns - b.warns), [rules]);
 
   return (
     <div className="space-y-6">
@@ -107,38 +170,114 @@ const AutomodPage: React.FC = () => {
 
       {!loading && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Übersicht */}
           <section className="rounded-lg border border-layout-divider bg-black/20 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-white">Regeln</h3>
+            <h3 className="mb-3 text-sm font-semibold text-white">Übersicht</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-md border border-layout-divider bg-[#0b0e1a] p-3">
+                <div className="text-foreground/70">Regeln</div>
+                <div className="mt-1 text-lg font-semibold text-white">{rules.length}</div>
+              </div>
+              <div className="rounded-md border border-layout-divider bg-[#0b0e1a] p-3">
+                <div className="text-foreground/70">Capslock</div>
+                <div className="mt-1 text-lg font-semibold text-white">{capsEnabled ? 'Aktiv' : 'Inaktiv'}</div>
+              </div>
+              <div className="rounded-md border border-layout-divider bg-[#0b0e1a] p-3 col-span-2">
+                <div className="text-foreground/70">Blacklist</div>
+                <div className="mt-1 text-lg font-semibold text-white">{blEnabled ? `${blWords.split(/\r?\n|,/).filter((w)=>w.trim()).length} Wörter` : 'Inaktiv'}</div>
+              </div>
+            </div>
+          </section>
+
+          {/* Capslock */}
+          <section className="rounded-lg border border-layout-divider bg-black/20 p-4">
+            <h3 className="mb-3 text-sm font-semibold text-white">Capslock</h3>
             <div className="space-y-3 text-sm">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={capsEnabled} onChange={(e) => setCapsEnabled(e.target.checked)} />
+                <span className="text-foreground/80">Capslock‑Erkennung aktivieren</span>
+              </label>
               <label className="block">
-                <span className="mb-1 block text-foreground/70">Verwarnungen bis Aktion</span>
+                <span className="mb-1 block text-foreground/70">Prozent‑Schwelle</span>
                 <input
                   type="number"
                   className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                  value={rulesWarns}
-                  onChange={(e) => setRulesWarns(e.target.value === '' ? '' : Number(e.target.value))}
+                  value={capsPercent}
+                  onChange={(e) => setCapsPercent(e.target.value === '' ? '' : Number(e.target.value))}
                   min={0}
+                  max={100}
                 />
               </label>
-              <label className="block">
-                <span className="mb-1 block text-foreground/70">Aktion (z. B. timeout, mute)</span>
-                <input
-                  type="text"
-                  className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                  value={rulesAction}
-                  onChange={(e) => setRulesAction(e.target.value)}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-foreground/70">Timeout‑Dauer (Sekunden)</span>
-                <input
-                  type="number"
-                  className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
-                  value={rulesTimeout}
-                  onChange={(e) => setRulesTimeout(e.target.value === '' ? '' : Number(e.target.value))}
-                  min={0}
-                />
-              </label>
+            </div>
+          </section>
+
+          {/* Regeln */}
+          <section className="rounded-lg border border-layout-divider bg-black/20 p-4 lg:col-span-2">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">Moderationsregeln</h3>
+              <button
+                type="button"
+                onClick={addRule}
+                className="inline-flex items-center rounded-md border border-layout-divider bg-[#101428] px-3 py-1.5 text-sm text-white hover:bg-[#151b34]"
+              >
+                + Regel hinzufügen
+              </button>
+            </div>
+            <div className="space-y-3">
+              {sortedRules.length === 0 && (
+                <div className="rounded-md border border-dashed border-layout-divider bg-[#0b0e1a] p-4 text-sm text-foreground/70">
+                  Noch keine Regeln. Füge oben deine erste Regel hinzu.
+                </div>
+              )}
+              {sortedRules.map((rule, idx) => (
+                <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-[#2a2f45] bg-[#0f1220] p-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_1fr_200px_auto] md:items-end">
+                    <label className="block text-sm">
+                      <span className="mb-1 block text-foreground/70">Warnungen</span>
+                      <input
+                        type="number"
+                        className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
+                        value={rule.warns}
+                        onChange={(e) => updateRule(idx, { warns: Math.max(0, Number(e.target.value || 0)) })}
+                        min={0}
+                      />
+                    </label>
+                    <label className="block text-sm">
+                      <span className="mb-1 block text-foreground/70">Aktion</span>
+                      <select
+                        className="w-full appearance-none rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8]"
+                        value={rule.action}
+                        onChange={(e) => updateRule(idx, { action: e.target.value })}
+                      >
+                        <option value="">— auswählen —</option>
+                        <option value="timeout">Timeout</option>
+                        <option value="kick">Kick</option>
+                        <option value="ban">Ban</option>
+                      </select>
+                    </label>
+                    <label className="block text-sm">
+                      <span className="mb-1 block text-foreground/70">Timeout (Sek.)</span>
+                      <input
+                        type="number"
+                        className="w-full rounded-md border border-layout-divider bg-[#0b0e1a] px-3 py-2 text-white outline-none focus:border-[#4b46c8] disabled:opacity-50"
+                        value={rule.timeout_seconds ?? ''}
+                        onChange={(e) => updateRule(idx, { timeout_seconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
+                        min={0}
+                        disabled={rule.action !== 'timeout'}
+                      />
+                    </label>
+                    <div className="flex justify-end md:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => removeRule(idx)}
+                        className="inline-flex items-center rounded-md border border-[#3a2a31] bg-[#1a0f12] px-3 py-2 text-sm text-[#ffb4c0] hover:bg-[#2a151a]"
+                      >
+                        Entfernen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 
