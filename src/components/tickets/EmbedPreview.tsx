@@ -4,28 +4,15 @@ import astraLogo from '@/assets/Idee_2_blau.jpg';
 export interface EmbedPreviewProps {
   title?: string;
   description?: string;
-  color?: string;
-  footer?: string;
-  imageUrl?: string;
-  thumbnailUrl?: string;
-  buttonLabel?: string;
-  buttonEmoji?: string;
 }
 
-const DEFAULT_COLOR = '#4b46c8';
+const EMBED_COLOR = '#4b46c8';
 
 export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
   title,
   description,
-  color,
-  footer,
-  imageUrl,
-  thumbnailUrl,
-  buttonLabel,
-  buttonEmoji,
 }) => {
-  const barColor = color || DEFAULT_COLOR;
-  const hasContent = title || description || footer || imageUrl || thumbnailUrl;
+  const hasContent = title || description;
 
   return (
     <div className="space-y-2">
@@ -48,7 +35,7 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
         <div className="ml-8 overflow-hidden rounded bg-[#2b2d31]">
           <div className="flex">
             {/* Color bar */}
-            <div className="w-1 shrink-0" style={{ backgroundColor: barColor }} />
+            <div className="w-1 shrink-0" style={{ backgroundColor: EMBED_COLOR }} />
             <div className="flex-1 min-w-0 p-3">
               <div className="flex gap-3">
                 <div className="flex-1 min-w-0 space-y-1.5">
@@ -58,30 +45,22 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
                   {description && (
                     <p className="text-[0.85rem] text-[#dbdee1] leading-relaxed whitespace-pre-wrap break-words">{description}</p>
                   )}
-                  {imageUrl && (
-                    <div className="mt-2 max-w-[300px]">
-                      <img
-                        src={imageUrl}
-                        alt="Embed-Bild"
-                        className="rounded max-h-[200px] w-auto object-contain"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    </div>
-                  )}
                 </div>
-                {/* Thumbnail – use provided URL or default Astra logo */}
+                {/* Thumbnail – Astra logo */}
                 <div className="shrink-0">
                   <img
-                    src={thumbnailUrl || astraLogo}
+                    src={astraLogo}
                     alt="Thumbnail"
                     className="h-[60px] w-[60px] rounded object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).src = astraLogo; }}
                   />
                 </div>
               </div>
-              {footer && (
-                <p className="mt-2 text-[0.72rem] text-[#949ba4]">{footer}</p>
-              )}
+              {/* Footer (fixed, not configurable) */}
+              <div className="mt-3">
+                <p className="text-[0.72rem] leading-snug text-[#a6a8ad]">
+                  Klicke auf den Button, um ein Ticket zu erstellen!
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -93,8 +72,7 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
             disabled
             className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#248046] px-4 py-2 text-[0.85rem] font-medium text-white cursor-default hover:bg-[#1a6334] transition-colors"
           >
-            {buttonEmoji && <span>{buttonEmoji}</span>}
-            <span>{buttonLabel || 'Ticket öffnen'}</span>
+            <span>Ticket öffnen</span>
           </button>
         </div>
       </div>

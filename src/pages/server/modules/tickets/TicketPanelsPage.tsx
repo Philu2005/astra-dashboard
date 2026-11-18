@@ -26,20 +26,13 @@ interface EditorState {
   title: string;
   description: string;
   topic: string;
-  embed_color: string;
-  footer: string;
-  image_url: string;
-  thumbnail_url: string;
-  button_label: string;
-  button_emoji: string;
   support_role_id: string;
   category_id: string;
   channel_id: string;
 }
 
 const EMPTY_EDITOR: EditorState = {
-  title: '', description: '', topic: '', embed_color: '#4b46c8', footer: '',
-  image_url: '', thumbnail_url: '', button_label: '', button_emoji: '',
+  title: '', description: '', topic: '',
   support_role_id: '', category_id: '', channel_id: '',
 };
 
@@ -48,12 +41,6 @@ function editorFromPanel(p: TicketPanel): EditorState {
     title: p.title || '',
     description: p.description || '',
     topic: (p.topic as string) || '',
-    embed_color: (p.embed_color as string) || '#4b46c8',
-    footer: (p.footer as string) || '',
-    image_url: (p.image_url as string) || '',
-    thumbnail_url: (p.thumbnail_url as string) || '',
-    button_label: (p.button_label as string) || '',
-    button_emoji: (p.button_emoji as string) || '',
     support_role_id: (p.support_role_id as string) || '',
     category_id: (p.category_id as string) || '',
     channel_id: p.channel_id || '',
@@ -258,8 +245,7 @@ const TicketPanelsPage: React.FC = () => {
     try {
       const payload: TicketPanelConfigRequest = {};
       const fields: (keyof EditorState)[] = [
-        'title', 'description', 'topic', 'embed_color', 'footer', 'image_url',
-        'thumbnail_url', 'button_label', 'button_emoji', 'support_role_id', 'category_id',
+        'title', 'description', 'topic', 'support_role_id', 'category_id',
       ];
       for (const f of fields) {
         const val = editForm[f];
@@ -483,7 +469,7 @@ const TicketPanelsPage: React.FC = () => {
                 <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
                 <StyledTextarea placeholder="Panel-Beschreibung" value={createForm.description} onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))} />
               </div>
-              <EmbedPreview title={createForm.title} description={createForm.description} color={createForm.embed_color} />
+              <EmbedPreview title={createForm.title} description={createForm.description} />
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-[#2a2f45] px-5 py-4">
               <StyledButton variant="ghost" onClick={() => setShowCreate(false)} disabled={creating}>Abbrechen</StyledButton>
@@ -513,26 +499,6 @@ const TicketPanelsPage: React.FC = () => {
                     <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label><StyledInput value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} /></div>
                   </div>
                 </FieldGroup>
-                <FieldGroup label="Design">
-                  <div className="space-y-3">
-                    <div>
-                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Embed-Farbe</label>
-                      <div className="flex items-center gap-2">
-                        <input type="color" value={editForm.embed_color || '#4b46c8'} onChange={e => setEditForm(f => ({ ...f, embed_color: e.target.value }))} className="h-9 w-12 cursor-pointer rounded border border-[#2a2f45] bg-transparent" />
-                        <StyledInput value={editForm.embed_color} onChange={e => setEditForm(f => ({ ...f, embed_color: e.target.value }))} className="max-w-[140px]" />
-                      </div>
-                    </div>
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Footer</label><StyledInput value={editForm.footer} onChange={e => setEditForm(f => ({ ...f, footer: e.target.value }))} /></div>
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Bild-URL</label><StyledInput value={editForm.image_url} onChange={e => setEditForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." /></div>
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Thumbnail-URL</label><StyledInput value={editForm.thumbnail_url} onChange={e => setEditForm(f => ({ ...f, thumbnail_url: e.target.value }))} placeholder="https://..." /></div>
-                  </div>
-                </FieldGroup>
-                <FieldGroup label="Button">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Beschriftung</label><StyledInput value={editForm.button_label} onChange={e => setEditForm(f => ({ ...f, button_label: e.target.value }))} placeholder="Ticket erstellen" /></div>
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Emoji</label><StyledInput value={editForm.button_emoji} onChange={e => setEditForm(f => ({ ...f, button_emoji: e.target.value }))} placeholder="🎫" /></div>
-                  </div>
-                </FieldGroup>
                 <FieldGroup label="Ticket-Konfiguration">
                   <div className="space-y-3">
                     <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={editForm.support_role_id || null} onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} />
@@ -547,12 +513,6 @@ const TicketPanelsPage: React.FC = () => {
                   <EmbedPreview
                     title={editForm.title}
                     description={editForm.description}
-                    color={editForm.embed_color}
-                    footer={editForm.footer}
-                    imageUrl={editForm.image_url}
-                    thumbnailUrl={editForm.thumbnail_url}
-                    buttonLabel={editForm.button_label}
-                    buttonEmoji={editForm.button_emoji}
                   />
                 </div>
               </div>

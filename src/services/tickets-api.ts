@@ -44,12 +44,6 @@ export interface TicketPanel {
   support_role_id?: string;
   category_id?: string;
   topic?: string;
-  embed_color?: string;
-  footer?: string;
-  image_url?: string;
-  thumbnail_url?: string;
-  button_label?: string;
-  button_emoji?: string;
   [key: string]: unknown;
 }
 
@@ -82,12 +76,6 @@ export interface TicketPanelConfigRequest {
   topic?: string;
   title?: string;
   description?: string;
-  embed_color?: string;
-  footer?: string;
-  image_url?: string;
-  thumbnail_url?: string;
-  button_label?: string;
-  button_emoji?: string;
 }
 
 export interface TicketPanelConfigResponse {
