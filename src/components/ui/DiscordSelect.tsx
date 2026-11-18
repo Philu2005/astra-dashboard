@@ -17,9 +17,12 @@ export interface DiscordEntity {
 export interface DiscordSelectProps {
   label?: string;
   placeholder?: string;
-  // Single- oder Multi-Select je nach Einsatzstelle
-  value: string | string[] | null;
-  onChange: (idOrIds: string | string[]) => void;
+  // Bestehende API beibehalten (Single-Select)
+  value: string | null;
+  onChange: (id: string) => void;
+  // Optional: Multi-Select ohne Breaking Change
+  multiValue?: string[] | null;
+  onMultiChange?: (ids: string[]) => void;
   loading?: boolean;
   error?: string | null;
   items: DiscordEntity[];
@@ -51,7 +54,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
   className,
   groupByCategory,
 }) => {
-  const isMulti = Array.isArray(value);
+  const isMulti = Array.isArray((multiValue ?? undefined));
   const options: SelectOption[] = useMemo(() => {
     const channelIcon = (t?: number) => {
       switch (t) {
@@ -119,7 +122,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
   // Geschlossener Zustand mit Chips (bei Multi-Select)
   const triggerContent = () => {
     if (!isMulti) return null; // StyledSelect rendert Single-Trigger selbst
-    const ids = (value as string[] | null) ?? [];
+    const ids = (multiValue as string[] | null) ?? [];
     const byId = new Map(options.filter(o=>o.type!== 'group').map(o=>[o.value,o] as const));
     return (
       <div className="flex min-h-10 w-full items-center gap-1.5 rounded-md border border-[#2a2f45] bg-[#0f1220] px-2.5 py-1.5 text-left text-[0.92rem] text-white focus-within:ring-2 focus-within:ring-astra-purple/40">
@@ -139,7 +142,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
                 onClick={(e)=>{
                   e.stopPropagation();
                   const next = ids.filter(x=>x!==id);
-                  onChange(next);
+                  onMultiChange?.(next);
                 }}
               >
                 <X className="h-3.5 w-3.5" />
@@ -164,12 +167,12 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
       {label && <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">{label}</label>}
       <StyledSelect
         options={options}
-        value={Array.isArray(value) ? (value[0] ?? '') : (value ?? '')}
+        value={value ?? ''}
         onChange={(v) => {
           if (isMulti) {
-            const ids = new Set<string>(Array.isArray(value) ? value : []);
+            const ids = new Set<string>(Array.isArray(multiValue) ? multiValue! : []);
             if (ids.has(v)) ids.delete(v); else ids.add(v);
-            onChange(Array.from(ids));
+            onMultiChange?.(Array.from(ids));
           } else {
             onChange(v);
           }
