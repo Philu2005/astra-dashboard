@@ -97,21 +97,26 @@ export const ModuleTextarea = React.forwardRef<HTMLTextAreaElement, ModuleTextar
 ModuleTextarea.displayName = 'ModuleTextarea';
 
 // Checkbox
-export interface ModuleCheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {}
-export const ModuleCheckbox = React.forwardRef<HTMLInputElement, ModuleCheckboxProps>(({ className, ...rest }, ref) => {
-  return (
-    <label className={cn('inline-flex items-center gap-2 text-[0.95rem] text-white', className)}>
-      <input
-        ref={ref}
-        type="checkbox"
-        className={cn(
-          'h-4 w-4 rounded border-[#2a2f45] bg-[#0f1220] text-astra-purple',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
-        )}
-        {...rest}
-      />
-      {rest.children}
-    </label>
-  );
-});
+export interface ModuleCheckboxProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'children'> {
+  children?: React.ReactNode;
+}
+export const ModuleCheckbox = React.forwardRef<HTMLInputElement, ModuleCheckboxProps>(
+  ({ className, children, ...rest }, ref) => {
+    return (
+      <label className={cn('inline-flex items-center gap-2 text-[0.95rem] text-white', className)}>
+        <input
+          ref={ref}
+          type="checkbox"
+          className={cn(
+            'h-4 w-4 rounded border-[#2a2f45] bg-[#0f1220] text-astra-purple',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
+          )}
+          {...rest}
+        />
+        {children}
+      </label>
+    );
+  },
+);
 ModuleCheckbox.displayName = 'ModuleCheckbox';

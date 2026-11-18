@@ -1,4 +1,6 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { serversApi } from '@/services/servers-api';
 import {
   ModulePageLayout,
   ModulePageHeader,
@@ -18,26 +20,7 @@ import {
   ModuleChannelSelect,
 } from '@/components/module-ui';
 
-// Lokale Demo-Daten für den Channel-Select (keine API-Aufrufe, keine Mock-Endpunkte)
-const demoCategories = [
-  { id: 'cat-info', name: 'INFORMATION' },
-  { id: 'cat-community', name: 'COMMUNITY' },
-];
-
-const demoChannels = [
-  { id: '1', name: 'welcome', type: 0, parent_id: 'cat-info' },
-  { id: '2', name: 'rules', type: 0, parent_id: 'cat-info' },
-  { id: '3', name: 'news', type: 0, parent_id: 'cat-info' },
-  { id: '4', name: 'general', type: 0, parent_id: 'cat-community' },
-  { id: '5', name: 'media', type: 0, parent_id: 'cat-community' },
-  { id: '6', name: 'voice-chat', type: 2, parent_id: 'cat-community' },
-  { id: '7', name: 'no-category-text', type: 0, parent_id: null as any },
-];
-
-const withParentName = demoChannels.map((c) => ({
-  ...c,
-  parent_name: c.parent_id ? demoCategories.find((x) => x.id === c.parent_id)?.name : 'UNGROUPED',
-}));
+type ChannelItem = { id: string; name: string; type?: number; parent_id?: string | null; parent_name?: string | null };
 
 const SectionTitle: React.FC<{ title: string }>=({ title })=> (
   <h2 className="text-white/90 text-lg font-semibold mt-2">{title}</h2>
@@ -55,6 +38,9 @@ const RowLabel: React.FC<{ title: string; desc?: string }> = ({ title, desc }) =
 );
 
 const ModuleUiPreview: React.FC = () => {
+  const [search] = useSearchParams();
+  const guildId = search.get('guildId') || undefined;
+
   const [toggleOn, setToggleOn] = React.useState(false);
   const [selectedChannel, setSelectedChannel] = React.useState<string | undefined>();
   const [selectValue, setSelectValue] = React.useState<string | undefined>();
@@ -62,6 +48,50 @@ const ModuleUiPreview: React.FC = () => {
   const [num, setNum] = React.useState<number | undefined>(5);
   const [multiline, setMultiline] = React.useState('Lorem ipsum dolor sit amet...');
   const [checked, setChecked] = React.useState(true);
+
+  // Channel-Daten aus echter API laden (falls guildId vorhanden)
+  const [channelItems, setChannelItems] = React.useState<ChannelItem[] | null>(null);
+  const [channelsLoading, setChannelsLoading] = React.useState(false);
+  const [channelsError, setChannelsError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let aborted = false;
+    async function load() {
+      if (!guildId) {
+        setChannelItems(null);
+        setChannelsLoading(false);
+        setChannelsError(null);
+        return;
+      }
+      setChannelsLoading(true);
+      setChannelsError(null);
+      try {
+        const [{ channels }, { categories }] = await Promise.all([
+          serversApi.getChannels(guildId),
+          serversApi.getCategories(guildId),
+        ]);
+        if (aborted) return;
+        const catNameById = new Map<string, string>();
+        for (const c of categories) catNameById.set(c.id, c.name);
+        const items: ChannelItem[] = channels.map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          parent_id: c.parent_id ?? null,
+          parent_name: c.parent_id ? catNameById.get(c.parent_id) ?? null : null,
+        }));
+        setChannelItems(items);
+      } catch (e: any) {
+        if (!aborted) setChannelsError(e?.message || 'Unbekannter Fehler');
+      } finally {
+        if (!aborted) setChannelsLoading(false);
+      }
+    }
+    load();
+    return () => {
+      aborted = true;
+    };
+  }, [guildId]);
 
   return (
     <ModulePageLayout className="py-6" twoColumns>
@@ -162,18 +192,34 @@ const ModuleUiPreview: React.FC = () => {
         <SectionTitle title="Discord-artiger Channel-Select" />
         <ModuleSettingsCard>
           <ModuleSection heading="Gruppierte Auswahl" description="Kategorien mit Channels">
-            <ModuleSettingsRow>
-              <RowLabel title="Channel" desc="Gruppiert nach Kategorien; Text/Voice sichtbar." />
-              <div className="w-full max-w-md">
-                <ModuleChannelSelect
-                  items={withParentName}
-                  value={selectedChannel ?? null}
-                  onChange={(v:string)=> setSelectedChannel(v)}
-                  placeholder="# wähle einen Channel"
-                  groupByCategory
-                />
-              </div>
-            </ModuleSettingsRow>
+            {!guildId ? (
+              <ModuleSettingsRow>
+                <RowLabel title="Channel" desc="Füge ?guildId=DEINE_SERVER_ID an die URL an." />
+                <div className="w-full max-w-md">
+                  <ModuleChannelSelect
+                    items={[]}
+                    value={null}
+                    onChange={()=>{}}
+                    placeholder="Keine echten Discord-Daten verfügbar"
+                    disabled
+                  />
+                </div>
+              </ModuleSettingsRow>
+            ) : (
+              <ModuleSettingsRow>
+                <RowLabel title="Channel" desc="Gruppiert nach Kategorien; Text/Voice sichtbar." />
+                <div className="w-full max-w-md">
+                  <ModuleChannelSelect
+                    items={channelItems ?? []}
+                    value={selectedChannel ?? null}
+                    onChange={(v:string)=> setSelectedChannel(v)}
+                    placeholder={channelsLoading ? 'Laden…' : channelsError ? `Fehler: ${channelsError}` : '# wähle einen Channel'}
+                    groupByCategory
+                    disabled={channelsLoading || !!channelsError}
+                  />
+                </div>
+              </ModuleSettingsRow>
+            )}
           </ModuleSection>
         </ModuleSettingsCard>
       </div>
