@@ -10,7 +10,7 @@ export interface StyledSwitchProps extends Omit<React.ButtonHTMLAttributes<HTMLB
   error?: string;
 }
 
-// Professioneller Toggle: dunkler Track, violetter aktiver Zustand, flüssiger Thumb
+// Hochwertiger Pill-Switch: ON/OFF im Track, Astra-Purple aktiv, flüssiger Knob
 export const StyledSwitch = React.forwardRef<HTMLButtonElement, StyledSwitchProps>(
   ({ className, checked, defaultChecked, onChange, disabled, label, hint, error, ...props }, ref) => {
     const isControlled = checked !== undefined;
@@ -25,7 +25,14 @@ export const StyledSwitch = React.forwardRef<HTMLButtonElement, StyledSwitchProp
     };
 
     const onKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      // Space und Enter: preventDefault um doppelten Toggle durch native button-Klick zu verhindern
+      if (e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+      // Enter: native buttons feuern onClick bei Enter – wir verhindern den Default
+      // und toggeln manuell, damit kein doppelter Toggle entsteht
+      if (e.key === 'Enter') {
         e.preventDefault();
         toggle();
       }
@@ -39,51 +46,77 @@ export const StyledSwitch = React.forwardRef<HTMLButtonElement, StyledSwitchProp
       }
     };
 
+    const switchId = React.useId();
+
     return (
-      <div className={cn('flex items-start gap-3', disabled && 'opacity-60', className)}>
+      <div className={cn('flex items-start gap-3', className)}>
         <button
           ref={ref}
+          id={switchId}
           type="button"
           role="switch"
           aria-checked={c}
-          aria-disabled={disabled}
+          disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
           className={cn(
-            'relative inline-flex h-6 w-12 shrink-0 items-center rounded-full border transition-all duration-200 motion-reduce:transition-none',
-            'border-[#2a2f45] bg-[#0f1220]',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
-            'hover:border-astra-purple/35',
-            c ? 'border-astra-purple/60 bg-astra-purple' : 'bg-[#0f1220]',
+            // Größerer Pill-Switch: 56×28 für ON/OFF + Knob
+            'relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border',
+            'transition-colors duration-200 ease-out motion-reduce:transition-none',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1220]',
+            c
+              ? 'border-[#5b56d6]/60 bg-astra-purple hover:bg-[#5b56d6]'
+              : 'border-[#2a2f45] bg-[#1a1f33] hover:border-[#3a4060]',
+            disabled && 'pointer-events-none opacity-50 cursor-default',
           )}
           {...props}
         >
-          {/* Track-Label */}
+          {/* ON/OFF Labels im Track */}
           <span
-            aria-hidden
-            className={cn(
-              'pointer-events-none absolute inset-0 flex items-center justify-between px-1.5 text-[0.65rem] font-semibold uppercase tracking-wide',
-              c ? 'text-white/90' : 'text-[#7f86a8]'
-            )}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 flex select-none items-center"
           >
-            <span className={cn('transition-opacity', c ? 'opacity-90' : 'opacity-0')}>ON</span>
-            <span className={cn('transition-opacity', c ? 'opacity-0' : 'opacity-80')}>OFF</span>
+            {/* ON – links vom Knob, sichtbar wenn aktiv */}
+            <span
+              className={cn(
+                'absolute left-1.5 text-[0.6rem] font-bold uppercase tracking-wider',
+                'transition-opacity duration-150 motion-reduce:transition-none',
+                c ? 'text-white/90 opacity-100' : 'opacity-0',
+              )}
+            >
+              ON
+            </span>
+            {/* OFF – rechts vom Knob, sichtbar wenn inaktiv */}
+            <span
+              className={cn(
+                'absolute right-1.5 text-[0.6rem] font-bold uppercase tracking-wider',
+                'transition-opacity duration-150 motion-reduce:transition-none',
+                c ? 'opacity-0' : 'text-[#6b7194] opacity-100',
+              )}
+            >
+              OFF
+            </span>
           </span>
+
+          {/* Knob */}
           <span
+            aria-hidden="true"
             className={cn(
-              'absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[#e6ecff] transition-all duration-200 motion-reduce:transition-none will-change-transform',
-              'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.35)]',
-              c ? 'translate-x-6' : 'translate-x-0',
+              'pointer-events-none absolute top-[3px] h-[22px] w-[22px] rounded-full',
+              'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)]',
+              'transition-transform duration-200 ease-out motion-reduce:transition-none will-change-transform',
+              c ? 'translate-x-[29px]' : 'translate-x-[3px]',
             )}
           />
         </button>
+
         {(label || hint || error) && (
-          <span className="flex min-w-0 flex-col">
+          <label htmlFor={switchId} className={cn('flex min-w-0 flex-col', disabled ? 'cursor-default' : 'cursor-pointer')}>
             {label && <span className="text-[0.95rem] leading-5 text-[#dbe3ff]">{label}</span>}
             {(hint || error) && (
               <span className={cn('text-[0.82rem]', error ? 'text-red-400' : 'text-[#8fa1c6]')}>{error || hint}</span>
             )}
-          </span>
+          </label>
         )}
       </div>
     );
