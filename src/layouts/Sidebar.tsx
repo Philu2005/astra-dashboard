@@ -88,7 +88,16 @@ const NavItem = ({ icon: Icon, label, active, external, href, onClick }: NavItem
 };
 
 export const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  // Initialzustand: auf Desktop (>= lg) standardmäßig geöffnet, mobil geschlossen
+  const getInitialOpen = () => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.innerWidth >= 1024; // Tailwind lg Breakpoint
+    } catch {
+      return false;
+    }
+  };
+  const [isOpen, setIsOpen] = useState<boolean>(getInitialOpen);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [serverSearch, setServerSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -112,6 +121,17 @@ export const Sidebar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
 
+  // Optional: ESC schließt die Sidebar (wenn offen)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <>
       {/* Mobile Toggle Button */}
@@ -129,25 +149,30 @@ export const Sidebar = () => {
 
       {/* Backdrop for mobile */}
       {isOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-[#050711]/74 backdrop-blur-[2px] z-50"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      <aside className={cn(
-        "w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] transition-transform duration-300 lg:translate-x-0 backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)]",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] transition-transform duration-300 backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)]",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        aria-hidden={!isOpen}
+      >
       {/* Branding */}
         <div className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider lg:border-b-0">
+          {/* Schließen/Toggle-Button innerhalb der Sidebar (auf allen Breakpoints sichtbar) */}
           <button
             onClick={() => setIsOpen(false)}
             className={cn(
-              "lg:hidden p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md flex items-center justify-center",
+              "p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md flex items-center justify-center",
               isOpen ? "opacity-100 scale-100 delay-300" : "opacity-0 scale-90 pointer-events-none"
             )}
             aria-label="Navigation schließen"
+            title="Navigation schließen"
           >
             <Menu className="w-6 h-6" />
           </button>
