@@ -50,11 +50,11 @@ export const StyledSwitch = React.forwardRef<HTMLButtonElement, StyledSwitchProp
           onClick={toggle}
           onKeyDown={onKeyDown}
           className={cn(
-            'relative inline-flex h-6 w-12 shrink-0 items-center rounded-full border transition-all duration-200',
-            'border-[#2a2f45] bg-[#0f1220] shadow-astra',
+            'relative inline-flex h-6 w-12 shrink-0 items-center rounded-full border transition-all duration-200 motion-reduce:transition-none',
+            'border-[#2a2f45] bg-[#0f1220]',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
             'hover:border-astra-purple/35',
-            c ? 'border-astra-purple/60 bg-astra-purple/25' : 'bg-[#0f1220]',
+            c ? 'border-astra-purple/60 bg-astra-purple' : 'bg-[#0f1220]',
           )}
           {...props}
         >
@@ -63,7 +63,7 @@ export const StyledSwitch = React.forwardRef<HTMLButtonElement, StyledSwitchProp
             aria-hidden
             className={cn(
               'pointer-events-none absolute inset-0 flex items-center justify-between px-1.5 text-[0.65rem] font-semibold uppercase tracking-wide',
-              c ? 'text-astra-purple/90' : 'text-[#7f86a8]'
+              c ? 'text-white/90' : 'text-[#7f86a8]'
             )}
           >
             <span className={cn('transition-opacity', c ? 'opacity-90' : 'opacity-0')}>ON</span>
@@ -71,9 +71,9 @@ export const StyledSwitch = React.forwardRef<HTMLButtonElement, StyledSwitchProp
           </span>
           <span
             className={cn(
-              'absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[#cfd5f0] transition-all duration-200 will-change-transform',
-              'shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_2px_8px_rgba(0,0,0,0.35)]',
-              c ? 'translate-x-6 bg-[#e6ecff]' : 'translate-x-0',
+              'absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[#e6ecff] transition-all duration-200 motion-reduce:transition-none will-change-transform',
+              'shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.35)]',
+              c ? 'translate-x-6' : 'translate-x-0',
             )}
           />
         </button>

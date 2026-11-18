@@ -77,7 +77,8 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
     return options.filter(o => (o.type === 'group' ? true : o.label.toLowerCase().includes(q)));
   }, [options, search]);
 
-  const showSearch = searchable ?? options.length > 8;
+  // Suche grundsätzlich verfügbar, sofern nicht explizit abgeschaltet
+  const showSearch = searchable ?? true;
 
   const commit = useCallback(
     (next: string) => {
@@ -194,16 +195,15 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
       style={dropdownStyle}
       className={cn(
         'astra-scrollbar-hide overflow-y-auto overflow-x-hidden box-border will-change-transform',
-        // Panel Look & Feel
-        'rounded-lg border border-[#2a2f45] bg-[#111427]/98 text-white shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]',
-        // Animation
-        // Vermeide Zoom-bedingtes „Wackeln" – nur sanftes Einblenden/Schieben
-        'animate-in fade-in-0 slide-in-from-top-1 duration-120 ease-out',
+        // Panel Look & Feel (ruhiger, dunkler, sehr dezenter Shadow)
+        'rounded-lg border border-[#2a2f45] bg-[#0f1220]/98 text-white shadow-[0_12px_24px_-14px_rgba(0,0,0,0.65)]',
+        // Animation (kurz, weich, ohne Zoom)
+        'animate-in fade-in-0 slide-in-from-top-1 duration-150 ease-out motion-reduce:transition-none motion-reduce:animate-none',
       )}
       onKeyDown={onKeyDown}
     >
       {showSearch && (
-        <div className="sticky top-0 z-10 border-b border-[#2a2f45] bg-[#111427]/98 p-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm">
+        <div className="sticky top-0 z-10 border-b border-[#2a2f45] bg-[#0f1220]/98 p-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm">
           <input
             ref={searchRef}
             type="text"
@@ -211,7 +211,7 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
             onChange={e => { setSearch(e.target.value); setActiveIndex(0); }}
             onKeyDown={onKeyDown}
             placeholder="Suchen…"
-            className="w-full rounded-md border border-[#2a2f45] bg-[#0f1220] px-2.5 py-1.5 text-[0.85rem] text-white placeholder-[#7f86a8] outline-none focus:border-astra-purple/40"
+            className="w-full rounded-md border border-[#2a2f45] bg-[#0c1020] px-2.5 py-1.5 text-[0.85rem] text-white placeholder-[#7f86a8] outline-none focus:border-astra-purple/40 focus-visible:ring-2 focus-visible:ring-astra-purple/40"
           />
         </div>
       )}
@@ -245,7 +245,7 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
             onClick={() => !isDisabled && commit(opt.value)}
             className={cn(
               'flex cursor-pointer items-start gap-2 px-3 py-2 text-[0.9rem] box-border',
-              'transition-colors duration-150',
+              'transition-colors duration-150 motion-reduce:transition-none',
               isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-astra-purple/12',
               isActive && 'bg-astra-purple/12',
               isSelected ? 'text-astra-purple font-medium' : 'text-[#dbe3ff]'
