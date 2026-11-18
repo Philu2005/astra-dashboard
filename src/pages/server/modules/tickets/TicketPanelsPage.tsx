@@ -329,7 +329,7 @@ const TicketPanelsPage: React.FC = () => {
         backTo={`/servers/${guildId}/modules`}
         backLabel="Modulübersicht"
         actions={
-          <StyledButton onClick={() => { setCreateForm({ ...EMPTY_EDITOR }); setShowCreate(true); }}>
+          <StyledButton variant="primary" size="md" onClick={() => { setCreateForm({ ...EMPTY_EDITOR }); setShowCreate(true); }}>
             <Plus className="h-4 w-4" /> Neues Panel
           </StyledButton>
         }

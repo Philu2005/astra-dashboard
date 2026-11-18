@@ -1,4 +1,5 @@
 import React from 'react';
+import astraLogo from '@/assets/Idee_2_blau.jpg';
 
 export interface EmbedPreviewProps {
   title?: string;
@@ -29,58 +30,75 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
   return (
     <div className="space-y-2">
       <p className="text-[0.8rem] font-medium text-[#8b8fad]">Vorschau</p>
-      <div className="rounded-lg bg-[#2b2d31] p-0 overflow-hidden">
-        <div className="flex">
-          {/* Color bar */}
-          <div className="w-1 shrink-0 rounded-l" style={{ backgroundColor: barColor }} />
-          <div className="flex-1 p-3 min-w-0">
-            <div className="flex gap-3">
-              <div className="flex-1 min-w-0 space-y-1.5">
-                {title && (
-                  <p className="text-[0.95rem] font-semibold text-white leading-tight">{title}</p>
-                )}
-                {description && (
-                  <p className="text-[0.85rem] text-[#dbdee1] leading-relaxed whitespace-pre-wrap break-words">{description}</p>
-                )}
-                {imageUrl && (
-                  <div className="mt-2 max-w-[300px]">
-                    <img
-                      src={imageUrl}
-                      alt="Embed-Bild"
-                      className="rounded max-h-[200px] w-auto object-contain"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
-                )}
-              </div>
-              {thumbnailUrl && (
+
+      {/* Discord message container */}
+      <div className="rounded-lg bg-[#313338] p-3">
+        {/* Bot header */}
+        <div className="mb-2 flex items-center gap-2">
+          <img
+            src={astraLogo}
+            alt="Astra"
+            className="h-6 w-6 rounded-full object-cover"
+          />
+          <span className="text-[0.85rem] font-semibold text-white">Astra</span>
+          <span className="rounded bg-[#5865f2] px-1 py-[1px] text-[0.6rem] font-semibold uppercase text-white leading-tight">APP</span>
+        </div>
+
+        {/* Embed */}
+        <div className="ml-8 overflow-hidden rounded bg-[#2b2d31]">
+          <div className="flex">
+            {/* Color bar */}
+            <div className="w-1 shrink-0" style={{ backgroundColor: barColor }} />
+            <div className="flex-1 min-w-0 p-3">
+              <div className="flex gap-3">
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  {title && (
+                    <p className="text-[0.95rem] font-semibold text-white leading-tight">{title}</p>
+                  )}
+                  {description && (
+                    <p className="text-[0.85rem] text-[#dbdee1] leading-relaxed whitespace-pre-wrap break-words">{description}</p>
+                  )}
+                  {imageUrl && (
+                    <div className="mt-2 max-w-[300px]">
+                      <img
+                        src={imageUrl}
+                        alt="Embed-Bild"
+                        className="rounded max-h-[200px] w-auto object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                </div>
+                {/* Thumbnail – use provided URL or default Astra logo */}
                 <div className="shrink-0">
                   <img
-                    src={thumbnailUrl}
+                    src={thumbnailUrl || astraLogo}
                     alt="Thumbnail"
-                    className="h-16 w-16 rounded object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    className="h-[60px] w-[60px] rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = astraLogo; }}
                   />
                 </div>
+              </div>
+              {footer && (
+                <p className="mt-2 text-[0.72rem] text-[#949ba4]">{footer}</p>
               )}
             </div>
-            {footer && (
-              <p className="mt-2 text-[0.75rem] text-[#949ba4]">{footer}</p>
-            )}
           </div>
         </div>
+
+        {/* Button – below embed, Discord-style green */}
+        <div className="ml-8 mt-2">
+          <button
+            type="button"
+            disabled
+            className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#248046] px-4 py-2 text-[0.85rem] font-medium text-white cursor-default hover:bg-[#1a6334] transition-colors"
+          >
+            {buttonEmoji && <span>{buttonEmoji}</span>}
+            <span>{buttonLabel || 'Ticket öffnen'}</span>
+          </button>
+        </div>
       </div>
-      {/* Button preview */}
-      <div className="flex">
-        <button
-          type="button"
-          disabled
-          className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#5865f2] px-4 py-1.5 text-[0.85rem] font-medium text-white opacity-90 cursor-default"
-        >
-          {buttonEmoji && <span>{buttonEmoji}</span>}
-          <span>{buttonLabel || 'Ticket erstellen'}</span>
-        </button>
-      </div>
+
       {!hasContent && (
         <p className="text-[0.78rem] text-[#8b8fad] italic">Fülle die Felder aus, um eine Vorschau zu sehen.</p>
       )}

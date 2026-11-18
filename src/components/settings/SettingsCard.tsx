@@ -10,14 +10,14 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({ className, header, f
   return (
     <div
       className={cn(
-        'rounded-[1.15rem] border shadow-astra transition-all duration-300 relative overflow-hidden',
+        'rounded-[1.15rem] border shadow-astra transition-all duration-300 relative',
         'bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border-[#2d3246]',
         'hover:border-astra-purple/45 motion-reduce:transition-none',
         className,
       )}
       {...props}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.03)_0%,rgba(255,255,255,0)_42%)] pointer-events-none" />
+      <div className="absolute inset-0 rounded-[1.15rem] bg-[linear-gradient(140deg,rgba(255,255,255,0.03)_0%,rgba(255,255,255,0)_42%)] pointer-events-none" />
       {header && (
         <div className="relative z-10 border-b border-[#2d3246]/80 px-4 py-3 sm:px-5 sm:py-4 text-[#c1c7de]">
           {header}

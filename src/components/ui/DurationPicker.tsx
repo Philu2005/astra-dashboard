@@ -18,34 +18,43 @@ export interface DurationPickerProps {
   className?: string;
 }
 
+function formatHours(h: number): string {
+  if (h === 0) return 'Deaktiviert';
+  if (h < 24) return h === 1 ? '1 Stunde' : `${h} Stunden`;
+  const d = Math.floor(h / 24);
+  const rest = h % 24;
+  const dLabel = d === 1 ? '1 Tag' : `${d} Tage`;
+  if (rest === 0) return dLabel;
+  return `${dLabel} ${rest} Std.`;
+}
+
+function formatMinutes(m: number): string {
+  if (m === 0) return 'Deaktiviert';
+  if (m < 60) return m === 1 ? '1 Minute' : `${m} Minuten`;
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  const hLabel = h === 1 ? '1 Stunde' : `${h} Stunden`;
+  if (rest === 0) return hLabel;
+  return `${hLabel} ${rest} Min.`;
+}
+
 function buildOptions(unit: 'hours' | 'minutes', min: number, max: number): SelectOption[] {
   const opts: SelectOption[] = [];
 
   if (unit === 'hours') {
-    for (let h = min; h <= max; h++) {
-      const label = h === 0 ? 'Deaktiviert' : h === 1 ? '1 Stunde' : `${h} Stunden`;
-      opts.push({ value: String(h), label });
+    // Sinnvolle Stunden-Presets statt 0-720
+    const steps = [0, 1, 2, 3, 4, 6, 8, 12, 18, 24, 36, 48, 72, 96, 120, 168, 336, 504, 720];
+    for (const h of steps) {
+      if (h < min || h > max) continue;
+      opts.push({ value: String(h), label: formatHours(h) });
     }
   } else {
     // Sinnvolle Minutenintervalle
     const steps = [0, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440, 2880, 4320, 7200, 10080];
     for (const m of steps) {
       if (m < min || m > max) continue;
-      let label: string;
-      if (m === 0) {
-        label = 'Deaktiviert';
-      } else if (m < 60) {
-        label = `${m} Minuten`;
-      } else {
-        const h = Math.floor(m / 60);
-        const rest = m % 60;
-        label = rest === 0
-          ? (h === 1 ? '1 Stunde' : `${h} Stunden`)
-          : `${h} Std. ${rest} Min.`;
-      }
-      opts.push({ value: String(m), label });
+      opts.push({ value: String(m), label: formatMinutes(m) });
     }
-    // Falls der aktuelle Wert nicht in den Steps ist, einfügen
   }
 
   return opts;
@@ -66,20 +75,7 @@ export const DurationPicker: React.FC<DurationPickerProps> = ({
     const opts = buildOptions(unit, min, max);
     // Sicherstellen, dass der aktuelle Wert enthalten ist
     if (!opts.find(o => o.value === String(value))) {
-      let lbl: string;
-      if (value === 0) {
-        lbl = 'Deaktiviert';
-      } else if (unit === 'hours') {
-        lbl = value === 1 ? '1 Stunde' : `${value} Stunden`;
-      } else if (value < 60) {
-        lbl = `${value} Minuten`;
-      } else {
-        const h = Math.floor(value / 60);
-        const rest = value % 60;
-        lbl = rest === 0
-          ? (h === 1 ? '1 Stunde' : `${h} Stunden`)
-          : `${h} Std. ${rest} Min.`;
-      }
+      const lbl = unit === 'hours' ? formatHours(value) : formatMinutes(value);
       opts.push({ value: String(value), label: lbl });
       opts.sort((a, b) => Number(a.value) - Number(b.value));
     }
