@@ -253,7 +253,7 @@ const TicketConfigPage: React.FC = () => {
                               onChange={(v) => updateField(key, v)}
                               min={meta.min}
                               max={meta.max}
-                              className="max-w-[280px]"
+                              className="max-w-full sm:max-w-[280px]"
                             />
                           ) : typeof value === 'number' ? (
                             <div className="flex items-center gap-3">
@@ -268,7 +268,7 @@ const TicketConfigPage: React.FC = () => {
                                 }}
                                 min={meta.min}
                                 max={meta.max}
-                                className="max-w-[160px]"
+                                className="w-full sm:max-w-[160px]"
                               />
                               {meta.unit && (
                                 <span className="text-[0.8rem] text-[#8b8fad] whitespace-nowrap">
@@ -280,6 +280,7 @@ const TicketConfigPage: React.FC = () => {
                             <StyledInput
                               value={String(value ?? '')}
                               onChange={e => updateField(key, e.target.value)}
+                              className="w-full"
                             />
                           )}
                         </div>

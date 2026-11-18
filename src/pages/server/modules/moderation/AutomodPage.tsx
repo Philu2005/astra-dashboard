@@ -238,61 +238,62 @@ const AutomodPage: React.FC = () => {
                     </div>
                   )}
                   {sortedRules.map((rule, idx) => (
-                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-3 shadow-astra hover:border-astra-purple/40 transition-colors">
-                      <div className="flex flex-wrap items-end gap-2 sm:gap-3">
-                        {/* Warnungen */}
-                        <div className="w-full sm:w-[100px] shrink-0">
-                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
-                            Warnungen
-                            <StyledTooltip content="Anzahl der Verwarnungen, ab der die festgelegte Moderationsaktion automatisch ausgeführt wird." side="top" className="w-56">
-                              <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
-                            </StyledTooltip>
+                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-4 shadow-astra hover:border-astra-purple/40 transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-3">
+                        <div className="flex items-end gap-3 flex-1 min-w-0">
+                          {/* Warnungen */}
+                          <div className="w-[80px] xs:w-[100px] shrink-0">
+                            <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                              Warnungen
+                              <StyledTooltip content="Anzahl der Verwarnungen, ab der die festgelegte Moderationsaktion automatisch ausgeführt wird." side="top" className="w-56">
+                                <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
+                              </StyledTooltip>
+                            </div>
+                            <StyledNumberInput
+                              value={rule.warns as any}
+                              onChange={(e) => {
+                                const raw = (e.target as any).value;
+                                if (raw === '') return;
+                                const n = Number(raw);
+                                updateRule(idx, { warns: Number.isFinite(n) ? Math.max(1, n) : (rule.warns as any) });
+                              }}
+                              min={1}
+                              className="w-full h-11 sm:h-10"
+                            />
                           </div>
-                          <StyledNumberInput
-                            value={rule.warns as any}
-                            onChange={(e) => {
-                              const raw = (e.target as any).value;
-                              if (raw === '') return;
-                              const n = Number(raw);
-                              updateRule(idx, { warns: Number.isFinite(n) ? Math.max(1, n) : (rule.warns as any) });
-                            }}
-                            min={1}
-                            className="w-full"
-                          />
-                        </div>
-                        {/* Aktion */}
-                        <div className="flex-1 min-w-0 sm:min-w-[140px]">
-                          <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
-                            Aktion
-                            <StyledTooltip content="Legt fest, welche Maßnahme bei Erreichen der Verwarnungsanzahl ausgeführt wird. Timeout: Mitglied kann für die festgelegte Dauer nicht kommunizieren. Kick: Mitglied wird vom Server entfernt. Ban: Mitglied wird dauerhaft ausgeschlossen." side="top" className="w-64">
-                              <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
-                            </StyledTooltip>
+                          {/* Aktion */}
+                          <div className="flex-1 min-w-0">
+                            <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                              Aktion
+                              <StyledTooltip content="Legt fest, welche Maßnahme bei Erreichen der Verwarnungsanzahl ausgeführt wird. Timeout: Mitglied kann für die festgelegte Dauer nicht kommunizieren. Kick: Mitglied wird vom Server entfernt. Ban: Mitglied wird dauerhaft ausgeschlossen." side="top" className="w-64">
+                                <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
+                              </StyledTooltip>
+                            </div>
+                            <StyledSelect
+                              value={rule.action}
+                              onChange={(val) => {
+                                const patch: Partial<AutomodRule> = { action: val };
+                                if (val === 'timeout' && !rule.timeout_seconds) {
+                                  patch.timeout_seconds = 60;
+                                }
+                                if (val !== 'timeout') {
+                                  patch.timeout_seconds = undefined;
+                                }
+                                updateRule(idx, patch);
+                              }}
+                              options={ACTION_OPTIONS}
+                              placeholder="— auswählen —"
+                              className="h-11 sm:h-10"
+                            />
                           </div>
-                          <StyledSelect
-                            value={rule.action}
-                            onChange={(val) => {
-                              const patch: Partial<AutomodRule> = { action: val };
-                              if (val === 'timeout' && !rule.timeout_seconds) {
-                                patch.timeout_seconds = 60;
-                              }
-                              if (val !== 'timeout') {
-                                patch.timeout_seconds = undefined;
-                              }
-                              updateRule(idx, patch);
-                            }}
-                            options={ACTION_OPTIONS}
-                            placeholder="— auswählen —"
-                          />
                         </div>
-                        {/* Timeout-Dauer */}
+
+                        {/* Timeout-Dauer & Einheit */}
                         {rule.action === 'timeout' && (
-                          <div className="flex w-full sm:w-auto items-end gap-2">
-                            <div className="w-full sm:w-[120px]">
-                              <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                          <div className="flex items-end gap-2 w-full sm:w-auto">
+                            <div className="flex-1 sm:w-[100px]">
+                              <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                                 Dauer
-                                <StyledTooltip content="Dauer des Timeouts. Intern werden Sekunden gespeichert." side="top" className="w-56">
-                                  <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
-                                </StyledTooltip>
                               </div>
                               {(() => {
                                 const secs = Number(rule.timeout_seconds ?? 0);
@@ -309,13 +310,13 @@ const AutomodPage: React.FC = () => {
                                       updateRule(idx, { timeout_seconds: secsNext });
                                     }}
                                     min={0}
-                                    className="w-full"
+                                    className="w-full h-11 sm:h-10"
                                   />
                                 );
                               })()}
                             </div>
-                            <div className="w-[110px]">
-                              <div className="mb-1 text-[0.82rem] text-transparent select-none">Einheit</div>
+                            <div className="w-[110px] xs:w-[130px] sm:w-[110px]">
+                              <div className="mb-1.5 text-[0.82rem] text-transparent select-none hidden sm:block">Einheit</div>
                               {(() => {
                                 const secs = Number(rule.timeout_seconds ?? 0);
                                 const unit: 's' | 'm' | 'h' = secs % 3600 === 0 ? 'h' : secs % 60 === 0 ? 'm' : 's';
@@ -325,26 +326,28 @@ const AutomodPage: React.FC = () => {
                                     onChange={(u) => {
                                       const fromUnit: 's' | 'm' | 'h' = unit;
                                       const toUnit = (u as 's' | 'm' | 'h');
-                                      // aktuellen Anzeige‑Wert erhalten
                                       const displayVal = fromUnit === 'h' ? Math.floor(secs / 3600) : fromUnit === 'm' ? Math.floor(secs / 60) : secs;
                                       const nextSecs = toUnit === 'h' ? displayVal * 3600 : toUnit === 'm' ? displayVal * 60 : displayVal;
                                       updateRule(idx, { timeout_seconds: nextSecs });
                                     }}
                                     options={[
-                                      { value: 's', label: 'Sekunden' },
-                                      { value: 'm', label: 'Minuten' },
-                                      { value: 'h', label: 'Stunden' },
+                                      { value: 's', label: 'Sek.' },
+                                      { value: 'm', label: 'Min.' },
+                                      { value: 'h', label: 'Std.' },
                                     ]}
+                                    className="h-11 sm:h-10"
                                   />
                                 );
                               })()}
                             </div>
                           </div>
                         )}
-                        {/* Entfernen-Button – immer rechts */}
-                        <div className="shrink-0 ml-auto">
-                          <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)} title="Regel entfernen">
-                            <Trash2 className="w-4 h-4" />
+                        
+                        {/* Entfernen-Button */}
+                        <div className="flex sm:block justify-end pt-2 sm:pt-0">
+                          <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)} title="Regel entfernen" className="h-11 w-11 sm:h-9 sm:w-auto p-0 sm:px-3">
+                            <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
+                            <span className="sm:hidden ml-2 font-medium">Löschen</span>
                           </StyledButton>
                         </div>
                       </div>

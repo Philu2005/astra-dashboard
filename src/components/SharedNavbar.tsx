@@ -78,15 +78,16 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
       )}
     >
       <nav className="mx-auto flex w-full max-w-[1380px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 sm:gap-6">
           {variant === 'subpage' && showBackButton && (
             <a
               href={backTo || '/'}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#2a2f47] bg-layout-topbar/70 px-3.5 py-2 text-[0.92rem] font-medium text-[#d7ddf2] transition-all duration-200 hover:border-[#5d649b] hover:bg-layout-hover focus:outline-none focus:ring-2 focus:ring-[#4b46c8]/50"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl border border-[#2a2f47] bg-layout-topbar/70 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-[0.85rem] sm:text-[0.92rem] font-medium text-[#d7ddf2] transition-all duration-200 hover:border-[#5d649b] hover:bg-layout-hover focus:outline-none focus:ring-2 focus:ring-[#4b46c8]/50"
               aria-label="Zurück"
             >
               <ChevronLeft className="w-4 h-4" />
-              {backLabel}
+              <span className="hidden xs:inline">{backLabel}</span>
+              <span className="xs:hidden">Back</span>
             </a>
           )}
 
@@ -94,13 +95,14 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
             <div className="hidden lg:block h-6 w-px bg-layout-divider" />
           )}
 
-          <a href={ctaLinks.home} className="flex items-center gap-3 group">
-            <div className="relative flex items-center justify-center w-[38px] h-[38px] bg-[#4b46c8] rounded-xl shadow-astra-glow border border-[#5f5ad6]/20 overflow-hidden shrink-0 transition-transform group-hover:scale-105">
-              <AstraLogo size={34} glow="soft" fill className="scale-[1.18]" alt="Astra" />
+          <a href={ctaLinks.home} className="flex items-center gap-2 sm:gap-3 group">
+            <div className="relative flex items-center justify-center w-[32px] h-[32px] sm:w-[38px] sm:h-[38px] bg-[#4b46c8] rounded-lg sm:rounded-xl shadow-astra-glow border border-[#5f5ad6]/20 overflow-hidden shrink-0 transition-transform group-hover:scale-105">
+              <AstraLogo size={28} glow="soft" fill className="scale-[1.18] sm:hidden" alt="Astra" />
+              <AstraLogo size={34} glow="soft" fill className="scale-[1.18] hidden sm:block" alt="Astra" />
             </div>
             <div>
-              <p className="text-xl font-semibold leading-none tracking-[-0.02em] text-white">Astra</p>
-              <p className="text-[0.78rem] font-medium leading-none text-[#a6adca]">Discord Bot</p>
+              <p className="text-lg sm:text-xl font-semibold leading-none tracking-[-0.02em] text-white">Astra</p>
+              <p className="text-[0.7rem] sm:text-[0.78rem] font-medium leading-none text-[#a6adca] mt-0.5 sm:mt-0">Discord Bot</p>
             </div>
           </a>
 
@@ -224,7 +226,7 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
       </nav>
 
       {variant === 'landing' && open && (
-        <div className="border-t border-layout-divider bg-[#0f1220] px-4 pb-5 pt-4 lg:hidden">
+        <div className="border-t border-layout-divider bg-[#0f1220] px-4 pb-6 pt-4 lg:hidden max-h-[calc(100vh-64px)] overflow-y-auto">
           <div className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <a
@@ -232,10 +234,10 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    'rounded-xl border px-4 py-2.5 text-[#d7ddf2] transition-colors',
+                    'rounded-xl border px-4 py-3 text-[#d7ddf2] transition-colors',
                     isLinkActive(item.href)
                       ? 'bg-[#4b46c8]/20 border-[#4b46c8]/40 text-white'
-                      : 'bg-layout-topbar/70 border-layout-divider'
+                      : 'bg-layout-topbar/70 border-layout-divider hover:border-[#3a4060]'
                   )}
                 >
                   {item.label}
@@ -243,38 +245,43 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
               ))}
 
             {/* Ressourcen (mobil) */}
-            <div className="mt-2">
-              <div className="px-1.5 pb-1 text-[0.86rem] font-semibold text-[#cfd4ec]">Ressourcen</div>
-              <a
-                href={withFrom('/docs', currentPath)}
-                onClick={() => setOpen(false)}
-                className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]"
-              >
-                Dokumentation
-              </a>
-              <a
-                href={withFrom('/status', currentPath)}
-                onClick={() => setOpen(false)}
-                className="mt-2 block rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]"
-              >
-                Status
-              </a>
-              <div
-                aria-disabled="true"
-                className="mt-2 rounded-xl border border-dashed border-layout-divider bg-layout-topbar/50 px-4 py-2.5 text-[#9aa2c3]"
-              >
-                Updates (Demnächst)
+            <div className="mt-4">
+              <div className="px-1.5 pb-2 text-[0.86rem] font-bold uppercase tracking-wider text-[#8288a5]">Ressourcen</div>
+              <div className="grid grid-cols-1 gap-2">
+                <a
+                  href={withFrom('/docs', currentPath)}
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-3 text-[#d7ddf2] hover:border-[#3a4060]"
+                >
+                  Dokumentation
+                </a>
+                <a
+                  href={withFrom('/status', currentPath)}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-3 text-[#d7ddf2] hover:border-[#3a4060]"
+                >
+                  Status
+                </a>
+                <div
+                  aria-disabled="true"
+                  className="rounded-xl border border-dashed border-layout-divider bg-layout-topbar/50 px-4 py-3 text-[#6b7194] cursor-not-allowed"
+                >
+                  Updates (Demnächst)
+                </div>
               </div>
             </div>
-            {!isAdmin && (
-              <a href="/support" onClick={() => setOpen(false)} className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-2.5 text-[#d7ddf2]">Support</a>
-            )}
-            {!authLoading && (
-              authenticated
-                ? <a href={ctaLinks.dashboard} className={cn(buttonPrimary, 'mt-2')}>Dashboard</a>
-                : <a href={ctaLinks.login} className={cn(buttonPrimary, 'mt-2')}>Login</a>
-            )}
-            <a href={ctaLinks.invite} className={buttonSecondary}>Astra einladen</a>
+
+            <div className="mt-4 flex flex-col gap-2 border-t border-layout-divider pt-4">
+              {!isAdmin && (
+                <a href="/support" onClick={() => setOpen(false)} className="flex h-11 items-center justify-center rounded-xl border border-layout-divider bg-layout-topbar/70 text-[0.95rem] font-semibold text-[#d7ddf2]">Support</a>
+              )}
+              {!authLoading && (
+                authenticated
+                  ? <a href={ctaLinks.dashboard} className={cn(buttonPrimary, 'h-11 w-full')}>Dashboard</a>
+                  : <a href={ctaLinks.login} className={cn(buttonPrimary, 'h-11 w-full')}>Login</a>
+              )}
+              <a href={ctaLinks.invite} className={cn(buttonSecondary, 'h-11')}>Astra einladen</a>
+            </div>
           </div>
         </div>
       )}

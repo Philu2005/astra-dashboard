@@ -260,19 +260,19 @@ export const Servers = () => {
     <div className="space-y-5 lg:space-y-6 w-full">
       {/* Greeting */}
       <section className="pt-2 lg:pt-3">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-3">
           <div className="space-y-2">
-            <h2 className="text-[2.65rem] xl:text-[2.95rem] font-semibold text-white tracking-[-0.02em] leading-[1.1]">
+            <h2 className="text-[1.8rem] xs:text-[2.2rem] sm:text-[2.65rem] xl:text-[2.95rem] font-semibold text-white tracking-[-0.02em] leading-[1.1]">
               {getGreeting()}, {displayName}
             </h2>
-            <p className="text-[#c1c7de] text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
+            <p className="text-[#c1c7de] text-[1.1rem] xs:text-[1.3rem] sm:text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
               Du verwaltest {servers.length} Server mit Astra.
             </p>
           </div>
           <button
             onClick={refresh}
             disabled={false}
-            className="flex items-center gap-2 px-4 h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300 shrink-0 disabled:opacity-60"
+            className="flex items-center justify-center gap-2 px-4 h-11 sm:h-10 rounded-xl border border-[#5f58d8] bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white text-[0.88rem] font-semibold hover:border-[#8881ff] hover:shadow-[0_14px_30px_-18px_rgba(110,100,255,0.8)] transition-all duration-300 shrink-0 disabled:opacity-60 w-full sm:w-auto"
           >
             <RefreshCw className="w-4 h-4" />
             Aktualisieren
@@ -281,8 +281,8 @@ export const Servers = () => {
       </section>
 
       {/* Search & Filters */}
-      <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-5 shadow-astra space-y-4">
-        <div className="flex flex-col sm:flex-row gap-3">
+      <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-4 xs:p-5 shadow-astra space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#8288a5] pointer-events-none" />
             <input
@@ -293,22 +293,27 @@ export const Servers = () => {
               className="w-full h-11 pl-11 pr-4 bg-[#1a1e33] border border-[#2d3246] rounded-xl text-white text-[0.95rem] font-medium placeholder:text-[#6b7194] focus:outline-none focus:border-[#5f58d8] focus:ring-1 focus:ring-[#5f58d8]/30 transition-all duration-200"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#8288a5] shrink-0 hidden sm:block" />
-            {filterButtons.map((btn) => (
-              <button
-                key={btn.value}
-                onClick={() => setFilter(btn.value)}
-                className={cn(
-                  "px-3.5 h-11 rounded-xl text-[0.88rem] font-medium transition-all duration-200 border whitespace-nowrap",
-                  filter === btn.value
-                    ? "bg-[linear-gradient(90deg,rgba(83,76,205,0.6)_0%,rgba(83,76,205,0.3)_100%)] border-[#5f58d8] text-white shadow-[0_10px_26px_-18px_rgba(75,70,200,0.92)]"
-                    : "text-[#acb3cf] border-[#2d3246] bg-[#1a1e33] hover:text-[#f0f2ff] hover:border-[#373c53]"
-                )}
-              >
-                {btn.label}
-              </button>
-            ))}
+          <div className="flex flex-col xs:flex-row xs:items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[#8288a5] shrink-0" />
+              <span className="text-[0.82rem] font-bold uppercase tracking-wider text-[#6b7194] xs:hidden">Filter</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {filterButtons.map((btn) => (
+                <button
+                  key={btn.value}
+                  onClick={() => setFilter(btn.value)}
+                  className={cn(
+                    "flex-1 xs:flex-none px-3 h-10 xs:h-11 rounded-xl text-[0.82rem] xs:text-[0.88rem] font-medium transition-all duration-200 border whitespace-nowrap",
+                    filter === btn.value
+                      ? "bg-[linear-gradient(90deg,rgba(83,76,205,0.6)_0%,rgba(83,76,205,0.3)_100%)] border-[#5f58d8] text-white shadow-[0_10px_26px_-18px_rgba(75,70,200,0.92)]"
+                      : "text-[#acb3cf] border-[#2d3246] bg-[#1a1e33] hover:text-[#f0f2ff] hover:border-[#373c53]"
+                  )}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

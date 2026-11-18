@@ -19,7 +19,7 @@
 - [x] Ticketsystem-Interface (Ticket-Modul vollständig implementiert: Frontend + Backend + API-Doku)
 - [x] Ticket-Panel-Verwaltung: Erstellen, Bearbeiten, Verschieben, Löschen mit Embed-Vorschau, Discord-Selects und DurationPicker
 - [x] Statistiken und Aktivitätslogs (Mock-Daten & UI)
-- [x] Vollständige responsive Umsetzung der Dashboard-Seite
+- [x] Vollständige responsive Umsetzung des gesamten Astra Dashboards (Landingpage, Server-Auswahl, Modul-Einstellungen)
 
 ## Phase 3: Backend-Vorbereitung (Abgeschlossen)
 - [x] Spezifikation und Implementierung der API-Endpunkte (FastAPI)
@@ -76,6 +76,7 @@
 - [x] Vite-Build erfolgreich
 
 ## Fortschrittsprotokoll
+- **2026-11-18:** Vollständige Mobile-Responsivität für das gesamte Astra Dashboard implementiert: Umfassende Optimierung der Landingpage-Navbar (Hamburger-Menü, Logo-Skalierung), der Server-Auswahlseite (flexibles Grid & Filter) und sämtlicher Modul-Einstellungsseiten. Komplexe Layouts wie Moderationsregeln und Ticket-Panels wurden für Mobile-Touch und schmale Viewports (ab 320px) optimiert. Einführung eines `xs` (400px) Breakpoints für präzisere CSS-Anpassungen. Desktop-Design wurde durch gezielte Media-Queries geschützt. Verifiziert mit TypeScript-Check und Production-Build.
 - **2026-11-18:** Kritischen Regressions-Bug in der Panel-Sidebar behoben: Ursache war eine fixe `lg:translate-x-0`-Klasse und interner State ohne Desktop-Toggle, wodurch die Sidebar auf Desktop nicht mehr schließbar war. Fix: Zustandssteuerung vereinheitlicht (initial offen ab lg, ansonsten geschlossen), universeller Close-Button, `Escape`-Key-Handling und Entfernen der erzwungenen Desktop-Translate. Verifiziert mit TypeScript-Check und Production-Build. Keine Änderungen an globaler Navigationslogik.
 - **2026-11-16:** Technische Dokumentation aktualisiert und integriert: REST‑API‑Überblick (Technik & API) hinzugefügt, API‑Referenz korrigiert (Support‑Pfade unter /api/, Health unter /api/health, exemplarische Servers‑Beispiele), Monitoring/Health‑Kurzüberblick, Deployment/Infrastructure‑Hinweise (Reverse Proxy, Swagger lokal), Security‑Ergänzungen (CSRF Same‑Origin, CORS inkl. DELETE, XSS‑Guard, CSP). Doku‑Navigation angepasst, `docs/api-routing.md` vervollständigt. Keine Änderungen an API‑Funktionalität.
 - **2026-11-15:** Navbar für Docs, Status und Homepage überarbeitet: Eine neue, zentrale `SharedNavbar`-Komponente wurde implementiert, die das hochwertige Design der Landingpage im gesamten Projekt vereinheitlicht. Features: visuelle Indikatoren für aktive Routen, konsistente Astra-Purple/Cyan-Highlights, Backdrop-Blur, responsive Drawer-Navigation und Unterstützung für seiten-spezifische Inhalte (z. B. Docs-Suche). Veraltete Header-Implementierungen in `DocsPage.tsx` und `StatusPage.tsx` wurden ersetzt. Sidebar-Positionierung in den Docs für Sticky-Header korrigiert. TypeScript-Prüfung und Build erfolgreich.

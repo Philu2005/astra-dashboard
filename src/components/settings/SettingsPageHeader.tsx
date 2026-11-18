@@ -33,8 +33,8 @@ export const SettingsPageHeader: React.FC<SettingsPageHeaderProps> = ({ classNam
       )}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         <div className="space-y-1 sm:space-y-1.5 min-w-0">
-          <h1 className="text-[1.15rem] sm:text-[1.3rem] lg:text-[1.45rem] font-semibold leading-tight tracking-[-0.015em] text-white">{heading}</h1>
-          {description && <p className="text-[0.88rem] sm:text-[0.95rem] lg:text-[0.98rem] leading-relaxed text-[#9ca2be]">{description}</p>}
+          <h1 className="text-[1.3rem] xs:text-[1.5rem] sm:text-[1.6rem] lg:text-[1.8rem] font-bold leading-tight tracking-tight text-white">{heading}</h1>
+          {description && <p className="text-[0.88rem] xs:text-[0.92rem] sm:text-[0.95rem] lg:text-[0.98rem] leading-relaxed text-[#9ca2be]">{description}</p>}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2 self-start">{actions}</div>}
       </div>
