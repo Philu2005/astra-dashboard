@@ -259,6 +259,14 @@ class AstraClient:
         """PUT /tickets/panels/{guild_id}/{channel_id}/update?user_id=<user_id>"""
         return await self._request("PUT", f"/tickets/panels/{guild_id}/{channel_id}/update", params={"user_id": user_id}, json=payload)
 
+    async def delete_ticket_panel(self, guild_id: str, channel_id: str, message_id: str, user_id: str) -> dict[str, Any]:
+        """DELETE /tickets/panels/{guild_id}/{channel_id}/{message_id}?user_id=<user_id>"""
+        return await self._request("DELETE", f"/tickets/panels/{guild_id}/{channel_id}/{message_id}", params={"user_id": user_id})
+
+    async def update_ticket_panel_config(self, guild_id: str, channel_id: str, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """PUT /tickets/panels/{guild_id}/{channel_id}/config?user_id=<user_id>"""
+        return await self._request("PUT", f"/tickets/panels/{guild_id}/{channel_id}/config", params={"user_id": user_id}, json=payload)
+
     async def get_ticket_panels_status(self, guild_id: str, user_id: str) -> dict[str, Any]:
         """GET /tickets/panels/{guild_id}/status?user_id=<user_id>"""
         return await self._request("GET", f"/tickets/panels/{guild_id}/status", params={"user_id": user_id})

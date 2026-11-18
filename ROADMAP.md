@@ -17,6 +17,7 @@
 - [x] Serverauswahl und Übersicht
 - [ ] Entwicklung der Modlog- und Automod-Ansichten
 - [x] Ticketsystem-Interface (Ticket-Modul vollständig implementiert: Frontend + Backend + API-Doku)
+- [x] Ticket-Panel-Verwaltung: Erstellen, Bearbeiten, Verschieben, Löschen mit Embed-Vorschau, Discord-Selects und DurationPicker
 - [x] Statistiken und Aktivitätslogs (Mock-Daten & UI)
 - [x] Vollständige responsive Umsetzung der Dashboard-Seite
 

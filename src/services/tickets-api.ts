@@ -41,12 +41,27 @@ export interface TicketPanel {
   panel_message_id?: string;
   title?: string;
   description?: string;
+  support_role_id?: string;
+  category_id?: string;
+  topic?: string;
+  embed_color?: string;
+  footer?: string;
+  image_url?: string;
+  thumbnail_url?: string;
+  button_label?: string;
+  button_emoji?: string;
   [key: string]: unknown;
 }
 
 export interface TicketPanelsResponse {
   success: boolean;
   panels: TicketPanel[];
+}
+
+export interface TicketPanelPublishRequest {
+  channel_id: string;
+  title?: string;
+  description?: string;
 }
 
 export interface TicketPanelPublishResponse {
@@ -56,6 +71,33 @@ export interface TicketPanelPublishResponse {
 }
 
 export interface TicketPanelUpdateResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface TicketPanelConfigRequest {
+  channel_id?: string;
+  support_role_id?: string;
+  category_id?: string;
+  topic?: string;
+  title?: string;
+  description?: string;
+  embed_color?: string;
+  footer?: string;
+  image_url?: string;
+  thumbnail_url?: string;
+  button_label?: string;
+  button_emoji?: string;
+}
+
+export interface TicketPanelConfigResponse {
+  success: boolean;
+  message: string;
+  channel_id?: string;
+  panel_message_id?: string;
+}
+
+export interface TicketPanelDeleteResponse {
   success: boolean;
   message: string;
 }
@@ -105,20 +147,21 @@ export const ticketsApi = {
     const res = await apiClient.get(`/tickets/panels/${guildId}`);
     return handleResponse<TicketPanelsResponse>(res);
   },
-  async publishPanel(guildId: string, channelId: string, title?: string, description?: string): Promise<TicketPanelPublishResponse> {
-    const res = await apiClient.post(`/tickets/panels/${guildId}/publish`, {
-      channel_id: channelId,
-      ...(title !== undefined && { title }),
-      ...(description !== undefined && { description }),
-    });
+  async publishPanel(guildId: string, payload: TicketPanelPublishRequest): Promise<TicketPanelPublishResponse> {
+    const res = await apiClient.post(`/tickets/panels/${guildId}/publish`, payload);
     return handleResponse<TicketPanelPublishResponse>(res);
   },
-  async updatePanel(guildId: string, channelId: string, title?: string, description?: string): Promise<TicketPanelUpdateResponse> {
-    const res = await apiClient.put(`/tickets/panels/${guildId}/${channelId}/update`, {
-      ...(title !== undefined && { title }),
-      ...(description !== undefined && { description }),
-    });
+  async updatePanel(guildId: string, channelId: string, payload: { title?: string; description?: string }): Promise<TicketPanelUpdateResponse> {
+    const res = await apiClient.put(`/tickets/panels/${guildId}/${channelId}/update`, payload);
     return handleResponse<TicketPanelUpdateResponse>(res);
+  },
+  async updatePanelConfig(guildId: string, channelId: string, payload: TicketPanelConfigRequest): Promise<TicketPanelConfigResponse> {
+    const res = await apiClient.put(`/tickets/panels/${guildId}/${channelId}/config`, payload);
+    return handleResponse<TicketPanelConfigResponse>(res);
+  },
+  async deletePanel(guildId: string, channelId: string, messageId: string): Promise<TicketPanelDeleteResponse> {
+    const res = await apiClient.delete(`/tickets/panels/${guildId}/${channelId}/${messageId}`);
+    return handleResponse<TicketPanelDeleteResponse>(res);
   },
   async getPanelsStatus(guildId: string): Promise<TicketPanelStatusResponse> {
     const res = await apiClient.get(`/tickets/panels/${guildId}/status`);

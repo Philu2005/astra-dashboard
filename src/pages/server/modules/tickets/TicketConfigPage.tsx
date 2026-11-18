@@ -5,6 +5,7 @@ import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
+import DurationPicker from '@/components/ui/DurationPicker';
 import { Clock, Bell, RotateCcw, Info } from 'lucide-react';
 
 /* ── Feld-Metadaten ─────────────────────────────────────────────── */
@@ -252,6 +253,15 @@ const TicketConfigPage: React.FC = () => {
                                 }`}
                               />
                             </button>
+                          ) : typeof value === 'number' && (meta.unit === 'Stunden' || meta.unit === 'Minuten') ? (
+                            <DurationPicker
+                              value={value}
+                              unit={meta.unit === 'Stunden' ? 'hours' : 'minutes'}
+                              onChange={(v) => updateField(key, v)}
+                              min={meta.min}
+                              max={meta.max}
+                              className="max-w-[280px]"
+                            />
                           ) : typeof value === 'number' ? (
                             <div className="flex items-center gap-3">
                               <StyledInput

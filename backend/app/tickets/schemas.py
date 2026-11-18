@@ -68,6 +68,36 @@ class TicketPanelUpdateResponse(BaseModel):
     message: str = "Panel aktualisiert."
 
 
+class TicketPanelConfigRequest(BaseModel):
+    """Request zum Ändern der Panel-Konfiguration (inkl. Verschieben)."""
+    channel_id: Optional[str] = Field(None, description="Neuer Zielkanal (zum Verschieben).")
+    support_role_id: Optional[str] = Field(None, description="Support-Rollen-ID.")
+    category_id: Optional[str] = Field(None, description="Ticket-Kategorie-ID.")
+    topic: Optional[str] = Field(None, description="Thema des Panels.")
+    title: Optional[str] = Field(None, description="Panel-Titel.")
+    description: Optional[str] = Field(None, description="Panel-Beschreibung.")
+    embed_color: Optional[str] = Field(None, description="Embed-Farbe als Hex-String.")
+    footer: Optional[str] = Field(None, description="Embed-Footer-Text.")
+    image_url: Optional[str] = Field(None, description="Embed-Bild-URL.")
+    thumbnail_url: Optional[str] = Field(None, description="Embed-Thumbnail-URL.")
+    button_label: Optional[str] = Field(None, description="Button-Beschriftung.")
+    button_emoji: Optional[str] = Field(None, description="Button-Emoji.")
+
+
+class TicketPanelConfigResponse(BaseModel):
+    """Antwort nach dem Ändern der Panel-Konfiguration."""
+    success: bool = True
+    message: str = "Panel-Konfiguration aktualisiert."
+    channel_id: Optional[str] = Field(None, description="Neue Channel-ID nach Verschieben.")
+    panel_message_id: Optional[str] = Field(None, description="Neue Message-ID nach Verschieben.")
+
+
+class TicketPanelDeleteResponse(BaseModel):
+    """Antwort nach dem Löschen eines Panels."""
+    success: bool = True
+    message: str = "Panel gelöscht."
+
+
 class TicketPanelStatusResponse(BaseModel):
     """Veröffentlichungsstatus der Ticket-Panels."""
     success: bool = True
