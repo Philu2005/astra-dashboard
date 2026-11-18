@@ -32,7 +32,7 @@ import TicketPanelsPage from '@/pages/server/modules/tickets/TicketPanelsPage';
 import TicketOpenPage from '@/pages/server/modules/tickets/TicketOpenPage';
 import TicketLogPage from '@/pages/server/modules/tickets/TicketLogPage';
 // Dev-only preview page for module UI (guarded by import.meta.env.DEV in routes)
-import ModuleUiPreview from '@/pages/dev/ModuleUiPreview';
+// Dev-Modulvorschau wurde entfernt – keine Import mehr
 
 // --- Route Elements to preserve previous behaviors ---
 const RequireAuth: React.FC<{ children: React.ReactNode; message: 'dashboard' | 'servers' }> = ({ children, message }) => {
@@ -230,14 +230,7 @@ const router = createBrowserRouter([
             element: <SupportPage />,
           },
           // DEV-Only Routes
-          ...(import.meta.env.DEV
-            ? [
-                {
-                  path: 'dev/module-ui',
-                  element: <ModuleUiPreview />,
-                },
-              ]
-            : []),
+          // Dev-/Preview-Routen entfernt
           {
             path: 'support/ticket/:id',
             element: <TicketDetailRoute />,

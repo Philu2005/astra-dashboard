@@ -5,6 +5,7 @@ import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
+import { StyledSwitch } from '@/components/ui/StyledSwitch';
 import DurationPicker from '@/components/ui/DurationPicker';
 import { Clock, Bell, RotateCcw, Info } from 'lucide-react';
 
@@ -240,19 +241,11 @@ const TicketConfigPage: React.FC = () => {
                           )}
 
                           {typeof value === 'boolean' ? (
-                            <button
-                              type="button"
-                              onClick={() => updateField(key, !value)}
-                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-                                value ? 'bg-astra-accent' : 'bg-[#2a2d4a]'
-                              }`}
-                            >
-                              <span
-                                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform duration-200 ${
-                                  value ? 'translate-x-5' : 'translate-x-0'
-                                }`}
-                              />
-                            </button>
+                            <StyledSwitch
+                              checked={Boolean(value)}
+                              onChange={(v) => updateField(key, v)}
+                              aria-label={meta.label}
+                            />
                           ) : typeof value === 'number' && (meta.unit === 'Stunden' || meta.unit === 'Minuten') ? (
                             <DurationPicker
                               value={value}
