@@ -327,8 +327,13 @@ const TicketPanelsPage: React.FC = () => {
         backTo={`/servers/${guildId}/modules`}
         backLabel="Modulübersicht"
         actions={
-          <StyledButton variant="primary" size="md" onClick={() => { setCreateForm({ ...EMPTY_EDITOR }); setShowCreate(true); }}>
-            <Plus className="h-4 w-4" /> Neues Panel
+          <StyledButton
+            variant="primary"
+            size="md"
+            leftIcon={<Plus />}
+            onClick={() => { setCreateForm({ ...EMPTY_EDITOR }); setShowCreate(true); }}
+          >
+            Neues Panel
           </StyledButton>
         }
       />
@@ -434,7 +439,12 @@ const TicketPanelsPage: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setEditPanel(panel); setEditForm(editorFromPanel(panel)); }}
+                      onClick={() => {
+                        const snap = editorFromPanel(panel);
+                        initialEditRef.current = snap;
+                        setEditForm(snap);
+                        setEditPanel(panel);
+                      }}
                       className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
                       title="Bearbeiten"
                     >
@@ -485,8 +495,8 @@ const TicketPanelsPage: React.FC = () => {
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-[#2a2f45] px-5 py-4">
               <StyledButton variant="ghost" onClick={() => setShowCreate(false)} disabled={creating}>Abbrechen</StyledButton>
-              <StyledButton onClick={onPublish} disabled={creating || !createForm.channel_id}>
-                <Send className="h-4 w-4" /> {creating ? 'Wird veröffentlicht…' : 'Veröffentlichen'}
+              <StyledButton onClick={onPublish} disabled={creating || !createForm.channel_id} leftIcon={<Send />}>
+                {creating ? 'Wird veröffentlicht…' : 'Veröffentlichen'}
               </StyledButton>
             </div>
           </div>
@@ -554,8 +564,8 @@ const TicketPanelsPage: React.FC = () => {
             <DiscordSelect label="Neuer Zielkanal" kind="channel" items={textChannels.filter(c => c.id !== movePanel.channel_id).map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={moveChannelId || null} onChange={v => setMoveChannelId(v)} />
             <div className="flex items-center justify-end gap-3 pt-2">
               <StyledButton variant="ghost" onClick={() => setMovePanel(null)} disabled={moving}>Abbrechen</StyledButton>
-              <StyledButton onClick={onMove} disabled={moving || !moveChannelId}>
-                <ArrowRightLeft className="h-4 w-4" /> {moving ? 'Wird verschoben…' : 'Verschieben'}
+              <StyledButton onClick={onMove} disabled={moving || !moveChannelId} leftIcon={<ArrowRightLeft />}>
+                {moving ? 'Wird verschoben…' : 'Verschieben'}
               </StyledButton>
             </div>
           </div>

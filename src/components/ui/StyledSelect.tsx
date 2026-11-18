@@ -101,6 +101,7 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
       left: rect.left,
       width: rect.width,
       zIndex: 9999,
+      transform: 'translateZ(0)',
       ...(openAbove
         ? { bottom: window.innerHeight - rect.top + 4 }
         : { top: rect.bottom + 4 }),
@@ -127,7 +128,14 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
 
   useEffect(() => {
     if (open && showSearch) {
-      setTimeout(() => searchRef.current?.focus(), 0);
+      // Verhindert Page-Scroll-Jumps beim Fokussieren des Suchfeldes
+      setTimeout(() => {
+        try {
+          (searchRef.current as HTMLInputElement | null)?.focus({ preventScroll: true } as any);
+        } catch {
+          searchRef.current?.focus();
+        }
+      }, 0);
     }
   }, [open, showSearch]);
 
@@ -182,11 +190,12 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
       role="listbox"
       style={dropdownStyle}
       className={cn(
-        'astra-scrollbar-hide overflow-y-auto overflow-x-hidden box-border',
+        'astra-scrollbar-hide overflow-y-auto overflow-x-hidden box-border will-change-transform',
         // Panel Look & Feel
         'rounded-lg border border-[#2a2f45] bg-[#111427]/98 text-white shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]',
         // Animation
-        'animate-in fade-in-0 zoom-in-95 duration-150 ease-out',
+        // Vermeide Zoom-bedingtes „Wackeln" – nur sanftes Einblenden/Schieben
+        'animate-in fade-in-0 slide-in-from-top-1 duration-120 ease-out',
       )}
       onKeyDown={onKeyDown}
     >
