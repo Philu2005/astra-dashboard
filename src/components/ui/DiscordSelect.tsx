@@ -46,6 +46,8 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
   placeholder = 'Auswählen…',
   value,
   onChange,
+  multiValue,
+  onMultiChange,
   loading,
   error,
   items,
