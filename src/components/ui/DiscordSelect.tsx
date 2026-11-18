@@ -88,9 +88,10 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
       const out: SelectOption[] = [];
       for (const [group, ents] of groups) {
         if (group !== UNCATEGORIZED) {
-          out.push({ type: 'group', value: `g-${group}`, label: group } as SelectOption);
+          // Gruppenüberschriften sind nicht auswählbar → disabled
+          out.push({ type: 'group', value: `g-${group}`, label: group, disabled: true } as SelectOption);
         } else {
-          out.push({ type: 'group', value: `g-__none__`, label: 'Ohne Kategorie' } as SelectOption);
+          out.push({ type: 'group', value: `g-__none__`, label: 'Ohne Kategorie', disabled: true } as SelectOption);
         }
         for (const it of ents) {
           out.push({
@@ -124,6 +125,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
         onChange={(v) => onChange(v)}
         placeholder={loading ? 'Laden…' : error ? `Fehler: ${error}` : placeholder}
         disabled={disabled || loading}
+        searchable
       />
       {error && <p className="mt-1 text-[0.8rem] text-red-300">{error}</p>}
     </div>
