@@ -31,6 +31,8 @@ import TicketConfigPage from '@/pages/server/modules/tickets/TicketConfigPage';
 import TicketPanelsPage from '@/pages/server/modules/tickets/TicketPanelsPage';
 import TicketOpenPage from '@/pages/server/modules/tickets/TicketOpenPage';
 import TicketLogPage from '@/pages/server/modules/tickets/TicketLogPage';
+// Dev-only preview page for module UI (guarded by import.meta.env.DEV in routes)
+import ModuleUiPreview from '@/pages/dev/ModuleUiPreview';
 
 // --- Route Elements to preserve previous behaviors ---
 const RequireAuth: React.FC<{ children: React.ReactNode; message: 'dashboard' | 'servers' }> = ({ children, message }) => {
@@ -161,126 +163,147 @@ const GlobalLayoutOutlet: React.FC = () => (
   </GlobalDashboardLayout>
 );
 
+import { SidebarProvider } from '@/contexts/SidebarContext';
+
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <LandingPage />,
-    errorElement: (
-      <StaticInfoPage
-        title="Seite nicht gefunden"
-        description="Die gewünschte Seite existiert nicht. Nutze die Homepage oder das Dashboard."
-        showHomeActions
-      />
-    ),
-  },
-  {
-    path: '/',
+    // Root wrapper provides Sidebar context for ALL routes
     element: (
-      <WithServerProvider>
-        <GlobalLayoutOutlet />
-      </WithServerProvider>
+      <SidebarProvider>
+        <Outlet />
+      </SidebarProvider>
     ),
     children: [
       {
-        path: 'dashboard',
-        element: (
-          <RequireAuth message="dashboard">
-            <Dashboard />
-          </RequireAuth>
+        path: '/',
+        element: <LandingPage />,
+        errorElement: (
+          <StaticInfoPage
+            title="Seite nicht gefunden"
+            description="Die gewünschte Seite existiert nicht. Nutze die Homepage oder das Dashboard."
+            showHomeActions
+          />
         ),
       },
       {
-        path: 'dashboard/status',
+        path: '/',
         element: (
-          <RequireAuth message="dashboard">
-            <StatusPage />
-          </RequireAuth>
+          <WithServerProvider>
+            <GlobalLayoutOutlet />
+          </WithServerProvider>
         ),
+        children: [
+          {
+            path: 'dashboard',
+            element: (
+              <RequireAuth message="dashboard">
+                <Dashboard />
+              </RequireAuth>
+            ),
+          },
+          {
+            path: 'dashboard/status',
+            element: (
+              <RequireAuth message="dashboard">
+                <StatusPage />
+              </RequireAuth>
+            ),
+          },
+          {
+            path: 'dashboard/docs',
+            element: (
+              <RequireAuth message="dashboard">
+                <DocsPage />
+              </RequireAuth>
+            ),
+          },
+          {
+            path: 'servers',
+            element: (
+              <RequireAuth message="servers">
+                <Servers />
+              </RequireAuth>
+            ),
+          },
+          {
+            path: 'support',
+            element: <SupportPage />,
+          },
+          // DEV-Only Routes
+          ...(import.meta.env.DEV
+            ? [
+                {
+                  path: 'dev/module-ui',
+                  element: <ModuleUiPreview />,
+                },
+              ]
+            : []),
+          {
+            path: 'support/ticket/:id',
+            element: <TicketDetailRoute />,
+          },
+          {
+            path: 'dashboard/tickets',
+            element: <AdminTicketsPage />,
+          },
+        ],
       },
+      { path: '/docs', element: <DocsPage /> },
+      { path: '/status', element: <StatusPage /> },
+      { path: '/login', element: <LoginRedirectPage /> },
+      { path: '/auth/callback', element: <AuthCallbackPage /> },
+      { path: '/invite', element: <InviteRedirectPage /> },
+      // --- Serverbereich: Eigenständiges Layout und verschachtelte Routen ---
       {
-        path: 'dashboard/docs',
-        element: (
-          <RequireAuth message="dashboard">
-            <DocsPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: 'servers',
+        path: '/servers/:guildId',
         element: (
           <RequireAuth message="servers">
-            <Servers />
+            <WithServerProvider>
+              <ServerLayout />
+            </WithServerProvider>
           </RequireAuth>
         ),
-      },
-      {
-        path: 'support',
-        element: <SupportPage />,
-      },
-      {
-        path: 'support/ticket/:id',
-        element: <TicketDetailRoute />,
-      },
-      {
-        path: 'dashboard/tickets',
-        element: <AdminTicketsPage />,
-      },
-    ],
-  },
-  { path: '/docs', element: <DocsPage /> },
-  { path: '/status', element: <StatusPage /> },
-  { path: '/login', element: <LoginRedirectPage /> },
-  { path: '/auth/callback', element: <AuthCallbackPage /> },
-  { path: '/invite', element: <InviteRedirectPage /> },
-  // --- Serverbereich: Eigenständiges Layout und verschachtelte Routen ---
-  {
-    path: '/servers/:guildId',
-    element: (
-      <RequireAuth message="servers">
-        <WithServerProvider>
-          <ServerLayout />
-        </WithServerProvider>
-      </RequireAuth>
-    ),
-    children: [
-      { index: true, element: <ServerOverview /> },
-      { path: 'settings', element: <ServerSettingsPlaceholder /> },
-      { path: 'modules', element: <ModuleOverview /> },
-      {
-        path: 'modules/moderation',
-        element: <ModuleLayout moduleKey="moderation" />,
         children: [
-          { index: true, element: <Navigate to="automod" replace /> },
-          { path: 'automod', element: <AutomodPage /> },
-          { path: 'warnings', element: <WarningsPage /> },
-          { path: 'modlog', element: <ModlogPage /> },
+          { index: true, element: <ServerOverview /> },
+          { path: 'settings', element: <ServerSettingsPlaceholder /> },
+          { path: 'modules', element: <ModuleOverview /> },
+          {
+            path: 'modules/moderation',
+            element: <ModuleLayout moduleKey="moderation" />,
+            children: [
+              { index: true, element: <Navigate to="automod" replace /> },
+              { path: 'automod', element: <AutomodPage /> },
+              { path: 'warnings', element: <WarningsPage /> },
+              { path: 'modlog', element: <ModlogPage /> },
+            ],
+          },
+          {
+            path: 'modules/tickets',
+            element: <ModuleLayout moduleKey="tickets" />,
+            children: [
+              { index: true, element: <Navigate to="config" replace /> },
+              { path: 'config', element: <TicketConfigPage /> },
+              { path: 'panels', element: <TicketPanelsPage /> },
+              { path: 'open', element: <TicketOpenPage /> },
+              { path: 'log', element: <TicketLogPage /> },
+            ],
+          },
+          { path: 'permissions', element: <ServerPermissionsPlaceholder /> },
+          { path: 'logs', element: <ServerLogsPlaceholder /> },
+          { path: 'stats', element: <ServerStatsPlaceholder /> },
         ],
       },
       {
-        path: 'modules/tickets',
-        element: <ModuleLayout moduleKey="tickets" />,
-        children: [
-          { index: true, element: <Navigate to="config" replace /> },
-          { path: 'config', element: <TicketConfigPage /> },
-          { path: 'panels', element: <TicketPanelsPage /> },
-          { path: 'open', element: <TicketOpenPage /> },
-          { path: 'log', element: <TicketLogPage /> },
-        ],
+        path: '*',
+        element: (
+          <StaticInfoPage
+            title="Seite nicht gefunden"
+            description="Die gewünschte Seite existiert nicht. Nutze die Homepage oder das Dashboard."
+            showHomeActions
+          />
+        ),
       },
-      { path: 'permissions', element: <ServerPermissionsPlaceholder /> },
-      { path: 'logs', element: <ServerLogsPlaceholder /> },
-      { path: 'stats', element: <ServerStatsPlaceholder /> },
     ],
-  },
-  {
-    path: '*',
-    element: (
-      <StaticInfoPage
-        title="Seite nicht gefunden"
-        description="Die gewünschte Seite existiert nicht. Nutze die Homepage oder das Dashboard."
-        showHomeActions
-      />
-    ),
   },
 ]);
 

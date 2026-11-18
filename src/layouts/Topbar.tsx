@@ -1,8 +1,9 @@
-import { Bell, ChevronDown, Link2, LogOut, User } from 'lucide-react';
+import { Bell, ChevronDown, Link2, LogOut, User, Menu } from 'lucide-react';
 import { appConfig } from '@/lib/app-config';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConsent } from '@/contexts/ConsentContext';
 import { useState, useRef, useEffect } from 'react';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 const inviteUrl = appConfig.botInviteUrl;
 
@@ -17,6 +18,7 @@ export const Topbar = () => {
   const { openSettings } = useConsent();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { toggle, isDesktop } = useSidebar();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -30,6 +32,15 @@ export const Topbar = () => {
 
   return (
     <header className="h-[78px] flex items-center justify-end px-4 sm:px-6 lg:px-8 xl:px-10 gap-2.5 sm:gap-3 lg:gap-4 z-40 bg-layout-topbar/88 backdrop-blur-md border-b border-layout-divider sticky top-0">
+      {/* Global mobile Hamburger (only <lg). Positioned absolutely to not affect right-aligned content */}
+      <button
+        type="button"
+        onClick={toggle}
+        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md"
+        aria-label="Navigation umschalten"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
       <a
         href={inviteUrl || '#'}
         target="_blank"

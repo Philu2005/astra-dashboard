@@ -15,6 +15,7 @@ import { AstraLogo } from '@/components/AstraLogo';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -59,13 +60,18 @@ export const GlobalSidebar: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.id === '789555434201677824';
   const location = useLocation();
+  const { isOpen, isDesktop } = useSidebar();
 
   const inviteUrl = appConfig.botInviteUrl;
 
   return (
-    <aside className={cn(
-      'w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)]'
-    )}>
+    <aside
+      className={cn(
+        'w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)] transition-transform duration-300',
+        isDesktop ? 'translate-x-0' : (isOpen ? 'translate-x-0' : '-translate-x-full')
+      )}
+      aria-hidden={!isDesktop && !isOpen}
+    >
       {/* Branding */}
       <div className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider">
         <div className="relative flex items-center justify-center w-[56px] h-[56px] bg-[#463fb9] rounded-2xl shadow-astra-glow border border-[#4f4ab6]/45 overflow-hidden shrink-0">

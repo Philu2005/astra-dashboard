@@ -6,11 +6,9 @@ import { categories, modulesRegistry } from '@/modules/registry';
 import { AstraLogo } from '@/components/AstraLogo';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 import { appConfig } from '@/lib/app-config';
+import { useSidebar } from '@/contexts/SidebarContext';
 
-interface ServerSidebarProps {
-  open?: boolean;
-  onClose?: () => void;
-}
+interface ServerSidebarProps {}
 
 const NavItem: React.FC<{ to: string; icon: React.ElementType; label: string; onClick?: () => void }> = ({ to, icon: Icon, label, onClick }) => {
   return (
@@ -33,19 +31,21 @@ const NavItem: React.FC<{ to: string; icon: React.ElementType; label: string; on
   );
 };
 
-export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) => {
+export const ServerSidebar: React.FC<ServerSidebarProps> = () => {
   const { guildId } = useParams();
   const base = `/servers/${guildId}`;
   const botStatus = useBotStatus();
   const sidebarStatusConfig = botStatusConfig[botStatus];
   const inviteUrl = appConfig.botInviteUrl;
+  const { isOpen, isDesktop, close } = useSidebar();
 
   return (
     <aside
       className={cn(
-        'w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] transition-transform duration-300 lg:translate-x-0 backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)]',
-        open ? 'translate-x-0' : '-translate-x-full'
+        'w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] transition-transform duration-300 backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)]',
+        isDesktop ? 'translate-x-0' : (isOpen ? 'translate-x-0' : '-translate-x-full')
       )}
+      aria-hidden={!isDesktop && !isOpen}
     >
       {/* Branding – on mobile, add left padding to make room for the fixed hamburger button */}
       <div className="pl-[68px] lg:pl-8 pr-6 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider">
@@ -65,9 +65,9 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
             Serververwaltung
           </p>
           <div className="space-y-1">
-            <NavItem to={base} icon={Home} label="Übersicht" onClick={onClose} />
-            <NavItem to={`${base}/settings`} icon={Cog} label="Einstellungen" onClick={onClose} />
-            <NavItem to={`${base}/modules`} icon={Layers} label="Module" onClick={onClose} />
+            <NavItem to={base} icon={Home} label="Übersicht" onClick={!isDesktop ? close : undefined} />
+            <NavItem to={`${base}/settings`} icon={Cog} label="Einstellungen" onClick={!isDesktop ? close : undefined} />
+            <NavItem to={`${base}/modules`} icon={Layers} label="Module" onClick={!isDesktop ? close : undefined} />
           </div>
         </div>
 
@@ -76,9 +76,9 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
             Administration
           </p>
           <div className="space-y-1">
-            <NavItem to={`${base}/permissions`} icon={Shield} label="Berechtigungen" onClick={onClose} />
-            <NavItem to={`${base}/logs`} icon={FileText} label="Logs" onClick={onClose} />
-            <NavItem to={`${base}/stats`} icon={BarChart3} label="Statistiken" onClick={onClose} />
+            <NavItem to={`${base}/permissions`} icon={Shield} label="Berechtigungen" onClick={!isDesktop ? close : undefined} />
+            <NavItem to={`${base}/logs`} icon={FileText} label="Logs" onClick={!isDesktop ? close : undefined} />
+            <NavItem to={`${base}/stats`} icon={BarChart3} label="Statistiken" onClick={!isDesktop ? close : undefined} />
           </div>
         </div>
 
@@ -101,7 +101,7 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
                         to={m.buildPath(String(guildId))}
                         icon={m.icon as any}
                         label={m.name}
-                        onClick={onClose}
+                        onClick={!isDesktop ? close : undefined}
                       />
                     ))}
                   </React.Fragment>
@@ -115,7 +115,7 @@ export const ServerSidebar: React.FC<ServerSidebarProps> = ({ open, onClose }) =
       <div className="px-4 pb-3">
         <Link
           to="/dashboard"
-          onClick={onClose}
+          onClick={!isDesktop ? close : undefined}
           className="flex items-center gap-3 px-4 h-11 rounded-xl transition-all duration-200 border border-transparent text-[#acb3cf] hover:text-[#f0f2ff] hover:bg-layout-hover hover:border-layout-divider"
         >
           <LayoutDashboard className="w-5 h-5 text-[#9ea7c6]" strokeWidth={2} />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import GlobalSidebar from '@/layouts/GlobalSidebar';
 import { Topbar } from '@/layouts/Topbar';
 import { AstraLogo } from '@/components/AstraLogo';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface GlobalDashboardLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface GlobalDashboardLayoutProps {
 
 export const GlobalDashboardLayout: React.FC<GlobalDashboardLayoutProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { isOpen, isDesktop, close } = useSidebar();
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), 1050);
@@ -54,6 +56,14 @@ export const GlobalDashboardLayout: React.FC<GlobalDashboardLayoutProps> = ({ ch
       </div>
 
       <GlobalSidebar />
+
+      {/* Mobile Overlay */}
+      {isOpen && !isDesktop && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
+          onClick={close}
+        />
+      )}
 
       <div className="flex flex-col h-full w-full relative z-10 min-h-0">
         <div className="lg:ml-[278px] shrink-0">

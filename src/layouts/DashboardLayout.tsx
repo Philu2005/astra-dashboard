@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { AstraLogo } from '@/components/AstraLogo';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { isOpen, isDesktop, close } = useSidebar();
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsLoading(false), 1050);
@@ -54,6 +56,14 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </div>
 
       <Sidebar />
+
+      {/* Mobile Overlay */}
+      {isOpen && !isDesktop && (
+        <div
+          className="lg:hidden fixed inset-0 bg-[#050711]/74 backdrop-blur-[2px] z-50"
+          onClick={close}
+        />
+      )}
       
       <div className="flex flex-col h-full w-full relative z-10 min-h-0">
         <div className="lg:ml-[278px] shrink-0">

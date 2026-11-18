@@ -1,16 +1,16 @@
 import React from 'react';
 import { Outlet, useParams } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import { Topbar } from '@/layouts/Topbar';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import ServerSidebar from '@/layouts/ServerSidebar';
 import { useServerContext } from '@/contexts/ServerContext';
 import { StaticInfoPage } from '@/pages/StaticInfoPage';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 const ServerLayout: React.FC = () => {
   const { guildId } = useParams();
   const { servers, selectedServer, loadingState } = useServerContext();
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const { isOpen, isDesktop, close } = useSidebar();
 
   // Ladezustände
   if (loadingState.status === 'loading' || loadingState.status === 'idle') {
@@ -58,25 +58,16 @@ const ServerLayout: React.FC = () => {
         <div className="absolute right-[24%] top-[38%] w-1.5 h-1.5 rounded-full bg-[#9b93ff]/40 animate-[astra-float_20s_ease-in-out_infinite]" />
       </div>
 
-      {/* Mobile Hamburger Button – fixed position, always visible on mobile */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-[70] p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md"
-        aria-label={sidebarOpen ? 'Sidebar schließen' : 'Sidebar öffnen'}
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-
       {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
+      {isOpen && !isDesktop && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={close}
         />
       )}
 
       {/* Server Sidebar */}
-      <ServerSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <ServerSidebar />
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">

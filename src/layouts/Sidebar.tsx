@@ -24,6 +24,7 @@ import { useServerContext, iconColors } from '@/contexts/ServerContext';
 import { modulesRegistry } from '@/modules/registry';
 import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 const inviteUrl = appConfig.botInviteUrl;
 
@@ -88,16 +89,7 @@ const NavItem = ({ icon: Icon, label, active, external, href, onClick }: NavItem
 };
 
 export const Sidebar = () => {
-  // Initialzustand: auf Desktop (>= lg) standardmäßig geöffnet, mobil geschlossen
-  const getInitialOpen = () => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return window.innerWidth >= 1024; // Tailwind lg Breakpoint
-    } catch {
-      return false;
-    }
-  };
-  const [isOpen, setIsOpen] = useState<boolean>(getInitialOpen);
+  const { isOpen, isDesktop, close } = useSidebar();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [serverSearch, setServerSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -121,62 +113,21 @@ export const Sidebar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
 
-  // Optional: ESC schließt die Sidebar (wenn offen)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  // ESC/Overlay wird zentral im Provider gehandhabt
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "lg:hidden fixed top-4 left-4 z-[70] p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md",
-          isOpen ? "opacity-0 scale-90 pointer-events-none" : "opacity-100 scale-100 active:scale-95"
-        )}
-        aria-label="Navigation öffnen"
-        aria-hidden={isOpen}
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-
-      {/* Backdrop for mobile */}
-      {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-[#050711]/74 backdrop-blur-[2px] z-50"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
       <aside
         className={cn(
           "w-[278px] h-screen bg-layout-sidebar/98 border-r border-layout-divider flex flex-col fixed left-0 top-0 z-[65] transition-transform duration-300 backdrop-blur-xl shadow-[20px_0_44px_-28px_rgba(0,0,0,0.95)]",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          isDesktop ? "translate-x-0" : (isOpen ? "translate-x-0" : "-translate-x-full")
         )}
-        aria-hidden={!isOpen}
+        aria-hidden={!isDesktop && !isOpen}
       >
       {/* Branding */}
         <div className="px-6 lg:px-8 pt-5 pb-4 flex items-center gap-4 min-h-[78px] border-b border-layout-divider lg:border-b-0">
-          {/* Schließen/Toggle-Button innerhalb der Sidebar (auf allen Breakpoints sichtbar) */}
-          <button
-            onClick={() => setIsOpen(false)}
-            className={cn(
-              "p-3 rounded-xl border text-white shadow-[0_12px_28px_-16px_rgba(0,0,0,0.95)] transition-all duration-300 bg-layout-sidebar/96 border-layout-divider backdrop-blur-md flex items-center justify-center",
-              isOpen ? "opacity-100 scale-100 delay-300" : "opacity-0 scale-90 pointer-events-none"
-            )}
-            aria-label="Navigation schließen"
-            title="Navigation schließen"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-      <div className="flex items-center gap-4 min-w-0">
+          {/* Optional: interner Close-Button nicht mehr nötig; Steuerung über Topbar-Button & Overlay */}
+          <div className="flex items-center gap-4 min-w-0">
             <div className="relative flex items-center justify-center w-[56px] h-[56px] bg-[#463fb9] rounded-2xl shadow-astra-glow border border-[#4f4ab6]/45 overflow-hidden shrink-0">
               <AstraLogo size={56} glow="soft" fill className="scale-[1.18]" />
             </div>
@@ -192,7 +143,7 @@ export const Sidebar = () => {
           {/* Main */}
           <div>
             {pathname !== '/dashboard' && (
-              <NavItem icon={Home} label="Übersicht" active={false} href="/dashboard" onClick={() => setIsOpen(false)} />
+              <NavItem icon={Home} label="Übersicht" active={false} href="/dashboard" onClick={!isDesktop ? close : undefined} />
             )}
           </div>
 
@@ -261,6 +212,10 @@ export const Sidebar = () => {
                               if (window.location.pathname.replace(/\/+$/, '') !== target) {
                                 window.location.href = target;
                               }
+                              if (!isDesktop) {
+                                // Sidebar auf Mobile schließen
+                                close();
+                              }
                             }}
                             className={cn(
                               "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all duration-200 mx-0 group/item",
@@ -299,7 +254,7 @@ export const Sidebar = () => {
                 label="Konfiguration"
                 active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/settings`}
                 href={selectedServer ? `/servers/${selectedServer.id}/settings` : undefined}
-                onClick={() => setIsOpen(false)}
+                onClick={!isDesktop ? close : undefined}
               />
               <div className="mt-2 mb-1 px-4 text-[0.72rem] sm:text-[0.68rem] font-semibold text-[#7f89aa] uppercase tracking-[0.08em]">
                 Module
@@ -318,7 +273,7 @@ export const Sidebar = () => {
                         label={m.name}
                         active={isActive}
                         href={base}
-                        onClick={() => setIsOpen(false)}
+                        onClick={!isDesktop ? close : undefined}
                       />
                     );
                   })}
@@ -329,21 +284,21 @@ export const Sidebar = () => {
                 label="Berechtigungen"
                 active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/permissions`}
                 href={selectedServer ? `/servers/${selectedServer.id}/permissions` : undefined}
-                onClick={() => setIsOpen(false)}
+                onClick={!isDesktop ? close : undefined}
               />
               <NavItem
                 icon={FileText}
                 label="Logs"
                 active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/logs`}
                 href={selectedServer ? `/servers/${selectedServer.id}/logs` : undefined}
-                onClick={() => setIsOpen(false)}
+                onClick={!isDesktop ? close : undefined}
               />
               <NavItem
                 icon={BarChart3}
                 label="Statistiken"
                 active={Boolean(selectedServer) && pathname === `/servers/${selectedServer!.id}/stats`}
                 href={selectedServer ? `/servers/${selectedServer.id}/stats` : undefined}
-                onClick={() => setIsOpen(false)}
+                onClick={!isDesktop ? close : undefined}
               />
             </div>
           </div>
@@ -354,15 +309,15 @@ export const Sidebar = () => {
               Allgemein
             </p>
             <div className="space-y-1">
-              <NavItem icon={Server} label="Meine Server" active={pathname === '/servers'} href="/servers" onClick={() => setIsOpen(false)} />
+              <NavItem icon={Server} label="Meine Server" active={pathname === '/servers'} href="/servers" onClick={!isDesktop ? close : undefined} />
               {!isAdmin && (
-                <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={() => setIsOpen(false)} />
+                <NavItem icon={Headset} label="Support" active={pathname === '/support' || pathname.startsWith('/support/ticket/')} href="/support" onClick={!isDesktop ? close : undefined} />
               )}
               {/* Übergibt die Herkunft aus dem Dashboard explizit an Unterseiten */}
-              <NavItem icon={BookOpen} label="Dokumentation" href={withFrom('/docs', pathname)} onClick={() => setIsOpen(false)} />
-              <NavItem icon={Activity} label="Status" href={withFrom('/status', pathname)} onClick={() => setIsOpen(false)} />
+              <NavItem icon={BookOpen} label="Dokumentation" href={withFrom('/docs', pathname)} onClick={!isDesktop ? close : undefined} />
+              <NavItem icon={Activity} label="Status" href={withFrom('/status', pathname)} onClick={!isDesktop ? close : undefined} />
               {isAdmin && (
-                <NavItem icon={FileText} label="Support-Tickets" active={pathname === '/dashboard/tickets'} href="/dashboard/tickets" onClick={() => setIsOpen(false)} />
+                <NavItem icon={FileText} label="Support-Tickets" active={pathname === '/dashboard/tickets'} href="/dashboard/tickets" onClick={!isDesktop ? close : undefined} />
               )}
             </div>
           </div>
@@ -380,7 +335,7 @@ export const Sidebar = () => {
               if (!inviteUrl) {
                 event.preventDefault();
               }
-              setIsOpen(false);
+              if (!isDesktop) close();
             }}
             className={cn(
               "lg:hidden w-full inline-flex items-center justify-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-[0.85rem] font-semibold tracking-wide transition-all duration-300 border-[#6861e1] bg-[linear-gradient(138deg,#6460e6_0%,#4b46c8_58%,#3e3aa2_100%)] text-white shadow-[0_14px_34px_-22px_rgba(92,84,219,0.98),0_0_0_1px_rgba(158,153,255,0.18)_inset]",
