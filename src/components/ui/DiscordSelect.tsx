@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import StyledSelect, { type SelectOption } from '@/components/ui/StyledSelect';
-import { Hash, PoundSterling, Shield, FolderTree, HashIcon } from 'lucide-react';
+import { FolderTree } from 'lucide-react';
 
 export type DiscordSelectKind = 'channel' | 'role' | 'category';
 
@@ -49,14 +49,19 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
         return <div className="h-3 w-3 rounded-full" style={{ backgroundColor: roleColorToStyle(ent.color)?.color || '#7289da' }} />;
       }
       if (kind === 'category') return <FolderTree className="h-4 w-4" />;
-      return <Hash className="h-4 w-4" />;
+      // Für Channel kein Icon verwenden – stattdessen „# “ im Label
+      return null;
     };
-    return items.map((it) => ({
-      value: it.id,
-      label: it.name || it.id,
-      description: `ID: ${it.id}`,
-      icon: iconFor(it),
-    }));
+    return items.map((it) => {
+      const baseLabel = it.name || it.id;
+      const label = kind === 'channel' ? `# ${baseLabel}` : baseLabel;
+      return {
+        value: it.id,
+        label,
+        description: `ID: ${it.id}`,
+        icon: iconFor(it) ?? undefined,
+      } as SelectOption;
+    });
   }, [items, kind]);
 
   const current = value ?? '';

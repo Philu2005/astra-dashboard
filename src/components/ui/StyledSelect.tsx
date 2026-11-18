@@ -52,6 +52,20 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
+  // Einmalig: CSS-Regel für ausgeblendete Scrollbars in WebKit-basierten Browsern injizieren
+  useEffect(() => {
+    const STYLE_ID = 'astra-select-scrollbar-style';
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      /* Nur gezielt für unser Dropdown anwenden */
+      .astra-scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+      .astra-scrollbar-hide::-webkit-scrollbar { display: none; width: 0; height: 0; }
+    `;
+    document.head.appendChild(style);
+  }, []);
+
   const selected = useMemo(() => options.find(o => (current ?? '') === o.value) || null, [options, current]);
 
   const filteredOptions = useMemo(() => {
@@ -90,7 +104,11 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
       ...(openAbove
         ? { bottom: window.innerHeight - rect.top + 4 }
         : { top: rect.bottom + 4 }),
+      // Stabile, kontrollierte Höhe ohne horizontale Scrollbars
       maxHeight: Math.min(maxH, openAbove ? spaceAbove - 8 : spaceBelow - 8),
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      boxSizing: 'border-box',
     });
   }, []);
 
@@ -163,11 +181,17 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
       ref={listRef}
       role="listbox"
       style={dropdownStyle}
-      className="overflow-auto rounded-md border bg-[#121524] shadow-astra border-[#333a55] focus:outline-none animate-in fade-in-0 zoom-in-95 duration-150"
+      className={cn(
+        'astra-scrollbar-hide overflow-y-auto overflow-x-hidden box-border',
+        // Panel Look & Feel
+        'rounded-lg border border-[#2a2f45] bg-[#111427]/98 text-white shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]',
+        // Animation
+        'animate-in fade-in-0 zoom-in-95 duration-150 ease-out',
+      )}
       onKeyDown={onKeyDown}
     >
       {showSearch && (
-        <div className="sticky top-0 z-10 border-b border-[#2a2f45] bg-[#121524] p-2">
+        <div className="sticky top-0 z-10 border-b border-[#2a2f45] bg-[#111427]/98 p-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm">
           <input
             ref={searchRef}
             type="text"
@@ -175,12 +199,12 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
             onChange={e => { setSearch(e.target.value); setActiveIndex(0); }}
             onKeyDown={onKeyDown}
             placeholder="Suchen…"
-            className="w-full rounded border border-[#2a2f45] bg-[#0f1220] px-2.5 py-1.5 text-[0.85rem] text-white placeholder-[#7f86a8] outline-none focus:border-astra-purple/40"
+            className="w-full rounded-md border border-[#2a2f45] bg-[#0f1220] px-2.5 py-1.5 text-[0.85rem] text-white placeholder-[#7f86a8] outline-none focus:border-astra-purple/40"
           />
         </div>
       )}
       {filteredOptions.length === 0 && (
-        <div className="px-3 py-3 text-[0.85rem] text-[#7f86a8]">Keine Ergebnisse</div>
+        <div className="px-3 py-3 text-[0.85rem] text-[#9aa2c3]">Keine Ergebnisse</div>
       )}
       {filteredOptions.map((opt, idx) => (
         <div
@@ -193,15 +217,15 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
           onMouseDown={e => e.preventDefault()}
           onClick={() => !opt.disabled && commit(opt.value)}
           className={cn(
-            'flex cursor-pointer items-center gap-2 px-3 py-2 text-[0.9rem]',
-            'transition-colors',
-            opt.disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-astra-purple/10',
-            idx === activeIndex && 'bg-astra-purple/10',
-            current === opt.value ? 'text-astra-purple font-medium' : 'text-[#dbe3ff]',
+            'flex cursor-pointer items-center gap-2 px-3 py-2 text-[0.9rem] box-border',
+            'transition-colors duration-150',
+            opt.disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-astra-purple/12',
+            idx === activeIndex && 'bg-astra-purple/12',
+            current === opt.value ? 'text-astra-purple font-medium' : 'text-[#dbe3ff]'
           )}
         >
-          {opt.icon && <span className="shrink-0 text-[#9b95ff]">{opt.icon}</span>}
-          <span className="truncate">{opt.label}</span>
+          {opt.icon && <span className="shrink-0 text-[#9b95ff] [&>svg]:h-4 [&>svg]:w-4">{opt.icon}</span>}
+          <span className="truncate" title={opt.label}>{opt.label}</span>
         </div>
       ))}
     </div>,
@@ -221,17 +245,17 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
         onClick={() => { if (!disabled) setOpen(v => !v); }}
         onKeyDown={onKeyDown}
         className={cn(
-          'flex h-10 w-full items-center justify-between rounded-md border bg-[#0f1220] px-3 text-left text-[0.9rem] text-white',
-          'border-[#2a2f45] hover:border-astra-purple/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
+          'flex h-10 w-full items-center justify-between rounded-md border bg-[#0f1220] px-3 text-left text-[0.92rem] text-white box-border',
+          'border-[#2a2f45] hover:border-astra-purple/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
           'transition-colors duration-150 motion-reduce:transition-none',
           error && 'border-red-500/60 focus-visible:ring-red-400',
         )}
       >
         <span className={cn('flex min-w-0 items-center gap-2', !selected && 'text-[#7f86a8]')}>
           {selected?.icon}
-          <span className="truncate">{selected ? selected.label : placeholder}</span>
+          <span className="truncate" title={selected?.label || placeholder}>{selected ? selected.label : placeholder}</span>
         </span>
-        <svg aria-hidden="true" className={cn('h-4 w-4 shrink-0 text-[#9aa2c3] transition-transform', open && 'rotate-180')} viewBox="0 0 24 24" fill="none">
+        <svg aria-hidden="true" className={cn('h-4 w-4 shrink-0 text-[#9aa2c3] transition-transform duration-150', open && 'rotate-180')} viewBox="0 0 24 24" fill="none">
           <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ticketsApi, type TicketPanel, type TicketPanelConfigRequest } from '@/services/tickets-api';
 import { serversApi, type GuildChannel, type GuildRole, type GuildCategory } from '@/services/servers-api';
@@ -10,6 +10,7 @@ import { StyledButton } from '@/components/ui/StyledButton';
 import DiscordSelect from '@/components/ui/DiscordSelect';
 import AstraConfirmDialog from '@/components/ui/AstraConfirmDialog';
 import EmbedPreview from '@/components/tickets/EmbedPreview';
+import FloatingActionBar from '@/components/ui/FloatingActionBar';
 import {
   LayoutPanelTop, Plus, Pencil, Trash2, Send, Hash, Shield, FolderTree,
   CheckCircle2, AlertTriangle, XCircle, Loader2, ArrowRightLeft, X,
@@ -104,6 +105,7 @@ const TicketPanelsPage: React.FC = () => {
   // Edit form
   const [editForm, setEditForm] = useState<EditorState>({ ...EMPTY_EDITOR });
   const [saving, setSaving] = useState(false);
+  const initialEditRef = useRef<EditorState | null>(null);
 
   // Delete
   const [deleting, setDeleting] = useState(false);
@@ -263,6 +265,7 @@ const TicketPanelsPage: React.FC = () => {
       }
       setToast({ type: 'ok', msg: 'Panel aktualisiert.' });
       setEditPanel(null);
+      initialEditRef.current = null;
       await loadPanels();
     } catch (e: any) {
       setToast({ type: 'error', msg: e?.message || 'Speichern fehlgeschlagen.' });
@@ -306,6 +309,15 @@ const TicketPanelsPage: React.FC = () => {
   };
 
   /* ── Render ───────────────────────────────────────────────────── */
+
+  const isDirty = useMemo(() => {
+    if (!initialEditRef.current) return false;
+    try {
+      return JSON.stringify(initialEditRef.current) !== JSON.stringify(editForm);
+    } catch {
+      return true;
+    }
+  }, [editForm]);
 
   return (
     <div className="space-y-5">
@@ -517,12 +529,15 @@ const TicketPanelsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-[#2a2f45] px-5 py-4">
-              <StyledButton variant="ghost" onClick={() => setEditPanel(null)} disabled={saving}>Abbrechen</StyledButton>
-              <StyledButton onClick={onSaveEdit} disabled={saving}>
-                {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Speichern…</> : 'Änderungen speichern'}
-              </StyledButton>
-            </div>
+            {/* Floating Action Bar: erscheint nur bei Änderungen */}
+            {isDirty && (
+              <FloatingActionBar
+                saving={saving}
+                onCancel={() => setEditPanel(null)}
+                onSave={onSaveEdit}
+                saveLabel={saving ? 'Speichere…' : 'Änderungen übernehmen'}
+              />
+            )}
           </div>
         </div>
       )}

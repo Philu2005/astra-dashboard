@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ticketsApi } from '@/services/tickets-api';
+import { moderationApi } from '@/services/moderation-api';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
@@ -30,10 +30,10 @@ const TicketLogPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await ticketsApi.getLog(guildId);
+        const res = await moderationApi.getModlog(guildId);
         if (!active) return;
-        setCurrent(res.channel_id);
-        setChannelId(res.channel_id ?? '');
+        setCurrent(res.channelId ?? null);
+        setChannelId(res.channelId ?? '');
       } catch (e: any) {
         if (!active) return;
         setError(e?.message || 'Fehler beim Laden der Ticket-Log-Konfiguration.');
@@ -74,8 +74,8 @@ const TicketLogPage: React.FC = () => {
     try {
       const trimmed = channelId.trim();
       if (!trimmed) throw new Error('Bitte eine gültige Kanal-ID eingeben.');
-      const res = await ticketsApi.putLog(guildId, trimmed);
-      setCurrent(res.channel_id);
+      const res = await moderationApi.putModlog(guildId, trimmed);
+      setCurrent(res.channelId ?? null);
       setInfo('Gespeichert.');
     } catch (e: any) {
       setError(e?.message || 'Speichern fehlgeschlagen.');
@@ -90,7 +90,7 @@ const TicketLogPage: React.FC = () => {
     setError(null);
     setInfo(null);
     try {
-      await ticketsApi.deleteLog(guildId);
+      await moderationApi.deleteModlog(guildId);
       setCurrent(null);
       setChannelId('');
       setInfo('Ticket-Log-Konfiguration entfernt.');

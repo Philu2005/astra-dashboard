@@ -30,13 +30,18 @@ const sizeClasses: Record<ButtonSize, string> = {
 export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProps>(
   ({ className, variant = 'secondary', size = 'md', loading = false, disabled, leftIcon, rightIcon, children, ...props }, ref) => {
     const isDisabled = disabled || loading;
+    const renderIcon = (icon?: React.ReactNode) => {
+      if (!icon) return null;
+      // Wrapper sorgt für konsistente Icon-Größe ohne die Child-Props zu verändern
+      return <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-4 [&>svg]:w-4" aria-hidden>{icon}</span>;
+    };
     return (
       <button
         ref={ref}
         disabled={isDisabled}
         className={cn(
-          'inline-flex flex-row flex-nowrap items-center justify-center gap-2 border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
-          'shadow-astra select-none whitespace-nowrap shrink-0 w-fit',
+          'inline-flex flex-row flex-nowrap items-center justify-center gap-2 border transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
+          'shadow-astra select-none whitespace-nowrap shrink-0 w-fit font-medium',
           variantClasses[variant],
           sizeClasses[size],
           isDisabled && 'opacity-70 cursor-not-allowed',
@@ -50,9 +55,9 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
             <path className="opacity-75" d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
           </svg>
         )}
-        {!loading && leftIcon}
-        <span>{children}</span>
-        {!loading && rightIcon}
+        {!loading && renderIcon(leftIcon)}
+        <span className="leading-none">{children}</span>
+        {!loading && renderIcon(rightIcon)}
       </button>
     );
   },
