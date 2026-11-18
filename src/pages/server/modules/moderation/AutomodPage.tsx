@@ -286,26 +286,59 @@ const AutomodPage: React.FC = () => {
                         </div>
                         {/* Timeout-Dauer */}
                         {rule.action === 'timeout' && (
-                          <div className="w-full sm:w-[130px] shrink-0">
-                            <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
-                              Dauer (Sek.)
-                              <StyledTooltip content="Dauer des Timeouts in Sekunden. Das Mitglied kann für diese Zeit nicht kommunizieren." side="top" className="w-52">
-                                <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
-                              </StyledTooltip>
+                          <div className="flex w-full sm:w-auto items-end gap-2">
+                            <div className="w-full sm:w-[120px]">
+                              <div className="mb-1 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
+                                Dauer
+                                <StyledTooltip content="Dauer des Timeouts. Intern werden Sekunden gespeichert." side="top" className="w-56">
+                                  <span className="cursor-help"><HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60" /></span>
+                                </StyledTooltip>
+                              </div>
+                              {(() => {
+                                const secs = Number(rule.timeout_seconds ?? 0);
+                                const unit: 's' | 'm' | 'h' = secs % 3600 === 0 ? 'h' : secs % 60 === 0 ? 'm' : 's';
+                                const displayVal = unit === 'h' ? Math.floor(secs / 3600) : unit === 'm' ? Math.floor(secs / 60) : secs;
+                                return (
+                                  <StyledNumberInput
+                                    value={(displayVal as any)}
+                                    onChange={(e) => {
+                                      const raw = (e.target as any).value;
+                                      const n = raw === '' ? NaN : Number(raw);
+                                      if (Number.isNaN(n)) return;
+                                      const secsNext = unit === 'h' ? Math.max(0, n * 3600) : unit === 'm' ? Math.max(0, n * 60) : Math.max(0, n);
+                                      updateRule(idx, { timeout_seconds: secsNext });
+                                    }}
+                                    min={0}
+                                    className="w-full"
+                                  />
+                                );
+                              })()}
                             </div>
-                            <StyledNumberInput
-                              value={(rule.timeout_seconds ?? '') as any}
-                              onChange={(e) =>
-                                updateRule(idx, {
-                                  timeout_seconds:
-                                    (e.target as any).value === ''
-                                      ? undefined
-                                      : Math.max(0, Number((e.target as any).value)),
-                                })
-                              }
-                              min={0}
-                              className="w-full"
-                            />
+                            <div className="w-[110px]">
+                              <div className="mb-1 text-[0.82rem] text-transparent select-none">Einheit</div>
+                              {(() => {
+                                const secs = Number(rule.timeout_seconds ?? 0);
+                                const unit: 's' | 'm' | 'h' = secs % 3600 === 0 ? 'h' : secs % 60 === 0 ? 'm' : 's';
+                                return (
+                                  <StyledSelect
+                                    value={unit}
+                                    onChange={(u) => {
+                                      const fromUnit: 's' | 'm' | 'h' = unit;
+                                      const toUnit = (u as 's' | 'm' | 'h');
+                                      // aktuellen Anzeige‑Wert erhalten
+                                      const displayVal = fromUnit === 'h' ? Math.floor(secs / 3600) : fromUnit === 'm' ? Math.floor(secs / 60) : secs;
+                                      const nextSecs = toUnit === 'h' ? displayVal * 3600 : toUnit === 'm' ? displayVal * 60 : displayVal;
+                                      updateRule(idx, { timeout_seconds: nextSecs });
+                                    }}
+                                    options={[
+                                      { value: 's', label: 'Sekunden' },
+                                      { value: 'm', label: 'Minuten' },
+                                      { value: 'h', label: 'Stunden' },
+                                    ]}
+                                  />
+                                );
+                              })()}
+                            </div>
                           </div>
                         )}
                         {/* Entfernen-Button – immer rechts */}

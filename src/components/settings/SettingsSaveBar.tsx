@@ -25,28 +25,36 @@ export const SettingsSaveBar: React.FC<SettingsSaveBarProps> = ({
 
   return (
     <div
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-[#2d3246] bg-[linear-gradient(180deg,#111428_0%,#0f1220_100%)]/95 backdrop-blur-xl supports-[backdrop-filter]:bg-opacity-85',
-        'shadow-[0_-10px_30px_rgba(0,0,0,0.45),0_-1px_0_rgba(75,70,200,0.15)]',
-        className,
-      )}
+      className={cn('pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3', className)}
       {...props}
     >
-      <div className="mx-auto flex max-w-[1200px] flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-4 sm:px-5 py-3">
-        <div className="flex items-center gap-2.5">
+      <div
+        className={cn(
+          'pointer-events-auto inline-flex items-center gap-3 rounded-2xl border border-[#2a2f45] bg-[#111427]/95 px-3 py-2',
+          'shadow-[0_12px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur supports-[backdrop-filter]:backdrop-blur-md',
+          'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95',
+        )}
+        role="region"
+        aria-label="Änderungsleiste"
+        style={{
+          // Safe-Area respektieren
+          paddingBottom: 'max(0px, env(safe-area-inset-bottom))',
+        }}
+      >
+        <div className="hidden sm:flex items-center gap-2 pr-1">
           <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-astra-purple shadow-[0_0_8px_rgba(75,70,200,0.6)]" />
-          <span className="text-[0.85rem] sm:text-[0.95rem] text-[#c1c7de]">
+          <span className="text-[0.85rem] text-[#c1c7de]">
             {saving ? 'Speichern läuft…' : 'Ungespeicherte Änderungen'}
           </span>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <StyledButton variant="ghost" onClick={onCancel} disabled={saving} className="flex-1 sm:flex-none">
+        {onCancel && (
+          <StyledButton variant="ghost" size="md" onClick={onCancel} disabled={saving}>
             {cancelLabel}
           </StyledButton>
-          <StyledButton variant="primary" onClick={onSave} loading={saving} className="flex-1 sm:flex-none">
-            {saveLabel}
-          </StyledButton>
-        </div>
+        )}
+        <StyledButton variant="primary" size="md" onClick={onSave} loading={saving}>
+          {saveLabel}
+        </StyledButton>
       </div>
     </div>
   );

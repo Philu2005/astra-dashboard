@@ -468,30 +468,52 @@ const TicketPanelsPage: React.FC = () => {
 
       {/* ── Create Dialog ─────────────────────────────────────────── */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto pt-[5vh] pb-10">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh] pb-10">
           <div className="absolute inset-0 bg-black/50" onClick={() => !creating && setShowCreate(false)} />
-          <div className="relative z-10 w-[95%] max-w-2xl rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-xl">
+          <div className="relative z-10 w-[95%] max-w-3xl rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#2a2f45] px-5 py-4">
               <h3 className="text-lg font-semibold text-white">Neues Panel veröffentlichen</h3>
               <button type="button" onClick={() => setShowCreate(false)} className="text-[#8b8fad] hover:text-white"><X className="h-5 w-5" /></button>
             </div>
-            <div className="space-y-4 p-5">
-              <DiscordSelect label="Zielkanal *" kind="channel" items={textChannels.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={createForm.channel_id} onChange={v => setCreateForm(f => ({ ...f, channel_id: v }))} />
-              <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={createForm.support_role_id || null} onChange={v => setCreateForm(f => ({ ...f, support_role_id: v }))} />
-              <DiscordSelect label="Ticket-Kategorie" kind="category" items={categories.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={createForm.category_id || null} onChange={v => setCreateForm(f => ({ ...f, category_id: v }))} />
-              <div className="space-y-1.5">
-                <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label>
-                <StyledInput placeholder="z. B. Allgemeiner Support" value={createForm.topic} onChange={e => setCreateForm(f => ({ ...f, topic: e.target.value }))} />
+            <div className="grid max-h-[78vh] grid-cols-1 gap-6 overflow-y-auto p-5 lg:grid-cols-[1fr_280px]">
+              <div className="space-y-6">
+                <FieldGroup label="Discord‑Zuweisungen">
+                  <div className="space-y-3">
+                    <DiscordSelect
+                      label="Zielkanal *"
+                      kind="channel"
+                      groupByCategory
+                      items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+                      loading={resLoading}
+                      value={createForm.channel_id}
+                      onChange={v => setCreateForm(f => ({ ...f, channel_id: v }))}
+                    />
+                    <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={createForm.support_role_id || null} onChange={v => setCreateForm(f => ({ ...f, support_role_id: v }))} />
+                    <DiscordSelect label="Ticket-Kategorie" kind="category" items={categories.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={createForm.category_id || null} onChange={v => setCreateForm(f => ({ ...f, category_id: v }))} />
+                  </div>
+                </FieldGroup>
+                <FieldGroup label="Inhalt">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label>
+                      <StyledInput placeholder="z. B. Allgemeiner Support" value={createForm.topic} onChange={e => setCreateForm(f => ({ ...f, topic: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                      <StyledInput placeholder="Panel-Titel" value={createForm.title} onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                      <StyledTextarea placeholder="Panel-Beschreibung" value={createForm.description} onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))} />
+                    </div>
+                  </div>
+                </FieldGroup>
               </div>
-              <div className="space-y-1.5">
-                <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
-                <StyledInput placeholder="Panel-Titel" value={createForm.title} onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))} />
+              <div className="hidden lg:block">
+                <div className="sticky top-4">
+                  <EmbedPreview title={createForm.title} description={createForm.description} />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
-                <StyledTextarea placeholder="Panel-Beschreibung" value={createForm.description} onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))} />
-              </div>
-              <EmbedPreview title={createForm.title} description={createForm.description} />
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-[#2a2f45] px-5 py-4">
               <StyledButton variant="ghost" onClick={() => setShowCreate(false)} disabled={creating}>Abbrechen</StyledButton>
@@ -505,27 +527,45 @@ const TicketPanelsPage: React.FC = () => {
 
       {/* ── Edit Dialog ───────────────────────────────────────────── */}
       {editPanel && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto pt-[3vh] pb-10">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh] pb-10">
           <div className="absolute inset-0 bg-black/50" onClick={() => !saving && setEditPanel(null)} />
-          <div className="relative z-10 w-[95%] max-w-3xl rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-xl">
+          <div className="relative z-10 w-[95%] max-w-3xl rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#2a2f45] px-5 py-4">
               <h3 className="text-lg font-semibold text-white">Panel bearbeiten</h3>
               <button type="button" onClick={() => setEditPanel(null)} className="text-[#8b8fad] hover:text-white"><X className="h-5 w-5" /></button>
             </div>
-            <div className="grid gap-6 p-5 lg:grid-cols-[1fr_280px]">
+            <div className="grid max-h-[78vh] grid-cols-1 gap-6 overflow-y-auto p-5 lg:grid-cols-[1fr_280px]">
               <div className="space-y-6">
-                <FieldGroup label="Inhalt">
-                  <div className="space-y-3">
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label><StyledInput value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label><StyledTextarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></div>
-                    <div><label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label><StyledInput value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} /></div>
-                  </div>
-                </FieldGroup>
-                <FieldGroup label="Ticket-Konfiguration">
+                <FieldGroup label="Discord‑Zuweisungen">
                   <div className="space-y-3">
                     <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={editForm.support_role_id || null} onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} />
                     <DiscordSelect label="Ticket-Kategorie" kind="category" items={categories.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={editForm.category_id || null} onChange={v => setEditForm(f => ({ ...f, category_id: v }))} />
-                    <DiscordSelect label="Zielkanal" kind="channel" items={textChannels.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={editForm.channel_id || null} onChange={v => setEditForm(f => ({ ...f, channel_id: v }))} disabled />
+                    <DiscordSelect
+                      label="Zielkanal (fixiert)"
+                      kind="channel"
+                      groupByCategory
+                      items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+                      loading={resLoading}
+                      value={editForm.channel_id || null}
+                      onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
+                      disabled
+                    />
+                  </div>
+                </FieldGroup>
+                <FieldGroup label="Inhalt">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label>
+                      <StyledInput placeholder="z. B. Allgemeiner Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                      <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                      <StyledTextarea placeholder="Panel-Beschreibung" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+                    </div>
                   </div>
                 </FieldGroup>
               </div>
@@ -561,7 +601,17 @@ const TicketPanelsPage: React.FC = () => {
             <p className="text-[0.85rem] text-[#8b8fad]">
               Verschiebe das Panel aus <span className="text-white font-medium">#{channelName[movePanel.channel_id || ''] || movePanel.channel_id}</span> in einen anderen Kanal.
             </p>
-            <DiscordSelect label="Neuer Zielkanal" kind="channel" items={textChannels.filter(c => c.id !== movePanel.channel_id).map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={moveChannelId || null} onChange={v => setMoveChannelId(v)} />
+            <DiscordSelect
+              label="Neuer Zielkanal"
+              kind="channel"
+              groupByCategory
+              items={textChannels
+                .filter(c => c.id !== movePanel.channel_id)
+                .map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+              loading={resLoading}
+              value={moveChannelId || null}
+              onChange={v => setMoveChannelId(v)}
+            />
             <div className="flex items-center justify-end gap-3 pt-2">
               <StyledButton variant="ghost" onClick={() => setMovePanel(null)} disabled={moving}>Abbrechen</StyledButton>
               <StyledButton onClick={onMove} disabled={moving || !moveChannelId} leftIcon={<ArrowRightLeft />}>

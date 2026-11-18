@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import StyledSelect, { type SelectOption } from '@/components/ui/StyledSelect';
-import { FolderTree } from 'lucide-react';
+import { FolderTree, Hash, Volume2, Megaphone, Video, AtSign } from 'lucide-react';
 
 export type DiscordSelectKind = 'channel' | 'role' | 'category';
 
@@ -8,6 +8,10 @@ export interface DiscordEntity {
   id: string;
   name: string;
   color?: number;
+  // Optional für Channels
+  type?: number;
+  parent_id?: string | null;
+  parent_name?: string | null;
 }
 
 export interface DiscordSelectProps {
@@ -21,6 +25,8 @@ export interface DiscordSelectProps {
   kind: DiscordSelectKind;
   disabled?: boolean;
   className?: string;
+  // Nur für Channels: nach Kategorien gruppieren, wenn parent_name vorhanden ist
+  groupByCategory?: boolean;
 }
 
 function roleColorToStyle(color?: number): React.CSSProperties | undefined {
@@ -42,27 +48,70 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
   kind,
   disabled,
   className,
+  groupByCategory,
 }) => {
   const options: SelectOption[] = useMemo(() => {
+    const channelIcon = (t?: number) => {
+      switch (t) {
+        case 2: // Voice
+          return <Volume2 className="h-4 w-4" />;
+        case 5: // Announcement
+          return <Megaphone className="h-4 w-4" />;
+        case 13: // Stage (approx)
+          return <AtSign className="h-4 w-4" />;
+        case 15: // Forum
+          return <Hash className="h-4 w-4" />;
+        case 0: // Text
+        default:
+          return <Hash className="h-4 w-4" />;
+      }
+    };
+
     const iconFor = (ent: DiscordEntity) => {
       if (kind === 'role') {
         return <div className="h-3 w-3 rounded-full" style={{ backgroundColor: roleColorToStyle(ent.color)?.color || '#7289da' }} />;
       }
       if (kind === 'category') return <FolderTree className="h-4 w-4" />;
-      // Für Channel kein Icon verwenden – stattdessen „# “ im Label
+      if (kind === 'channel') return channelIcon(ent.type);
       return null;
     };
-    return items.map((it) => {
-      const baseLabel = it.name || it.id;
-      const label = kind === 'channel' ? `# ${baseLabel}` : baseLabel;
-      return {
-        value: it.id,
-        label,
-        description: `ID: ${it.id}`,
-        icon: iconFor(it) ?? undefined,
-      } as SelectOption;
-    });
-  }, [items, kind]);
+
+    // Gruppierung nur für Channels und wenn parent_name Daten vorhanden sind
+    if (kind === 'channel' && (groupByCategory || items.some(i => i.parent_name))) {
+      const groups = new Map<string, DiscordEntity[]>();
+      const UNCATEGORIZED = '__uncategorized__';
+      for (const it of items) {
+        const key = (it.parent_name || '').trim() || UNCATEGORIZED;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(it);
+      }
+      const out: SelectOption[] = [];
+      for (const [group, ents] of groups) {
+        if (group !== UNCATEGORIZED) {
+          out.push({ type: 'group', value: `g-${group}`, label: group } as SelectOption);
+        } else {
+          out.push({ type: 'group', value: `g-__none__`, label: 'Ohne Kategorie' } as SelectOption);
+        }
+        for (const it of ents) {
+          out.push({
+            value: it.id,
+            label: it.name || it.id,
+            description: `#${it.id}`,
+            icon: iconFor(it) ?? undefined,
+          });
+        }
+      }
+      return out;
+    }
+
+    // Standard: flache Liste
+    return items.map((it) => ({
+      value: it.id,
+      label: kind === 'channel' ? (it.name?.startsWith('#') ? it.name : `# ${it.name}`) : (it.name || it.id),
+      description: `ID: ${it.id}`,
+      icon: iconFor(it) ?? undefined,
+    }));
+  }, [items, kind, groupByCategory]);
 
   const current = value ?? '';
 

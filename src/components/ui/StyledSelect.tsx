@@ -8,6 +8,8 @@ export interface SelectOption {
   icon?: React.ReactNode;
   disabled?: boolean;
   description?: string;
+  // Optional: Gruppenheader. Wird als nicht-auswählbarer Titel gerendert
+  type?: 'option' | 'group';
 }
 
 export interface StyledSelectProps {
@@ -71,7 +73,8 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
   const filteredOptions = useMemo(() => {
     if (!search.trim()) return options;
     const q = search.toLowerCase();
-    return options.filter(o => o.label.toLowerCase().includes(q));
+    // Gruppenheader bleiben sichtbar, Einträge werden gefiltert
+    return options.filter(o => (o.type === 'group' ? true : o.label.toLowerCase().includes(q)));
   }, [options, search]);
 
   const showSearch = searchable ?? options.length > 8;
@@ -212,31 +215,47 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
           />
         </div>
       )}
-      {filteredOptions.length === 0 && (
+      {filteredOptions.filter(o => o.type !== 'group').length === 0 && (
         <div className="px-3 py-3 text-[0.85rem] text-[#9aa2c3]">Keine Ergebnisse</div>
       )}
-      {filteredOptions.map((opt, idx) => (
-        <div
-          key={opt.value}
-          id={`opt-${idx}`}
-          data-index={idx}
-          role="option"
-          aria-selected={current === opt.value}
-          onMouseEnter={() => setActiveIndex(idx)}
-          onMouseDown={e => e.preventDefault()}
-          onClick={() => !opt.disabled && commit(opt.value)}
-          className={cn(
-            'flex cursor-pointer items-center gap-2 px-3 py-2 text-[0.9rem] box-border',
-            'transition-colors duration-150',
-            opt.disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-astra-purple/12',
-            idx === activeIndex && 'bg-astra-purple/12',
-            current === opt.value ? 'text-astra-purple font-medium' : 'text-[#dbe3ff]'
-          )}
-        >
-          {opt.icon && <span className="shrink-0 text-[#9b95ff] [&>svg]:h-4 [&>svg]:w-4">{opt.icon}</span>}
-          <span className="truncate" title={opt.label}>{opt.label}</span>
-        </div>
-      ))}
+      {filteredOptions.map((opt, idx) => {
+        if (opt.type === 'group') {
+          return (
+            <div
+              key={`g-${opt.value}`}
+              aria-hidden
+              className="select-none px-3 pt-2 pb-1 text-[0.75rem] font-semibold uppercase tracking-wide text-[#8a93b8]"
+            >
+              {opt.label}
+            </div>
+          );
+        }
+        const isSelected = current === opt.value;
+        const isActive = idx === activeIndex;
+        const isDisabled = Boolean(opt.disabled);
+        return (
+          <div
+            key={opt.value}
+            id={`opt-${idx}`}
+            data-index={idx}
+            role="option"
+            aria-selected={isSelected}
+            onMouseEnter={() => setActiveIndex(idx)}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => !isDisabled && commit(opt.value)}
+            className={cn(
+              'flex cursor-pointer items-center gap-2 px-3 py-2 text-[0.9rem] box-border',
+              'transition-colors duration-150',
+              isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-astra-purple/12',
+              isActive && 'bg-astra-purple/12',
+              isSelected ? 'text-astra-purple font-medium' : 'text-[#dbe3ff]'
+            )}
+          >
+            {opt.icon && <span className="shrink-0 text-[#9b95ff] [&>svg]:h-4 [&>svg]:w-4">{opt.icon}</span>}
+            <span className="truncate" title={opt.label}>{opt.label}</span>
+          </div>
+        );
+      })}
     </div>,
     document.body,
   ) : null;
