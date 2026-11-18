@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import StyledSelect, { type SelectOption } from '@/components/ui/StyledSelect';
-import { FolderTree, Hash, Volume2, Megaphone, Video, AtSign } from 'lucide-react';
+import { FolderTree, Hash, Volume2, Megaphone, Video, AtSign, X, Check, Search } from 'lucide-react';
 
 export type DiscordSelectKind = 'channel' | 'role' | 'category';
 
@@ -17,8 +17,9 @@ export interface DiscordEntity {
 export interface DiscordSelectProps {
   label?: string;
   placeholder?: string;
-  value: string | null;
-  onChange: (id: string) => void;
+  // Single- oder Multi-Select je nach Einsatzstelle
+  value: string | string[] | null;
+  onChange: (idOrIds: string | string[]) => void;
   loading?: boolean;
   error?: string | null;
   items: DiscordEntity[];
@@ -50,6 +51,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
   className,
   groupByCategory,
 }) => {
+  const isMulti = Array.isArray(value);
   const options: SelectOption[] = useMemo(() => {
     const channelIcon = (t?: number) => {
       switch (t) {
@@ -114,19 +116,74 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
     }));
   }, [items, kind, groupByCategory]);
 
-  const current = value ?? '';
+  // Geschlossener Zustand mit Chips (bei Multi-Select)
+  const triggerContent = () => {
+    if (!isMulti) return null; // StyledSelect rendert Single-Trigger selbst
+    const ids = (value as string[] | null) ?? [];
+    const byId = new Map(options.filter(o=>o.type!== 'group').map(o=>[o.value,o] as const));
+    return (
+      <div className="flex min-h-10 w-full items-center gap-1.5 rounded-md border border-[#2a2f45] bg-[#0f1220] px-2.5 py-1.5 text-left text-[0.92rem] text-white focus-within:ring-2 focus-within:ring-astra-purple/40">
+        {ids.length === 0 && (
+          <span className="text-[#7f86a8] select-none">{loading ? 'Laden…' : error ? `Fehler: ${error}` : (placeholder || 'ändern …')}</span>
+        )}
+        {ids.map(id=>{
+          const o = byId.get(id);
+          return (
+            <span key={id} className="inline-flex items-center gap-1 rounded-full border border-[#2a2f45] bg-[#14182d] px-2 py-0.5 text-[0.82rem]">
+              {o?.icon && <span className="text-[#9b95ff] [&>svg]:h-3.5 [&>svg]:w-3.5">{o.icon}</span>}
+              <span className="max-w-[140px] truncate">{o?.label ?? id}</span>
+              <button
+                type="button"
+                aria-label="Entfernen"
+                className="ml-0.5 rounded-full p-0.5 text-[#9aa2c3] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40"
+                onClick={(e)=>{
+                  e.stopPropagation();
+                  const next = ids.filter(x=>x!==id);
+                  onChange(next);
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          );
+        })}
+        {/* Dummy input für direkten Textfokus im Trigger */}
+        <input
+          aria-hidden
+          tabIndex={-1}
+          className="h-5 flex-1 bg-transparent outline-none placeholder-[#7f86a8]"
+          placeholder={ids.length? 'ändern …' : ''}
+          readOnly
+        />
+      </div>
+    );
+  };
 
   return (
     <div className={className}>
       {label && <label className="mb-1 block text-[0.85rem] font-medium text-[#c1c7de]">{label}</label>}
       <StyledSelect
         options={options}
-        value={current}
-        onChange={(v) => onChange(v)}
+        value={Array.isArray(value) ? (value[0] ?? '') : (value ?? '')}
+        onChange={(v) => {
+          if (isMulti) {
+            const ids = new Set<string>(Array.isArray(value) ? value : []);
+            if (ids.has(v)) ids.delete(v); else ids.add(v);
+            onChange(Array.from(ids));
+          } else {
+            onChange(v);
+          }
+        }}
         placeholder={loading ? 'Laden…' : error ? `Fehler: ${error}` : placeholder}
         disabled={disabled || loading}
         searchable
+        // Für Multi: benutzerdefinierten Trigger-Inhalt (Chips) anzeigen
+        // StyledSelect ignoriert children, wir platzieren Content daneben:
+        className={isMulti ? 'discord-multiselect' : undefined}
       />
+      {isMulti && (
+        <div className="mt-2 -mb-1">{triggerContent()}</div>
+      )}
       {error && <p className="mt-1 text-[0.8rem] text-red-300">{error}</p>}
     </div>
   );
