@@ -339,7 +339,8 @@ async def get_ticket_log(guild_id: str, request: Request) -> dict[str, Any]:
     except AstraApiError as exc:
         raise _handle_astra_error(exc)
     if isinstance(data, dict):
-        return {"success": True, "channel_id": data.get("channel_id")}
+        channel_id = data.get("channel_id") or data.get("channelId")
+        return {"success": True, "channel_id": channel_id}
     return {"success": True, "channel_id": None}
 
 
@@ -363,7 +364,8 @@ async def put_ticket_log(guild_id: str, request: Request, body: TicketLogUpdateR
     except AstraApiError as exc:
         raise _handle_astra_error(exc)
     if isinstance(data, dict):
-        return {"success": True, "channel_id": data.get("channel_id", body.channel_id)}
+        channel_id = data.get("channel_id") or data.get("channelId") or body.channel_id
+        return {"success": True, "channel_id": channel_id}
     return {"success": True, "channel_id": body.channel_id}
 
 

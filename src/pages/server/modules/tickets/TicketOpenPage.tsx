@@ -44,7 +44,7 @@ const TicketOpenPage: React.FC = () => {
   const userName = useMemo(() => {
     // Falls das Ticket-Objekt Benutzernamen enthalten würde, könnten wir sie hier mappen.
     // Aktuell haben wir nur user_id. Wir lassen den Platzhalter für zukünftiges Mapping.
-    return (id: string) => id;
+    return (id: string) => `Benutzer (${id})`;
   }, []);
 
   useEffect(() => {
