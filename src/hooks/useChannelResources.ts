@@ -28,17 +28,21 @@ export function useChannelResources(channels: GuildChannel[], categories: GuildC
     });
 
     // 2. Kanäle transformieren und parent_name/position auflösen
-    return channels.map(ch => ({
-      id: ch.id,
-      name: ch.name || ch.id,
-      type: ch.type,
-      parent_id: ch.parent_id ?? null,
-      parent_name: ch.parent_id ? (nameMap.get(ch.parent_id) || null) : null,
-      // WICHTIG: position des Kanals für die Sortierung innerhalb der Gruppe erhalten
-      position: ch.position ?? 0,
-      // Optionale Information für die Kategorie-Sortierung
-      categoryPosition: ch.parent_id ? (posMap.get(ch.parent_id) ?? 999999) : 999999,
-    }));
+    return channels.map(ch => {
+      const categoryPos = ch.parent_id ? posMap.get(ch.parent_id) : undefined;
+      return {
+        id: ch.id,
+        name: ch.name || ch.id,
+        type: ch.type,
+        parent_id: ch.parent_id ?? null,
+        parent_name: ch.parent_id ? (nameMap.get(ch.parent_id) || null) : null,
+        // WICHTIG: position des Kanals für die Sortierung innerhalb der Gruppe erhalten
+        position: ch.position ?? 0,
+        // Information für die Kategorie-Sortierung
+        // Falls categoryPos fehlt, nutzen wir einen hohen Wert, aber niedriger als uncategorized (1000000)
+        categoryPosition: categoryPos !== undefined ? categoryPos : 999999,
+      };
+    });
   }, [channels, categories]);
 
   // Nur Text-Kanäle (Type 0 oder undefined)

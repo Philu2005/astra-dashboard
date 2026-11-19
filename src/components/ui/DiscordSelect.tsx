@@ -78,28 +78,47 @@ function buildOptions(
     const UNCATEGORIZED = '__uncategorized__';
     const groupsMap = new Map<string, { name: string; items: DiscordEntity[]; position: number }>();
 
+    // 1. Alle Kategorien als Gruppen initialisieren (auch wenn sie noch keine Kanäle haben)
     for (const it of items) {
-      const parentName = (it.parent_name || '').trim();
+      if (it.parent_id && it.parent_name) {
+        if (!groupsMap.has(it.parent_id)) {
+          groupsMap.set(it.parent_id, {
+            name: it.parent_name.trim() || `Kategorie ${it.parent_id}`,
+            items: [],
+            position: it.categoryPosition ?? 999999
+          });
+        }
+      }
+    }
+
+    // 2. Kanäle den Gruppen zuordnen
+    for (const it of items) {
       const parentId = it.parent_id || UNCATEGORIZED;
       
-      const key = parentId === UNCATEGORIZED ? UNCATEGORIZED : parentId;
-      const groupName = parentId === UNCATEGORIZED ? 'Ohne Kategorie' : parentName || `Kategorie ${parentId}`;
-      const groupPosition = parentId === UNCATEGORIZED ? 999999 : it.categoryPosition ?? it.position ?? 0;
-
-      if (!groupsMap.has(key)) {
-        groupsMap.set(key, { name: groupName, items: [], position: groupPosition });
+      if (parentId === UNCATEGORIZED) {
+        if (!groupsMap.has(UNCATEGORIZED)) {
+          groupsMap.set(UNCATEGORIZED, { name: 'Ohne Kategorie', items: [], position: 1000000 });
+        }
+        groupsMap.get(UNCATEGORIZED)!.items.push(it);
+      } else {
+        // Falls die Kategorie durch einen Kanal bekannt ist, aber noch nicht in der Map (sollte durch Schritt 1 abgedeckt sein)
+        if (!groupsMap.has(parentId)) {
+          groupsMap.set(parentId, {
+            name: (it.parent_name || '').trim() || `Kategorie ${parentId}`,
+            items: [],
+            position: it.categoryPosition ?? 999999
+          });
+        }
+        groupsMap.get(parentId)!.items.push(it);
       }
-      groupsMap.get(key)!.items.push(it);
     }
 
     const out: InternalOption[] = [];
     
-    // Zuerst Kategorien mit Inhalten
-    const sortedGroups = Array.from(groupsMap.entries()).sort((a, b) => {
-      if (a[0] === UNCATEGORIZED) return 1;
-      if (b[0] === UNCATEGORIZED) return -1;
-      return a[1].position - b[1].position;
-    });
+    // 3. Nur Gruppen mit Inhalten anzeigen und nach Position sortieren
+    const sortedGroups = Array.from(groupsMap.entries())
+      .filter(([_, group]) => group.items.length > 0)
+      .sort((a, b) => a[1].position - b[1].position);
 
     for (const [key, group] of sortedGroups) {
       out.push({
