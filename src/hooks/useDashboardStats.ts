@@ -37,16 +37,21 @@ export function useDashboardStats(intervalMs = 15_000): DashboardStatsState {
       if (pending) return;
       pending = true;
       const startTime = performance.now();
-      console.log(`[Performance] fetchStats (/dashboard/stats) started at ${new Date().toISOString()}`);
+      const timestamp = new Date().toISOString();
+      console.log(`[Performance] fetchStats (/dashboard/stats) started at ${timestamp} (Relative: ${startTime.toFixed(2)}ms)`);
       try {
         const response = await apiClient.get('/dashboard/stats');
-        const duration = performance.now() - startTime;
-        console.log(`[Performance] fetchStats (/dashboard/stats) finished: HTTP ${response.status}, duration: ${duration.toFixed(2)}ms`);
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        console.log(`[Performance] fetchStats (/dashboard/stats) response received at ${new Date().toISOString()} (Duration: ${duration.toFixed(2)}ms, Relative: ${endTime.toFixed(2)}ms)`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json: DashboardStatsResponse = await response.json();
+        const parseTime = performance.now();
+        console.log(`[Performance] fetchStats (/dashboard/stats) parsed at ${new Date().toISOString()} (Parse duration: ${(parseTime - endTime).toFixed(2)}ms, Total relative: ${parseTime.toFixed(2)}ms)`);
         if (!cancelled) {
           setData(json);
           setError(false);
+          console.log(`[Performance] fetchStats (/dashboard/stats) state updated at ${performance.now().toFixed(2)}ms`);
         }
       } catch (err) {
         if (!cancelled) {

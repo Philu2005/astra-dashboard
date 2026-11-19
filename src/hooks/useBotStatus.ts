@@ -23,17 +23,19 @@ export function useBotStatus(intervalMs = 15_000) {
       if (pending) return;
       pending = true;
       const startTime = performance.now();
-      console.log(`[Performance] useBotStatus (/status) started at ${new Date().toISOString()}`);
+      console.log(`[Performance] useBotStatus (/status) started at ${new Date().toISOString()} (Relative: ${startTime.toFixed(2)}ms)`);
       try {
         const data = await serverApi.getAstraStatus();
-        const duration = performance.now() - startTime;
-        console.log(`[Performance] useBotStatus (/status) finished, duration: ${duration.toFixed(2)}ms`);
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        console.log(`[Performance] useBotStatus (/status) response received at ${new Date().toISOString()} (Duration: ${duration.toFixed(2)}ms, Relative: ${endTime.toFixed(2)}ms)`);
         if (!cancelled) {
           if (data.status && ['online', 'offline', 'connecting', 'unknown'].includes(data.status)) {
             setStatus(data.status);
           } else {
             setStatus(data.online ? 'online' : 'offline');
           }
+          console.log(`[Performance] useBotStatus (/status) state updated at ${performance.now().toFixed(2)}ms`);
         }
       } catch {
         if (!cancelled) {

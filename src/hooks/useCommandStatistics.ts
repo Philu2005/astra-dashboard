@@ -21,16 +21,20 @@ export function useCommandStatistics(refreshMs = 30_000): CommandStatisticsState
       if (pending) return;
       pending = true;
       const startTime = performance.now();
-      console.log(`[Performance] useCommandStatistics (/statistics/commands) started at ${new Date().toISOString()}`);
+      console.log(`[Performance] useCommandStatistics (/statistics/commands) started at ${new Date().toISOString()} (Relative: ${startTime.toFixed(2)}ms)`);
       try {
         const res = await apiClient.get('/statistics/commands');
-        const duration = performance.now() - startTime;
-        console.log(`[Performance] useCommandStatistics (/statistics/commands) finished: HTTP ${res.status}, duration: ${duration.toFixed(2)}ms`);
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        console.log(`[Performance] useCommandStatistics (/statistics/commands) response received at ${new Date().toISOString()} (Duration: ${duration.toFixed(2)}ms, Relative: ${endTime.toFixed(2)}ms)`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: CommandStatisticsResponse = await res.json();
+        const parseTime = performance.now();
+        console.log(`[Performance] useCommandStatistics (/statistics/commands) parsed at ${new Date().toISOString()} (Parse duration: ${(parseTime - endTime).toFixed(2)}ms, Total relative: ${parseTime.toFixed(2)}ms)`);
         if (!cancelled) {
           setData(json);
           setError(false);
+          console.log(`[Performance] useCommandStatistics (/statistics/commands) state updated at ${performance.now().toFixed(2)}ms`);
         }
       } catch (err) {
         if (!cancelled) {

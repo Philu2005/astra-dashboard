@@ -50,8 +50,10 @@ const statusConfig = botStatusConfig;
 const formatNumber = (n: number): string => n.toLocaleString('de-DE');
 
 export const Dashboard = () => {
+  const mountTime = React.useRef(performance.now());
   React.useEffect(() => {
-    console.log(`[Performance] Dashboard mounted at ${new Date().toISOString()}`);
+    const now = performance.now();
+    console.log(`[Performance] Dashboard mounted at ${new Date().toISOString()} (${(now - mountTime.current).toFixed(2)}ms since component init)`);
   }, []);
   const botStatus = useBotStatusContext();
   const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats();
@@ -60,15 +62,24 @@ export const Dashboard = () => {
   // Logging für Initialload
   React.useEffect(() => {
     if (statsData) {
-      console.log(`[Performance] Dashboard Stats loaded: users=${statsData.stats.users}, guilds=${statsData.stats.guilds}, commands=${statsData.stats.commands}`);
+      const now = performance.now();
+      console.log(`[Performance] Dashboard Stats rendered at +${(now - mountTime.current).toFixed(2)}ms: users=${statsData.stats.users}, guilds=${statsData.stats.guilds}, commands=${statsData.stats.commands}`);
     }
   }, [statsData]);
 
   React.useEffect(() => {
     if (cmdStats) {
-      console.log(`[Performance] Command Stats loaded: total=${cmdStats.total}`);
+      const now = performance.now();
+      console.log(`[Performance] Command Stats rendered at +${(now - mountTime.current).toFixed(2)}ms: total=${cmdStats.total}`);
     }
   }, [cmdStats]);
+
+  React.useLayoutEffect(() => {
+    if (statsData && cmdStats) {
+      const now = performance.now();
+      console.log(`[Performance] Dashboard fully painted at +${(now - mountTime.current).toFixed(2)}ms`);
+    }
+  });
 
   const commandData: ChartPoint[] = React.useMemo(() => {
     if (!cmdStats || !cmdStats.data) return [];
@@ -238,21 +249,21 @@ export const Dashboard = () => {
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           title="Server"
-          value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.guilds ?? 0)}
+          value={(statsData === null && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.guilds ?? 0)}
           icon={Layout}
           className={statsData?.stale ? 'opacity-60' : undefined}
           subtitle={statsData?.last_successful_sync ? `Zuletzt: ${new Date(statsData.last_successful_sync).toLocaleTimeString('de-DE')}` : undefined}
         />
         <StatCard
           title="Nutzer"
-          value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.users ?? 0)}
+          value={(statsData === null && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.users ?? 0)}
           icon={Users}
           className={statsData?.stale ? 'opacity-60' : undefined}
           subtitle={statsData?.last_successful_sync ? `Synchronisiert` : undefined}
         />
         <StatCard
           title="Befehle"
-          value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.commands ?? 0)}
+          value={(statsData === null && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.commands ?? 0)}
           icon={Zap}
           className={statsData?.stale ? 'opacity-60' : undefined}
           subtitle={statsData?.stale ? 'Veraltet' : 'Live'}
@@ -378,11 +389,11 @@ export const Dashboard = () => {
                 <h3 className="text-white font-semibold text-[1.46rem] sm:text-[1.72rem] lg:text-[1.92rem] tracking-tight leading-none">Befehle <span className="text-[#9299b4] text-[0.9rem] sm:text-[1rem] lg:text-[1.05rem] font-medium ml-1">(letzte 7 Tage)</span></h3>
              </div>
 
-             {cmdLoading ? (
+             {cmdLoading && !cmdStats ? (
                 <div className="flex items-center justify-center h-[220px] text-[#9d94ff]">
                   <Loader2 className="w-5 h-5 animate-spin" />
                 </div>
-              ) : cmdError ? (
+              ) : cmdError && !cmdStats ? (
                 <div className="flex items-center justify-center h-[220px]">
                   <span className="text-[#c8ccde] text-sm">Statistiken konnten nicht geladen werden.</span>
                 </div>
