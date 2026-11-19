@@ -224,18 +224,21 @@ export const Dashboard = () => {
           value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.guilds ?? 0)}
           icon={Layout}
           className={statsData?.stale ? 'opacity-60' : undefined}
+          subtitle={statsData?.last_successful_sync ? `Zuletzt: ${new Date(statsData.last_successful_sync).toLocaleTimeString('de-DE')}` : undefined}
         />
         <StatCard
           title="Nutzer"
           value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.users ?? 0)}
           icon={Users}
           className={statsData?.stale ? 'opacity-60' : undefined}
+          subtitle={statsData?.last_successful_sync ? `Synchronisiert` : undefined}
         />
         <StatCard
           title="Befehle"
           value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.commands ?? 0)}
           icon={Zap}
           className={statsData?.stale ? 'opacity-60' : undefined}
+          subtitle={statsData?.stale ? 'Veraltet' : 'Live'}
         />
         <StatCard title="Aktive Module" value="8 / 10" icon={Shield} />
       </section>

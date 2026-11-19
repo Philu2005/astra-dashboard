@@ -7,11 +7,12 @@ interface StatCardProps {
   value: string;
   trend?: string;
   trendUp?: boolean;
+  subtitle?: string;
   icon: LucideIcon;
   className?: string;
 }
 
-export const StatCard = ({ title, value, trend, trendUp, icon: Icon, className }: StatCardProps) => {
+export const StatCard = ({ title, value, trend, trendUp, subtitle, icon: Icon, className }: StatCardProps) => {
   return (
     <div className={cn("bg-[linear-gradient(180deg,#151828_0%,#121524_100%)] border border-[#2e334a] p-4 sm:p-5 rounded-[1.05rem] hover:border-astra-purple/50 transition-all duration-300 group relative overflow-hidden shadow-astra min-w-0 h-full", className)}>
       <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0)_42%)] pointer-events-none" />
@@ -30,6 +31,11 @@ export const StatCard = ({ title, value, trend, trendUp, icon: Icon, className }
               trendUp ? "text-emerald-400" : "text-red-400"
             )}>
               {trendUp ? '+' : '-'}{trend} diese Woche
+            </p>
+          )}
+          {subtitle && (
+            <p className="text-[0.75rem] sm:text-[0.85rem] text-[#9399b5] mt-1.5 font-medium leading-none opacity-80 uppercase tracking-wider">
+              {subtitle}
             </p>
           )}
         </div>
