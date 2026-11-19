@@ -12,10 +12,11 @@ import DiscordSelect from '@/components/ui/DiscordSelect';
 import AstraConfirmDialog from '@/components/ui/AstraConfirmDialog';
 import EmbedPreview from '@/components/tickets/EmbedPreview';
 import FloatingActionBar from '@/components/ui/FloatingActionBar';
+import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import {
   LayoutPanelTop, Plus, Pencil, Trash2, Send, Hash, Shield, FolderTree,
   CheckCircle2, AlertTriangle, XCircle, Loader2, ArrowRightLeft, X,
-  ChevronDown,
+  ChevronDown, LayoutGrid,
 } from 'lucide-react';
 
 /* ── Typen ──────────────────────────────────────────────────────── */
@@ -105,10 +106,10 @@ const TicketPanelsPage: React.FC = () => {
   const [createForm, setCreateForm] = useState<EditorState>({ ...EMPTY_EDITOR });
   const [creating, setCreating] = useState(false);
 
-  // Edit form
-  const [editForm, setEditForm] = useState<EditorState>({ ...EMPTY_EDITOR });
+  // Edit form - now a map to support multiple dirty panels
+  const [editStates, setEditStates] = useState<Record<string, EditorState>>({});
   const [saving, setSaving] = useState(false);
-  const initialEditRef = useRef<EditorState | null>(null);
+  const initialStatesRef = useRef<Record<string, EditorState>>({});
 
   // Delete
   const [deleting, setDeleting] = useState(false);
@@ -244,38 +245,70 @@ const TicketPanelsPage: React.FC = () => {
     }
   };
 
-  const onSaveEdit = async () => {
-    if (!guildId || !editPanel?.channel_id) return;
+  const onSaveAll = async () => {
+    if (!guildId) return;
     setSaving(true);
-    try {
-      const payload: TicketPanelConfigRequest = {};
-      const fields: (keyof EditorState)[] = [
-        'title', 'description', 'topic', 'support_role_id', 'category_id',
-      ];
-      for (const f of fields) {
-        const val = editForm[f];
-        if (val) (payload as any)[f] = val;
+    
+    // Find all panels that are dirty
+    const dirtyPanelIds = Object.keys(editStates).filter(id => {
+      const initial = initialStatesRef.current[id];
+      const current = editStates[id];
+      return initial && JSON.stringify(initial) !== JSON.stringify(current);
+    });
+
+    let successCount = 0;
+    let failCount = 0;
+    const newEditStates = { ...editStates };
+
+    for (const channelId of dirtyPanelIds) {
+      const form = editStates[channelId];
+      const panel = panels.find(p => p.channel_id === channelId);
+      if (!panel) continue;
+
+      try {
+        const payload: TicketPanelConfigRequest = {};
+        const fields: (keyof EditorState)[] = ['title', 'description', 'topic', 'support_role_id', 'category_id'];
+        for (const f of fields) {
+          if (form[f]) (payload as any)[f] = form[f];
+        }
+        
+        await ticketsApi.updatePanelConfig(guildId, channelId, payload);
+        
+        // Embed update if title/description changed
+        if (form.title !== panel.title || form.description !== panel.description) {
+          try {
+            await ticketsApi.updatePanel(guildId, channelId, {
+              title: form.title || undefined,
+              description: form.description || undefined,
+            });
+          } catch { /* best effort */ }
+        }
+
+        // Update initial state for this panel
+        initialStatesRef.current[channelId] = { ...form };
+        successCount++;
+      } catch (e: any) {
+        console.error(`Failed to save panel ${channelId}:`, e);
+        failCount++;
       }
-      await ticketsApi.updatePanelConfig(guildId, editPanel.channel_id, payload);
-      // Also update the embed message if title/description changed
-      if (editForm.title || editForm.description) {
-        try {
-          await ticketsApi.updatePanel(guildId, editPanel.channel_id, {
-            title: editForm.title || undefined,
-            description: editForm.description || undefined,
-          });
-        } catch { /* config update succeeded, message update is best-effort */ }
-      }
-      setToast({ type: 'ok', msg: 'Panel aktualisiert.' });
-      setExpandedPanel(null);
-      setEditPanel(null);
-      initialEditRef.current = null;
-      await loadPanels();
-    } catch (e: any) {
-      setToast({ type: 'error', msg: e?.message || 'Speichern fehlgeschlagen.' });
-    } finally {
-      setSaving(false);
     }
+
+    if (failCount === 0) {
+      setToast({ type: 'ok', msg: dirtyPanelIds.length > 1 ? 'Alle Panels aktualisiert.' : 'Panel aktualisiert.' });
+    } else if (successCount > 0) {
+      setToast({ type: 'error', msg: `${successCount} Panels gespeichert, ${failCount} fehlgeschlagen.` });
+    } else {
+      setToast({ type: 'error', msg: 'Speichern fehlgeschlagen.' });
+    }
+
+    await loadPanels();
+    setSaving(false);
+  };
+
+  const onCancelAll = () => {
+    // Reset all edit states to their initial values
+    setEditStates({ ...initialStatesRef.current });
+    setExpandedPanel(null);
   };
 
   const onDelete = async () => {
@@ -315,270 +348,338 @@ const TicketPanelsPage: React.FC = () => {
   /* ── Render ───────────────────────────────────────────────────── */
 
   const isDirty = useMemo(() => {
-    if (!initialEditRef.current) return false;
-    try {
-      return JSON.stringify(initialEditRef.current) !== JSON.stringify(editForm);
-    } catch {
-      return true;
-    }
-  }, [editForm]);
+    return Object.keys(editStates).some(id => {
+      const initial = initialStatesRef.current[id];
+      const current = editStates[id];
+      return initial && JSON.stringify(initial) !== JSON.stringify(current);
+    });
+  }, [editStates]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <SettingsPageHeader
         heading="Ticket-Panels"
         description="Verwalte und veröffentliche Ticket-Panels in Discord-Kanälen."
         backTo={`/servers/${guildId}/modules`}
         backLabel="Modulübersicht"
-        actions={
-          <StyledButton
-            variant="primary"
-            size="md"
-            leftIcon={<Plus />}
-            onClick={() => { setCreateForm({ ...EMPTY_EDITOR }); setShowCreate(true); }}
-          >
-            Neues Panel
-          </StyledButton>
-        }
       />
 
       {/* Toast */}
       {toast && (
-        <div className={`rounded-lg border p-3 text-[0.9rem] ${toast.type === 'ok' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200' : 'border-red-500/40 bg-red-500/10 text-red-200'}`}>
+        <div className={`rounded-lg border p-3 text-[0.9rem] animate-in fade-in slide-in-from-top-2 duration-300 ${toast.type === 'ok' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200' : 'border-red-500/40 bg-red-500/10 text-red-200'}`}>
           {toast.msg}
         </div>
       )}
 
-      {/* Statistik-Leiste */}
-      {!loading && !error && (
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-          {[
-            { label: 'Panels', value: panels.length, icon: LayoutPanelTop },
-            { label: 'Aktiv', value: panels.filter(p => getPanelStatus(p).tone === 'ok').length, icon: CheckCircle2 },
-            { label: 'Kanäle', value: new Set(panels.map(p => p.channel_id).filter(Boolean)).size, icon: Hash },
-            { label: 'Rollen', value: new Set(panels.map(p => p.support_role_id).filter(Boolean)).size, icon: Shield },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-2.5 sm:p-3 text-center">
-              <s.icon className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-astra-accent" />
-              <p className="text-base sm:text-lg font-semibold text-white">{s.value}</p>
-              <p className="text-[0.72rem] sm:text-[0.78rem] text-[#8b8fad] uppercase tracking-tight sm:tracking-normal">{s.label}</p>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        {/* Linke Seite: Bestehende Panels */}
+        <div className="flex-1 min-w-0 space-y-5">
+          {/* Statistik-Leiste */}
+          {!loading && !error && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: 'Panels', value: panels.length, icon: LayoutPanelTop },
+                { label: 'Aktiv', value: panels.filter(p => getPanelStatus(p).tone === 'ok').length, icon: CheckCircle2 },
+                { label: 'Kanäle', value: new Set(panels.map(p => p.channel_id).filter(Boolean)).size, icon: Hash },
+                { label: 'Rollen', value: new Set(panels.map(p => p.support_role_id).filter(Boolean)).size, icon: Shield },
+              ].map(s => (
+                <div key={s.label} className="rounded-xl border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-3 text-center">
+                  <s.icon className="mx-auto mb-1 h-4 w-4 text-astra-accent" />
+                  <p className="text-lg font-semibold text-white">{s.value}</p>
+                  <p className="text-[0.72rem] text-[#8b8fad] uppercase tracking-wider">{s.label}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Ladezustand */}
-      {loading && (
-        <SettingsCard>
-          <div className="flex items-center gap-2 text-[0.95rem] text-[#c1c7de]">
-            <Loader2 className="h-4 w-4 animate-spin" /> Panels werden geladen…
-          </div>
-        </SettingsCard>
-      )}
+          {/* Ladezustand & Fehler */}
+          {loading && (
+            <SettingsCard>
+              <div className="flex items-center gap-2 text-[0.95rem] text-[#c1c7de]">
+                <Loader2 className="h-4 w-4 animate-spin" /> Panels werden geladen…
+              </div>
+            </SettingsCard>
+          )}
 
-      {/* Fehler */}
-      {error && (
-        <SettingsCard>
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-[0.95rem] text-red-200">{error}</div>
-        </SettingsCard>
-      )}
+          {error && (
+            <SettingsCard>
+              <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-[0.95rem] text-red-200">{error}</div>
+            </SettingsCard>
+          )}
 
-      {/* Panel-Liste */}
-      {!loading && !error && panels.length === 0 && (
-        <SettingsCard>
-          <div className="py-8 text-center">
-            <LayoutPanelTop className="mx-auto mb-3 h-10 w-10 text-[#3a3f5c]" />
-            <p className="text-[0.95rem] text-[#8b8fad]">Noch keine Ticket-Panels vorhanden.</p>
-            <p className="mt-1 text-[0.85rem] text-[#6b7094]">Erstelle ein neues Panel, um loszulegen.</p>
-          </div>
-        </SettingsCard>
-      )}
+          {/* Panel-Liste */}
+          {!loading && !error && panels.length === 0 && (
+            <SettingsCard>
+              <div className="py-8 text-center">
+                <LayoutPanelTop className="mx-auto mb-3 h-10 w-10 text-[#3a3f5c]" />
+                <p className="text-[0.95rem] text-[#8b8fad]">Noch keine Ticket-Panels vorhanden.</p>
+                <p className="mt-1 text-[0.85rem] text-[#6b7094]">Erstelle dein erstes Panel auf der rechten Seite.</p>
+              </div>
+            </SettingsCard>
+          )}
 
-      {!loading && !error && panels.length > 0 && (
-        <div className="space-y-3">
-          {panels.map((panel, i) => {
-            const st = getPanelStatus(panel);
-            const isExpanded = expandedPanel === panel.channel_id;
-            
-            return (
-              <div 
-                key={panel.channel_id || i}
-                className={cn(
-                  'rounded-2xl border transition-all duration-300 ease-out group',
-                  isExpanded 
-                    ? 'border-astra-purple/40 bg-[#15182b] shadow-astra-glow ring-1 ring-astra-purple/10' 
-                    : 'border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] hover:border-[#3a4163]'
-                )}
-              >
-                {/* Header: Clickable for toggle */}
-                <button
-                  type="button"
-                  className="w-full text-left p-4 focus:outline-none"
-                  onClick={() => {
-                    if (isExpanded) {
-                      setExpandedPanel(null);
-                      setEditPanel(null);
-                    } else {
-                      const snap = editorFromPanel(panel);
-                      initialEditRef.current = snap;
-                      setEditForm(snap);
-                      setEditPanel(panel);
-                      setExpandedPanel(panel.channel_id || null);
-                    }
-                  }}
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 space-y-1.5 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[0.95rem] font-medium text-white truncate">
-                          {panel.title || 'Ticket-Panel'}
-                        </p>
-                        <StatusBadge tone={st.tone} text={st.text} />
-                      </div>
-                      {panel.description && !isExpanded && (
-                        <p className="text-[0.83rem] text-[#8b8fad] line-clamp-1">{panel.description as string}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8rem] text-[#8b8fad]">
-                        {panel.channel_id && (
-                          <span className="flex items-center gap-1">
-                            <Hash className="h-3.5 w-3.5" />
-                            {channelName[panel.channel_id] || panel.channel_id}
-                          </span>
-                        )}
-                        {panel.support_role_id && (
-                          <span className="flex items-center gap-1">
-                            <Shield className="h-3.5 w-3.5" />
-                            {roleName[panel.support_role_id as string] || panel.support_role_id}
-                          </span>
-                        )}
-                        {panel.category_id && (
-                          <span className="flex items-center gap-1">
-                            <FolderTree className="h-3.5 w-3.5" />
-                            {categoryName[panel.category_id as string] || panel.category_id}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={() => { setMovePanel(panel); setMoveChannelId(''); }}
-                        className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
-                        title="Verschieben"
-                      >
-                        <ArrowRightLeft className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setDeletePanel(panel); setDeleteError(null); }}
-                        className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-red-400 hover:border-red-500/30 transition-colors"
-                        title="Löschen"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                      <div className={cn(
-                        'flex items-center justify-center w-8 h-8 rounded-full border border-[#2a2d4a] bg-[#13152a]/60 text-[#5c6180] transition-all duration-300', 
-                        isExpanded ? 'rotate-180 border-astra-purple/40 bg-astra-purple/10 text-astra-purple' : 'group-hover:border-[#3a4163]'
-                      )}>
-                        <ChevronDown className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Edit Area (Accordion) */}
-                <div 
-                  className={cn(
-                    "grid transition-[grid-template-rows] duration-300 ease-out",
-                    isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                  )}
-                >
-                  <div className="overflow-hidden">
-                    <div 
-                      className="px-5 pb-6 pt-2 border-t border-[#2a2f45]/50"
-                      onClick={e => e.stopPropagation()}
+          {!loading && !error && panels.length > 0 && (
+            <div className="space-y-3">
+              {panels.map((panel, i) => {
+                const st = getPanelStatus(panel);
+                const channelId = panel.channel_id || '';
+                const isExpanded = expandedPanel === channelId;
+                const currentForm = editStates[channelId] || editorFromPanel(panel);
+                
+                return (
+                  <div 
+                    key={channelId || i}
+                    className={cn(
+                      'rounded-2xl border transition-all duration-300 ease-out group',
+                      isExpanded 
+                        ? 'border-astra-purple/40 bg-[#15182b] shadow-astra-glow ring-1 ring-astra-purple/10' 
+                        : 'border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] hover:border-[#3a4163]'
+                    )}
+                  >
+                    {/* Header: Clickable for toggle */}
+                    <button
+                      type="button"
+                      className="w-full text-left p-4 focus:outline-none"
+                      onClick={() => {
+                        if (isExpanded) {
+                          setExpandedPanel(null);
+                        } else {
+                          if (!editStates[channelId]) {
+                            const snap = editorFromPanel(panel);
+                            initialStatesRef.current[channelId] = snap;
+                            setEditStates(prev => ({ ...prev, [channelId]: snap }));
+                          }
+                          setExpandedPanel(channelId);
+                        }
+                      }}
                     >
-                      <div className="mx-auto w-full max-w-[1440px]">
-                        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12 pt-4">
-                          <div className="flex-1 min-w-0 space-y-6">
-                            <FieldGroup label="Discord-Zuweisung">
-                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <DiscordSelect 
-                                  label="Support-Rolle" 
-                                  kind="role" 
-                                  items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
-                                  loading={resLoading} 
-                                  value={editForm.support_role_id || null} 
-                                  onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} 
-                                  className="w-full" 
-                                />
-                                <DiscordSelect
-                                  label="Ziel-Kanal"
-                                  kind="channel"
-                                  groupByCategory
-                                  items={textChannels.map(c => ({ 
-                                    id: c.id, 
-                                    name: c.name, 
-                                    type: c.type, 
-                                    parent_id: c.parent_id ?? null, 
-                                    parent_name: categoryName[c.parent_id || ''] || null 
-                                  }))}
-                                  loading={resLoading}
-                                  value={editForm.channel_id || null}
-                                  onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
-                                  className="w-full"
-                                />
-                              </div>
-                            </FieldGroup>
-                            
-                            <FieldGroup label="Panel-Inhalt">
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                  <div>
-                                    <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
-                                    <StyledInput placeholder="z. B. Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full" />
-                                  </div>
-                                  <div>
-                                    <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
-                                    <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full" />
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
-                                  <StyledTextarea placeholder="Beschreibe kurz den Zweck dieses Panels..." value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[120px]" />
-                                </div>
-                              </div>
-                            </FieldGroup>
-                            
-                            <div className="flex items-center justify-end gap-3 pt-6 border-t border-[#2a2f45]">
-                              <StyledButton variant="ghost" onClick={() => setExpandedPanel(null)} disabled={saving}>Abbrechen</StyledButton>
-                              <StyledButton onClick={onSaveEdit} loading={saving} disabled={!isDirty}>
-                                Speichern
-                              </StyledButton>
-                            </div>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 space-y-1.5 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[0.95rem] font-medium text-white truncate">
+                              {panel.title || 'Ticket-Panel'}
+                            </p>
+                            <StatusBadge tone={st.tone} text={st.text} />
+                            {initialStatesRef.current[channelId] && JSON.stringify(initialStatesRef.current[channelId]) !== JSON.stringify(editStates[channelId]) && (
+                              <span className="flex h-2 w-2 rounded-full bg-astra-purple shadow-[0_0_8px_rgba(75,70,200,0.6)]" title="Ungespeicherte Änderungen" />
+                            )}
                           </div>
+                          {panel.description && !isExpanded && (
+                            <p className="text-[0.83rem] text-[#8b8fad] line-clamp-1">{panel.description as string}</p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8rem] text-[#8b8fad]">
+                            {channelId && (
+                              <span className="flex items-center gap-1">
+                                <Hash className="h-3.5 w-3.5" />
+                                {channelName[channelId] || channelId}
+                              </span>
+                            )}
+                            {panel.support_role_id && (
+                              <span className="flex items-center gap-1">
+                                <Shield className="h-3.5 w-3.5" />
+                                {roleName[panel.support_role_id as string] || panel.support_role_id}
+                              </span>
+                            )}
+                            {panel.category_id && (
+                              <span className="flex items-center gap-1">
+                                <FolderTree className="h-3.5 w-3.5" />
+                                {categoryName[panel.category_id as string] || panel.category_id}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => { setMovePanel(panel); setMoveChannelId(''); }}
+                            className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
+                            title="Verschieben"
+                          >
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setDeletePanel(panel); setDeleteError(null); }}
+                            className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-red-400 hover:border-red-500/30 transition-colors"
+                            title="Löschen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          <div className={cn(
+                            'flex items-center justify-center w-8 h-8 rounded-full border border-[#2a2d4a] bg-[#13152a]/60 text-[#5c6180] transition-all duration-300', 
+                            isExpanded ? 'rotate-180 border-astra-purple/40 bg-astra-purple/10 text-astra-purple' : 'group-hover:border-[#3a4163]'
+                          )}>
+                            <ChevronDown className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </button>
 
-                          <div className="w-full lg:w-[360px] lg:shrink-0">
-                            <div className="sticky top-6">
+                    {/* Edit Area (Accordion) */}
+                    <div 
+                      className={cn(
+                        "grid transition-[grid-template-rows] duration-300 ease-out",
+                        isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                      )}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="px-5 pb-6 pt-2 border-t border-[#2a2f45]/50">
+                          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10 pt-4">
+                            <div className="flex-1 min-w-0 space-y-6">
+                              <FieldGroup label="Discord-Zuweisung">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                  <DiscordSelect 
+                                    label="Support-Rolle" 
+                                    kind="role" 
+                                    items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
+                                    loading={resLoading} 
+                                    value={currentForm.support_role_id || null} 
+                                    onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, support_role_id: v } }))} 
+                                    className="w-full" 
+                                  />
+                                  <DiscordSelect
+                                    label="Ziel-Kanal"
+                                    kind="channel"
+                                    groupByCategory
+                                    items={textChannels.map(c => ({ 
+                                      id: c.id, 
+                                      name: c.name, 
+                                      type: c.type, 
+                                      parent_id: c.parent_id ?? null, 
+                                      parent_name: categoryName[c.parent_id || ''] || null 
+                                    }))}
+                                    loading={resLoading}
+                                    value={currentForm.channel_id || null}
+                                    onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, channel_id: v } }))}
+                                    className="w-full"
+                                  />
+                                </div>
+                              </FieldGroup>
+                              
+                              <FieldGroup label="Panel-Inhalt">
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div>
+                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
+                                      <StyledInput placeholder="z. B. Support" value={currentForm.topic} onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, topic: e.target.value } }))} className="w-full" />
+                                    </div>
+                                    <div>
+                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                                      <StyledInput placeholder="Panel-Titel" value={currentForm.title} onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, title: e.target.value } }))} className="w-full" />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                                    <StyledTextarea placeholder="Beschreibe kurz den Zweck dieses Panels..." value={currentForm.description} onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, description: e.target.value } }))} className="w-full min-h-[100px]" />
+                                  </div>
+                                </div>
+                              </FieldGroup>
+                            </div>
+
+                            <div className="w-full lg:w-[320px] lg:shrink-0">
                               <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
-                              <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
-                                <EmbedPreview title={editForm.title} description={editForm.description} />
+                              <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4 scale-[0.9] origin-top">
+                                <EmbedPreview title={currentForm.title} description={currentForm.description} />
                               </div>
-                              <p className="mt-3 text-[0.78rem] text-[#6b7094] leading-relaxed">
-                                So wird das Panel in Discord für deine Mitglieder angezeigt.
-                              </p>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Rechte Seite: Neues Panel erstellen */}
+        <div className="w-full lg:w-[400px] lg:shrink-0">
+          <div className="sticky top-6">
+            <div className="rounded-2xl border border-astra-cyan/20 bg-[#15182b] p-5 shadow-2xl">
+              <div className="mb-5 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-astra-cyan/10 text-astra-cyan">
+                  <Plus className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Neues Panel</h3>
+              </div>
+
+              <div className="space-y-6">
+                <FieldGroup label="Discord-Zuweisung">
+                  <div className="space-y-4">
+                    <DiscordSelect
+                      label="Zielkanal *"
+                      kind="channel"
+                      groupByCategory
+                      items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+                      loading={resLoading}
+                      value={createForm.channel_id}
+                      onChange={v => {
+                        const channel = channels.find(c => c.id === v);
+                        setCreateForm(f => ({ ...f, channel_id: v, category_id: channel?.parent_id || f.category_id }));
+                      }}
+                      className="w-full"
+                    />
+                    <DiscordSelect
+                      label="Support-Rolle *"
+                      kind="role"
+                      items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))}
+                      loading={resLoading}
+                      value={createForm.support_role_id}
+                      onChange={v => setCreateForm(f => ({ ...f, support_role_id: v }))}
+                      className="w-full"
+                    />
+                  </div>
+                </FieldGroup>
+
+                <FieldGroup label="Embed Inhalt">
+                  <div className="space-y-4">
+                    <StyledInput
+                      label="Titel"
+                      placeholder="z. B. Support Tickets"
+                      value={createForm.title}
+                      onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
+                    />
+                    <StyledTextarea
+                      label="Beschreibung"
+                      placeholder="Klicke auf den Button um ein Ticket zu erstellen..."
+                      value={createForm.description}
+                      onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                </FieldGroup>
+
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4 overflow-hidden">
+                  <p className="mb-2 text-[0.7rem] font-bold text-[#6b7094] uppercase tracking-widest">Vorschau</p>
+                  <div className="scale-[0.85] origin-top-left">
+                    <EmbedPreview title={createForm.title} description={createForm.description} />
+                  </div>
+                </div>
+
+                <StyledButton
+                  variant="primary"
+                  className="w-full py-6 text-base shadow-astra-glow"
+                  onClick={onPublish}
+                  loading={creating}
+                  disabled={!createForm.channel_id || !createForm.support_role_id}
+                  leftIcon={<Send className="h-5 w-5" />}
+                >
+                  Panel veröffentlichen
+                </StyledButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Bar */}
+      <SettingsSaveBar
+        dirty={isDirty}
+        saving={saving}
+        onSave={onSaveAll}
+        onCancel={onCancelAll}
+      />
 
       {/* ── Create Dialog ─────────────────────────────────────────── */}
       {showCreate && (
