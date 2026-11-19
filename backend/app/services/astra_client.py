@@ -292,7 +292,7 @@ class AstraClient:
         """GET /moderation/members/lookup/{guild_id}?user_id=<user_id>&member_ids=id1,id2..."""
         params = {
             "user_id": user_id,
-            "member_ids": ",".join(member_ids)
+            "user_ids": ",".join(member_ids)
         }
         return await self._request("GET", f"/moderation/members/lookup/{guild_id}", params=params)
 
