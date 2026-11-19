@@ -498,9 +498,9 @@ const TicketPanelsPage: React.FC = () => {
                       className="px-5 pb-6 pt-2 border-t border-[#2a2f45]/50"
                       onClick={e => e.stopPropagation()}
                     >
-                      <div className="mx-auto w-full max-w-5xl">
-                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.2fr_0.8fr] pt-4">
-                          <div className="space-y-6">
+                      <div className="mx-auto w-full max-w-[1440px]">
+                        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12 pt-4">
+                          <div className="flex-1 min-w-0 space-y-6">
                             <FieldGroup label="Discord-Zuweisung">
                               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <DiscordSelect 
@@ -545,7 +545,7 @@ const TicketPanelsPage: React.FC = () => {
                                 </div>
                                 <div>
                                   <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
-                                  <StyledTextarea placeholder="Beschreibe kurz den Zweck dieses Panels..." value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[100px]" />
+                                  <StyledTextarea placeholder="Beschreibe kurz den Zweck dieses Panels..." value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[120px]" />
                                 </div>
                               </div>
                             </FieldGroup>
@@ -558,7 +558,7 @@ const TicketPanelsPage: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="hidden lg:block">
+                          <div className="w-full lg:w-[360px] lg:shrink-0">
                             <div className="sticky top-6">
                               <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
                               <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
