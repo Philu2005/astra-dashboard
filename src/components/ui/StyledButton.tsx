@@ -56,7 +56,7 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
           </svg>
         )}
         {!loading && renderIcon(leftIcon)}
-        <span className="leading-none truncate">{children}</span>
+        <span className="truncate">{children}</span>
         {!loading && renderIcon(rightIcon)}
       </button>
     );

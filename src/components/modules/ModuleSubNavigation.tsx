@@ -15,9 +15,9 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   const items = module.subpages ?? [];
 
   return (
-    <div className="w-fit max-w-full rounded-xl border border-[#2d3246] bg-[#0f1220]/80 p-1 shadow-astra">
+    <div className="w-fit max-w-full rounded-xl border border-[#2d3246] bg-[#0f1220]/80 p-1.5 shadow-astra">
       <nav
-        className="flex w-full gap-1 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex w-full gap-1.5 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label={`${module.name} Unterseiten`}
         role="tablist"
       >
@@ -33,10 +33,10 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
               key={sp.id}
               to={href}
               className={cn(
-                'inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-[0.92rem] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40 shrink-0',
+                'inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-[0.92rem] font-medium border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40 shrink-0',
                 active
-                  ? 'bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white border border-[#5f58d8]/50 shadow-[0_4px_12px_-6px_rgba(75,70,200,0.8)]'
-                  : 'text-[#9ca2be] border border-transparent hover:text-white hover:bg-white/5 hover:border-[#373c53]'
+                  ? 'bg-[linear-gradient(90deg,rgba(83,76,205,0.5)_0%,rgba(83,76,205,0.25)_100%)] text-white border-[#5f58d8]/50 shadow-[0_4px_10px_-4px_rgba(75,70,200,0.6)]'
+                  : 'text-[#9ca2be] border-transparent hover:text-white hover:bg-white/5 hover:border-[#373c53]'
               )}
               aria-current={active ? 'page' : undefined}
               role="tab"
