@@ -33,15 +33,15 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
     const renderIcon = (icon?: React.ReactNode) => {
       if (!icon) return null;
       // Wrapper sorgt für konsistente Icon-Größe ohne die Child-Props zu verändern
-      return <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-4 [&>svg]:w-4" aria-hidden>{icon}</span>;
+      return <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-4 [&>svg]:w-4 pointer-events-none" aria-hidden>{icon}</span>;
     };
     return (
       <button
         ref={ref}
         disabled={isDisabled}
         className={cn(
-          'inline-flex flex-row flex-nowrap items-center justify-center gap-2 border transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
-          'shadow-astra select-none shrink-0 w-fit font-medium overflow-hidden whitespace-nowrap',
+          'inline-flex items-center justify-center gap-2 border transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
+          'shadow-astra select-none shrink-0 w-fit font-medium overflow-hidden whitespace-nowrap flex-row flex-nowrap',
           variantClasses[variant],
           sizeClasses[size],
           isDisabled && 'opacity-70 cursor-not-allowed',
@@ -50,13 +50,13 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
         {...props}
       >
         {loading && (
-          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+          <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
           </svg>
         )}
         {!loading && renderIcon(leftIcon)}
-        <span className="truncate">{children}</span>
+        {children && <span className="truncate pointer-events-none min-w-0 flex-shrink">{children}</span>}
         {!loading && renderIcon(rightIcon)}
       </button>
     );

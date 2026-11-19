@@ -225,7 +225,13 @@ const AutomodPage: React.FC = () => {
                       <span className="text-[#dbe3ff] font-medium">Moderationsregeln</span>
                       <p className="text-[0.82rem] sm:text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
                     </div>
-                    <StyledButton variant="secondary" size="sm" onClick={addRule} leftIcon={<Plus className="w-4 h-4 shrink-0" />} className="w-full sm:w-auto shrink-0">
+                    <StyledButton 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={addRule} 
+                      leftIcon={<Plus className="w-4 h-4" />}
+                      className="w-full sm:w-auto shrink-0"
+                    >
                       Regel hinzufügen
                     </StyledButton>
                   </div>
@@ -238,11 +244,11 @@ const AutomodPage: React.FC = () => {
                     </div>
                   )}
                   {sortedRules.map((rule, idx) => (
-                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-4 shadow-astra hover:border-astra-purple/40 transition-colors relative">
-                      <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-3 min-w-0">
-                        <div className="flex items-end gap-3 flex-1 min-w-0">
+                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-4 shadow-astra hover:border-astra-purple/40 transition-colors relative min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-3 min-w-0">
+                        <div className="flex flex-col xs:flex-row items-stretch xs:items-end gap-3 flex-1 min-w-0">
                           {/* Warnungen */}
-                          <div className="w-[80px] xs:w-[100px] shrink-0">
+                          <div className="w-full xs:w-[100px] shrink-0">
                             <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                               Warnungen
                               <StyledTooltip content="Anzahl der Verwarnungen, ab der die festgelegte Moderationsaktion automatisch ausgeführt wird." side="top" className="w-56">
@@ -350,10 +356,10 @@ const AutomodPage: React.FC = () => {
                             size="sm" 
                             onClick={() => removeRule(idx)} 
                             title="Regel entfernen" 
-                            className="h-11 w-full sm:h-10 sm:w-auto px-4 sm:px-3 flex-row"
+                            leftIcon={<Trash2 className="w-4 h-4" />}
+                            className="h-11 w-full sm:h-10 sm:w-auto px-4 sm:px-3"
                           >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="sm:hidden ml-2 font-medium">Löschen</span>
+                            <span className="sm:hidden font-medium">Löschen</span>
                           </StyledButton>
                         </div>
                       </div>
@@ -372,19 +378,19 @@ const AutomodPage: React.FC = () => {
                     <ShieldAlert className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-[1rem] font-semibold text-white">Beleidigungsfilter</h3>
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.75rem] font-semibold ${profanityEnabled ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-[#1d2238] text-[#9ca2be] border border-[#353c56]'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${profanityEnabled ? 'bg-emerald-400' : 'bg-[#6b7194]'}`} />
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-[1rem] font-semibold text-white truncate">Beleidigungsfilter</h3>
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.75rem] font-semibold shrink-0 ${profanityEnabled ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-[#1d2238] text-[#9ca2be] border border-[#353c56]'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${profanityEnabled ? 'bg-emerald-400' : 'bg-[#6b7194]'}`} />
                         {profanityEnabled ? 'Aktiv' : 'Inaktiv'}
                       </span>
                     </div>
                     <p className="text-[0.88rem] text-muted-foreground mb-3">
                       Erkennt Beleidigungen automatisch und berücksichtigt den Zusammenhang einer Nachricht, um harmlose Aussagen nicht unnötig zu bestrafen.
                     </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[0.85rem] text-[#9ca2be]">Filter aktivieren</span>
-                      <StyledSwitch checked={profanityEnabled} onChange={(v) => setProfanityEnabled(v)} />
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-[0.85rem] text-[#9ca2be] truncate">Filter aktivieren</span>
+                      <StyledSwitch checked={profanityEnabled} onChange={(v) => setProfanityEnabled(v)} className="shrink-0" />
                     </div>
                   </div>
                 </div>
@@ -417,19 +423,19 @@ const AutomodPage: React.FC = () => {
                   <p className="text-[0.85rem] text-muted-foreground mt-0.5">Erkennt Nachrichten, die überwiegend in Großbuchstaben geschrieben wurden. Ab dem festgelegten Prozentwert kann die konfigurierte Moderationsregel greifen.</p>
                 </div>
               }>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+                  <div className="flex items-center gap-3 shrink-0">
                     <StyledSwitch checked={capsEnabled} onChange={(v) => setCapsEnabled(v)} />
                     <span className="text-[0.9rem] text-muted-foreground">Erkennung aktivieren</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.85rem] text-muted-foreground whitespace-nowrap">Schwelle (%)</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[0.85rem] text-muted-foreground truncate flex-shrink">Schwelle (%)</span>
                     <StyledNumberInput
                       value={(capsPercent as any)}
                       onChange={(e) => setCapsPercent((e.target as any).value === '' ? '' : Math.max(0, Math.min(100, Number((e.target as any).value))))}
                       min={0}
                       max={100}
-                      className="w-20"
+                      className="w-20 shrink-0"
                     />
                   </div>
                 </div>

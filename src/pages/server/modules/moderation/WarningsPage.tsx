@@ -232,9 +232,14 @@ const WarningsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex w-full sm:w-auto gap-2">
-                  <StyledButton onClick={() => load()} disabled={loading} variant="secondary" className="w-full sm:w-auto gap-2">
-                    <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? 'animate-spin' : ''}`} />
-                    <span>{loading ? 'Wird geladen...' : 'Aktualisieren'}</span>
+                  <StyledButton 
+                    onClick={() => load()} 
+                    disabled={loading} 
+                    variant="secondary" 
+                    leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
+                    className="w-full sm:w-auto"
+                  >
+                    {loading ? 'Wird geladen...' : 'Aktualisieren'}
                   </StyledButton>
                 </div>
               </div>
@@ -249,7 +254,7 @@ const WarningsPage: React.FC = () => {
                   <div className="flex flex-wrap gap-2 flex-1 min-w-0">
                     <button
                       onClick={() => setMemberFilter(null)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 ${
                         !memberFilter 
                           ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30' 
                           : 'bg-[#1a1e33] text-[#9ca2be] border border-[#2a2f45] hover:border-[#3a3f5a]'
@@ -261,7 +266,7 @@ const WarningsPage: React.FC = () => {
                       <button
                         key={opt.id}
                         onClick={() => setMemberFilter(opt.id)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all max-w-[120px] xs:max-w-[180px] sm:max-w-none ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all max-w-[120px] xs:max-w-[180px] sm:max-w-none shrink-0 ${
                           memberFilter === opt.id
                             ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
                             : 'bg-[#1a1e33] text-[#9ca2be] border border-[#2a2f45] hover:border-[#3a3f5a]'
@@ -358,7 +363,7 @@ const WarningsPage: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-[#dbe3ff] truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">
                             {members[userId] ? (
                               <>
@@ -392,9 +397,9 @@ const WarningsPage: React.FC = () => {
                             <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#1a1e33] text-[0.7rem] font-bold text-[#5c627a] border border-[#2a2f45]">
                               {list.length - idx}
                             </div>
-                            <div className="space-y-1 min-w-0">
-                              <div className="flex items-center gap-2 text-[0.8rem] text-[#9ca2be]">
-                                <span className="font-mono text-[0.7rem] bg-[#1a1e33] px-1 rounded border border-[#2a2f45]">ID: {String(w.warnId).slice(-8)}</span>
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2 text-[0.8rem] text-[#9ca2be]">
+                                <span className="font-mono text-[0.7rem] bg-[#1a1e33] px-1 rounded border border-[#2a2f45] shrink-0">ID: {String(w.warnId).slice(-8)}</span>
                               </div>
                               <p className="text-[0.95rem] leading-relaxed text-[#dbe3ff] break-words">
                                 {w.reason || <span className="italic opacity-30 text-[#9ca2be]">Kein Grund angegeben</span>}
@@ -408,20 +413,21 @@ const WarningsPage: React.FC = () => {
                             disabled={!!actionLoading} 
                             size="sm" 
                             variant={confirmOne === String(w.warnId) ? 'danger' : 'ghost'}
-                            className="h-9 gap-2 min-w-[36px] sm:min-w-[100px] flex-row"
+                            leftIcon={
+                              actionLoading === String(w.warnId) ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              ) : confirmOne === String(w.warnId) ? (
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100" />
+                              )
+                            }
+                            className="h-9 min-w-[36px] sm:min-w-[100px]"
                           >
-                            {actionLoading === String(w.warnId) ? (
-                              <RefreshCw className="h-3.5 w-3.5 animate-spin shrink-0" />
-                            ) : confirmOne === String(w.warnId) ? (
-                              <>
-                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                                <span className="hidden xs:inline truncate">Bestätigen</span>
-                              </>
+                            {confirmOne === String(w.warnId) ? (
+                              <span className="hidden xs:inline">Bestätigen</span>
                             ) : (
-                              <>
-                                <Trash2 className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100" />
-                                <span className="hidden sm:inline truncate">Entfernen</span>
-                              </>
+                              <span className="hidden sm:inline">Entfernen</span>
                             )}
                           </StyledButton>
                         </div>
@@ -457,10 +463,10 @@ const WarningsPage: React.FC = () => {
                     onClick={onDeleteAll}
                     disabled={!canQuery || loading || actionLoading !== null || warns.length === 0}
                     variant={confirmAll ? 'danger' : 'secondary'}
-                    className="w-full justify-start gap-3 border-red-500/20 text-red-200/70 hover:bg-red-500/10 hover:text-red-200 flex-row"
+                    leftIcon={<Trash2 className="h-4 w-4" />}
+                    className="w-full justify-start border-red-500/20 text-red-200/70 hover:bg-red-500/10 hover:text-red-200"
                   >
-                    <Trash2 className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{confirmAll ? 'Sicher? Jetzt klicken.' : 'Alle Verwarnungen löschen'}</span>
+                    {confirmAll ? 'Sicher? Jetzt klicken.' : 'Alle Verwarnungen löschen'}
                   </StyledButton>
                   {confirmAll && (
                     <p className="text-[0.7rem] text-red-400 px-1 animate-pulse">
