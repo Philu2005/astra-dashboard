@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { serverApi, ServerApiError } from '@/services/server-api';
 import type { AstraServer, ServerLoadingState } from '@/types/server';
@@ -70,20 +70,62 @@ const ServerContext = createContext<ServerContextValue | null>(null);
 export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<ServerLoadingState>({ status: 'idle' });
+  const retryTimerRef = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchServers = useCallback(async () => {
-    setLoadingState({ status: 'loading' });
+  const fetchServers = useCallback(async (retryCount = 0) => {
+    // Wenn es der erste Versuch ist, setzen wir den Status auf 'loading'
+    // Bei Retries behalten wir den Status bei oder könnten einen speziellen 'retrying' Status nutzen.
+    // Hier nutzen wir 'loading', um dem User Feedback zu geben, dass etwas passiert.
+    if (retryCount === 0) {
+      setLoadingState({ status: 'loading' });
+    } else {
+      setLoadingState({ 
+        status: 'loading', 
+        message: `Synchronisierung läuft... (Versuch ${retryCount})` 
+      });
+    }
+
+    // Vorherige Requests abbrechen
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    // Vorherige Timer löschen
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+
     try {
-      const response = await serverApi.getServers();
+      const response = await serverApi.getServers({ signal: abortControllerRef.current.signal });
       if (response.success && Array.isArray(response.servers)) {
         setLoadingState({ status: 'success', data: response.servers });
       } else {
         setLoadingState({ status: 'error', error: 'Ungültige Antwort vom Server.' });
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+
       if (err instanceof ServerApiError) {
         if (err.statusCode === 503) {
-          setLoadingState({ status: 'unavailable' });
+          const maxRetries = 6;
+          if (retryCount < maxRetries) {
+            // Exponentielles Backoff: 1s, 2s, 4s, 8s, 16s, 32s
+            const delay = Math.pow(2, retryCount) * 1000;
+            
+            // UI Update: Wir bleiben im 'loading' Zustand, 
+            // könnten aber eine Info hinzufügen, dass wir warten.
+            // Der Typ ServerLoadingState unterstützt das aktuell nicht direkt,
+            // daher bleiben wir bei 'loading' für die UX-Konsistenz.
+            
+            retryTimerRef.current = window.setTimeout(() => {
+              fetchServers(retryCount + 1);
+            }, delay);
+          } else {
+            setLoadingState({ status: 'unavailable' });
+          }
         } else {
           setLoadingState({ status: 'error', error: err.message, errorCode: err.statusCode });
         }
@@ -95,6 +137,15 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     fetchServers();
+
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, [fetchServers]);
+
+  const refresh = useCallback(() => {
+    fetchServers(0);
   }, [fetchServers]);
 
   const servers = useMemo<DisplayServer[]>(() => {
@@ -139,8 +190,8 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     selectedServer,
     selectServer,
     loadingState,
-    refresh: fetchServers,
-  }), [servers, selectedServerId, selectedServer, selectServer, loadingState, fetchServers]);
+    refresh,
+  }), [servers, selectedServerId, selectedServer, selectServer, loadingState, refresh]);
 
   return (
     <ServerContext.Provider value={value}>

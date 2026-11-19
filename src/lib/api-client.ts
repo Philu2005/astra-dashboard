@@ -35,7 +35,7 @@ function assertNoDoubleApiPrefix(endpoint: string): void {
 }
 
 export const apiClient = {
-  async get(endpoint: string) {
+  async get(endpoint: string, options?: RequestInit) {
     assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);
     const response = await fetch(`${base}${endpoint}`, {
@@ -43,12 +43,14 @@ export const apiClient = {
       credentials: 'include',
       headers: {
         'Accept': 'application/json',
+        ...options?.headers,
       },
+      ...options,
     });
     return response;
   },
 
-  async post(endpoint: string, data?: unknown) {
+  async post(endpoint: string, data?: unknown, options?: RequestInit) {
     assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);
     const response = await fetch(`${base}${endpoint}`, {
@@ -57,13 +59,15 @@ export const apiClient = {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        ...options?.headers,
       },
       body: data ? JSON.stringify(data) : undefined,
+      ...options,
     });
     return response;
   },
 
-  async put(endpoint: string, data?: unknown) {
+  async put(endpoint: string, data?: unknown, options?: RequestInit) {
     assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);
     const response = await fetch(`${base}${endpoint}`, {
@@ -72,13 +76,15 @@ export const apiClient = {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        ...options?.headers,
       },
       body: data ? JSON.stringify(data) : undefined,
+      ...options,
     });
     return response;
   },
 
-  async delete(endpoint: string) {
+  async delete(endpoint: string, options?: RequestInit) {
     assertNoDoubleApiPrefix(endpoint);
     const base = resolveBase(endpoint);
     const response = await fetch(`${base}${endpoint}`, {
@@ -86,7 +92,9 @@ export const apiClient = {
       credentials: 'include',
       headers: {
         'Accept': 'application/json',
+        ...options?.headers,
       },
+      ...options,
     });
     return response;
   },

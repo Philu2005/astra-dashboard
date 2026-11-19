@@ -42,23 +42,23 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const serverApi = {
-  async getServers(): Promise<ServersResponse> {
-    const res = await apiClient.get('/servers');
+  async getServers(options?: RequestInit): Promise<ServersResponse> {
+    const res = await apiClient.get('/servers', options);
     return handleResponse<ServersResponse>(res);
   },
 
-  async getServer(guildId: string): Promise<ServerDetailsResponse> {
-    const res = await apiClient.get(`/servers/${guildId}`);
+  async getServer(guildId: string, options?: RequestInit): Promise<ServerDetailsResponse> {
+    const res = await apiClient.get(`/servers/${guildId}`, options);
     return handleResponse<ServerDetailsResponse>(res);
   },
 
-  async getServerRoles(guildId: string): Promise<ServerRolesResponse> {
-    const res = await apiClient.get(`/servers/${guildId}/roles`);
+  async getServerRoles(guildId: string, options?: RequestInit): Promise<ServerRolesResponse> {
+    const res = await apiClient.get(`/servers/${guildId}/roles`, options);
     return handleResponse<ServerRolesResponse>(res);
   },
 
-  async getAstraStatus(): Promise<AstraStatusResponse> {
-    const res = await apiClient.get('/status');
+  async getAstraStatus(options?: RequestInit): Promise<AstraStatusResponse> {
+    const res = await apiClient.get('/status', options);
     return handleResponse<AstraStatusResponse>(res);
   },
 };

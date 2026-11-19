@@ -14,7 +14,12 @@ const ServerLayout: React.FC = () => {
 
   // Ladezustände
   if (loadingState.status === 'loading' || loadingState.status === 'idle') {
-    return <StaticInfoPage title="Wird geladen..." description="Server werden geladen." />;
+    return (
+      <StaticInfoPage
+        title="Wird geladen..."
+        description={loadingState.status === 'loading' && loadingState.message ? loadingState.message : "Server werden geladen."}
+      />
+    );
   }
   if (loadingState.status === 'unavailable') {
     return (

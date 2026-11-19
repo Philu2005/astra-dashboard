@@ -128,6 +128,10 @@ export const Servers = () => {
 
   // --- Loading State ---
   if (loadingState.status === 'idle' || loadingState.status === 'loading') {
+    const loadingMessage = loadingState.status === 'loading' && loadingState.message 
+      ? loadingState.message 
+      : 'Serverliste wird geladen…';
+      
     return (
       <div className="space-y-5 lg:space-y-6 w-full">
         <section className="pt-2 lg:pt-3 space-y-2">
@@ -135,12 +139,12 @@ export const Servers = () => {
             {getGreeting()}, {displayName}
           </h2>
           <p className="text-[#c1c7de] text-[1.75rem] xl:text-[1.95rem] font-normal max-w-4xl leading-tight">
-            Server werden geladen…
+            {loadingMessage}
           </p>
         </section>
         <div className="bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] border border-[#2d3246] rounded-[1.15rem] p-10 shadow-astra text-center">
           <Loader2 className="w-10 h-10 text-[#9d94ff] mx-auto mb-3 animate-spin" />
-          <p className="text-[#9ca2be] text-[1.1rem] font-medium">Serverliste wird geladen…</p>
+          <p className="text-[#9ca2be] text-[1.1rem] font-medium">{loadingMessage}</p>
         </div>
       </div>
     );

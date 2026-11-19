@@ -69,7 +69,7 @@ export interface ApiErrorResponse {
 
 export type ServerLoadingState =
   | { status: 'idle' }
-  | { status: 'loading' }
+  | { status: 'loading'; message?: string }
   | { status: 'success'; data: AstraServer[] }
   | { status: 'error'; error: string; errorCode?: number }
   | { status: 'unavailable' };
