@@ -75,7 +75,7 @@ function buildOptions(
 
   if (kind === 'channel' && groupByCategory) {
     const UNCATEGORIZED = '__uncategorized__';
-    const groupsMap = new Map<string, { name: string; items: DiscordEntity[] }>();
+    const groupsMap = new Map<string, { name: string; items: DiscordEntity[]; position: number }>();
 
     for (const it of items) {
       const parentName = (it.parent_name || '').trim();
