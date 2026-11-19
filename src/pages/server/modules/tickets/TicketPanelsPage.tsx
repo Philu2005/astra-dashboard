@@ -16,7 +16,7 @@ import EmbedPreview from '@/components/tickets/EmbedPreview';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import {
   LayoutPanelTop, Plus, Trash2, Send, Hash, Shield, FolderTree,
-  CheckCircle2, AlertTriangle, XCircle, Loader2, ArrowRightLeft, X,
+  CheckCircle2, AlertTriangle, XCircle, Loader2, X,
   ChevronDown, LayoutGrid,
 } from 'lucide-react';
 
@@ -105,7 +105,6 @@ const TicketPanelsPage: React.FC = () => {
   // Dialogs
   const [showCreate, setShowCreate] = useState(false);
   const [deletePanel, setDeletePanel] = useState<TicketPanel | null>(null);
-  const [movePanel, setMovePanel] = useState<TicketPanel | null>(null);
   const [expandedPanel, setExpandedPanel] = useState<string | null>(null);
 
   // Create form
@@ -120,10 +119,6 @@ const TicketPanelsPage: React.FC = () => {
   // Delete
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  // Move
-  const [moveChannelId, setMoveChannelId] = useState('');
-  const [moving, setMoving] = useState(false);
 
   // Toast auto-dismiss
   useEffect(() => {
@@ -266,12 +261,14 @@ const TicketPanelsPage: React.FC = () => {
     let successCount = 0;
     let failCount = 0;
 
-    for (const channelId of dirtyPanelIds) {
-      const form = editStates[channelId];
-      const panel = panels.find(p => p.channel_id === channelId);
+    for (const originalChannelId of dirtyPanelIds) {
+      const form = editStates[originalChannelId];
+      const panel = panels.find(p => p.channel_id === originalChannelId);
       if (!panel) continue;
 
       try {
+        const hasChannelChanged = form.channel_id !== originalChannelId;
+        
         // Konfiguration und Embed-Inhalt in einem Rutsch aktualisieren
         const payload: TicketPanelConfigRequest = {
           support_role_id: form.support_role_id || undefined,
@@ -280,18 +277,38 @@ const TicketPanelsPage: React.FC = () => {
           title: form.ticket_title || undefined,
           description: form.description || undefined,
         };
-        
-        await ticketsApi.updatePanelConfig(guildId, channelId, payload);
-        
-        // Da das Backend bei updatePanelConfig auch den Titel/Description im Embed ändert,
-        // ist ein zusätzlicher Aufruf von updatePanel (Embed-Update) meist redundant,
-        // aber wir lassen ihn für die Design-Treue/Sicherheit weg, wenn nicht explizit nötig,
-        // um den "doppelten Aufruf"-Fehler zu vermeiden.
 
-        initialStatesRef.current[channelId] = { ...form };
+        // Wenn der Kanal geändert wurde, übergeben wir die neue channel_id an updatePanelConfig
+        // Das Backend mappt channel_id auf new_channel_id und führt den Move-Workflow aus.
+        if (hasChannelChanged) {
+          payload.channel_id = form.channel_id;
+        }
+        
+        const res = await ticketsApi.updatePanelConfig(guildId, originalChannelId, payload);
+        
+        // Wenn verschoben wurde, aktualisieren wir den Key in editStates und initialStatesRef
+        if (hasChannelChanged && res.channel_id) {
+          const newId = res.channel_id;
+          initialStatesRef.current[newId] = { ...form };
+          delete initialStatesRef.current[originalChannelId];
+          
+          setEditStates(prev => {
+            const next = { ...prev };
+            next[newId] = { ...form };
+            delete next[originalChannelId];
+            return next;
+          });
+
+          if (expandedPanel === originalChannelId) {
+            setExpandedPanel(newId);
+          }
+        } else {
+          initialStatesRef.current[originalChannelId] = { ...form };
+        }
+
         successCount++;
       } catch (e: any) {
-        console.error(`Fehler beim Speichern von Panel ${channelId}:`, e);
+        console.error(`Fehler beim Speichern von Panel ${originalChannelId}:`, e);
         failCount++;
       }
     }
@@ -329,52 +346,6 @@ const TicketPanelsPage: React.FC = () => {
       setDeleteError(e?.message || 'Löschen fehlgeschlagen.');
     } finally {
       setDeleting(false);
-    }
-  };
-
-  const onMove = async () => {
-    console.log('[TicketPanel Move] Triggered', {
-      guildId,
-      panelChannelId: movePanel?.channel_id,
-      targetChannelId: moveChannelId,
-    });
-
-    if (!guildId || !movePanel?.channel_id || !moveChannelId) {
-      console.warn('[TicketPanel Move] Validation failed - missing IDs');
-      return;
-    }
-
-    setMoving(true);
-    try {
-      console.log('[TicketPanel Move] API Call: updatePanelConfig', {
-        guildId,
-        channelId: movePanel.channel_id,
-        new_channel_id: moveChannelId
-      });
-      
-      const res = await ticketsApi.updatePanelConfig(
-          guildId,
-          movePanel.channel_id,
-          { channel_id: moveChannelId }
-      );
-
-      console.log('[TicketPanel Move] API Success:', res);
-
-      setToast({ type: 'ok', msg: res.message || 'Panel verschoben.' });
-      setMovePanel(null);
-      setMoveChannelId('');
-      await loadPanels();
-    } catch (e: any) {
-      console.error('[TicketPanel Move] Failed:', {
-        error: e,
-        message: e?.message,
-        guildId,
-        panelChannelId: movePanel.channel_id,
-        targetChannelId: moveChannelId
-      });
-      setToast({ type: 'error', msg: e?.message || 'Verschieben fehlgeschlagen.' });
-    } finally {
-      setMoving(false);
     }
   };
 
@@ -536,20 +507,6 @@ const TicketPanelsPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={(e) => { 
-                              e.preventDefault();
-                              e.stopPropagation();
-                              console.log('[TicketPanel] Move button clicked for panel:', panel.channel_id);
-                              setMovePanel(panel); 
-                              setMoveChannelId(''); 
-                            }}
-                            className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
-                            title="Verschieben"
-                          >
-                            <ArrowRightLeft className="h-4 w-4" />
-                          </button>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -819,43 +776,7 @@ const TicketPanelsPage: React.FC = () => {
       {/* Removed separate Edit Modal in favor of Accordion-Style inline edit */}
 
       {/* ── Move Dialog ───────────────────────────────────────────── */}
-      {movePanel && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => !moving && setMovePanel(null)} />
-          <div className="relative z-10 w-[92%] max-w-md rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-xl p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Panel verschieben</h3>
-            <p className="text-[0.85rem] text-[#8b8fad]">
-              Verschiebe das Panel aus <span className="text-white font-medium">#{channelName[movePanel.channel_id || ''] || movePanel.channel_id}</span> in einen anderen Kanal.
-            </p>
-            <ModuleChannelSelect
-              label="Neuer Zielkanal"
-              items={textChannelResources.filter(c => c.id !== movePanel.channel_id)}
-              loading={resLoading}
-              value={moveChannelId || null}
-              onChange={v => {
-                console.log('[TicketPanel Move] targetChannelId selected:', v);
-                setMoveChannelId(v);
-              }}
-            />
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <StyledButton variant="ghost" onClick={() => setMovePanel(null)} disabled={moving}>Abbrechen</StyledButton>
-              <StyledButton
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('[TicketPanel Move] Button wirklich geklickt');
-                    void onMove();
-                  }}
-                  disabled={moving || !moveChannelId}
-                  leftIcon={<ArrowRightLeft />}
-              >
-                {moving ? 'Wird verschoben…' : 'Verschieben'}
-              </StyledButton>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed in favor of inline channel selection and save-all workflow */}
 
       {/* ── Delete Dialog ─────────────────────────────────────────── */}
       <AstraConfirmDialog
