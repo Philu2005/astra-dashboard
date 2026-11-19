@@ -245,10 +245,10 @@ const AutomodPage: React.FC = () => {
                   )}
                   {sortedRules.map((rule, idx) => (
                     <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-4 shadow-astra hover:border-astra-purple/40 transition-colors relative min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-3 min-w-0">
-                        <div className="flex flex-col xs:flex-row items-stretch xs:items-end gap-3 flex-1 min-w-0">
+                      <div className="flex flex-col lg:flex-row lg:items-end gap-3 min-w-0">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 flex-1 min-w-0">
                           {/* Warnungen */}
-                          <div className="w-full xs:w-[100px] shrink-0">
+                          <div className="w-full sm:w-[100px] shrink-0">
                             <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                               Warnungen
                               <StyledTooltip content="Anzahl der Verwarnungen, ab der die festgelegte Moderationsaktion automatisch ausgeführt wird." side="top" className="w-56">
@@ -296,8 +296,8 @@ const AutomodPage: React.FC = () => {
 
                         {/* Timeout-Dauer & Einheit */}
                         {rule.action === 'timeout' && (
-                          <div className="flex items-end gap-2 w-full sm:w-auto min-w-0">
-                            <div className="flex-1 sm:w-[100px] min-w-0">
+                          <div className="flex items-end gap-2 w-full lg:w-auto min-w-0">
+                            <div className="flex-1 lg:w-[100px] min-w-0">
                               <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                                 Dauer
                               </div>
@@ -316,13 +316,13 @@ const AutomodPage: React.FC = () => {
                                       updateRule(idx, { timeout_seconds: secsNext });
                                     }}
                                     min={0}
-                                    className="w-full h-11 sm:h-10"
+                                    className="w-full h-11 lg:h-10"
                                   />
                                 );
                               })()}
                             </div>
-                            <div className="w-[110px] xs:w-[130px] sm:w-[110px] shrink-0">
-                              <div className="mb-1.5 text-[0.82rem] text-transparent select-none hidden sm:block">Einheit</div>
+                            <div className="w-[110px] xs:w-[130px] lg:w-[110px] shrink-0">
+                              <div className="mb-1.5 text-[0.82rem] text-transparent select-none hidden lg:block">Einheit</div>
                               {(() => {
                                 const secs = Number(rule.timeout_seconds ?? 0);
                                 const unit: 's' | 'm' | 'h' = secs % 3600 === 0 ? 'h' : secs % 60 === 0 ? 'm' : 's';
@@ -341,7 +341,7 @@ const AutomodPage: React.FC = () => {
                                       { value: 'm', label: 'Min.' },
                                       { value: 'h', label: 'Std.' },
                                     ]}
-                                    className="h-11 sm:h-10"
+                                    className="h-11 lg:h-10"
                                   />
                                 );
                               })()}
@@ -350,16 +350,16 @@ const AutomodPage: React.FC = () => {
                         )}
                         
                         {/* Entfernen-Button */}
-                        <div className="w-full sm:w-auto shrink-0">
+                        <div className="w-full lg:w-auto shrink-0">
                           <StyledButton 
                             variant="danger" 
                             size="sm" 
                             onClick={() => removeRule(idx)} 
                             title="Regel entfernen" 
                             leftIcon={<Trash2 className="w-4 h-4" />}
-                            className="h-11 w-full sm:h-10 sm:w-auto px-4 sm:px-3"
+                            className="h-11 w-full lg:h-10 lg:w-auto px-4 lg:px-3"
                           >
-                            <span className="sm:hidden font-medium">Löschen</span>
+                            <span className="lg:hidden font-medium">Löschen</span>
                           </StyledButton>
                         </div>
                       </div>
@@ -372,7 +372,7 @@ const AutomodPage: React.FC = () => {
             {/* Rechte Spalte */}
             <div className="space-y-4">
               {/* Profanity Status Card */}
-              <SettingsCard>
+              <SettingsCard header={<div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-[#7c83ac]" /><span>Beleidigungsfilter</span></div>}>
                 <div className="flex items-start gap-4">
                   <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ${profanityEnabled ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' : 'bg-[#1d2238] border-[#353c56] text-[#9b95ff]'} transition-colors`}>
                     <ShieldAlert className="w-6 h-6" />
@@ -420,7 +420,7 @@ const AutomodPage: React.FC = () => {
               <SettingsCard header={
                 <div>
                   <span className="text-[#dbe3ff] font-medium">Capslock-Erkennung</span>
-                  <p className="text-[0.85rem] text-muted-foreground mt-0.5">Erkennt Nachrichten, die überwiegend in Großbuchstaben geschrieben wurden. Ab dem festgelegten Prozentwert kann die konfigurierte Moderationsregel greifen.</p>
+                  <p className="text-[0.85rem] text-muted-foreground mt-0.5">Erkennt Nachrichten, die überwiegend in Großbuchstaben geschrieben wurden.</p>
                 </div>
               }>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">

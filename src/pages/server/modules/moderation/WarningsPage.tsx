@@ -266,7 +266,7 @@ const WarningsPage: React.FC = () => {
                       <button
                         key={opt.id}
                         onClick={() => setMemberFilter(opt.id)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all max-w-[120px] xs:max-w-[180px] sm:max-w-none shrink-0 ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 max-w-[150px] xs:max-w-[200px] sm:max-w-none ${
                           memberFilter === opt.id
                             ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
                             : 'bg-[#1a1e33] text-[#9ca2be] border border-[#2a2f45] hover:border-[#3a3f5a]'
@@ -277,7 +277,7 @@ const WarningsPage: React.FC = () => {
                         ) : (
                           <User className="h-3 w-3 shrink-0" />
                         )}
-                        <span className="truncate">
+                        <span className="truncate min-w-0">
                           {opt.member?.display_name ? `${opt.member.display_name} (${String(opt.id).slice(0, 8)})` : String(opt.id).slice(0, 8)}
                         </span>
                       </button>
