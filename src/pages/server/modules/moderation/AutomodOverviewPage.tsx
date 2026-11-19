@@ -241,7 +241,7 @@ const StatusItem: React.FC<StatusItemProps> = ({ title, description, status, lin
   <div className="flex items-center justify-between rounded-xl border border-[#2a2d4a] bg-[#0f111d] p-4">
     <div className="flex items-center gap-3">
       <div className={cn(
-        "h-3 w-3 rounded-full shadow-[0_0_8px]",
+        "h-3 w-3 rounded-full shadow-[0_0_8px] shrink-0",
         status === 'ok' ? "bg-emerald-400 shadow-emerald-400/50" : 
         status === 'warn' ? "bg-amber-400 shadow-amber-400/50" :
         "bg-[#3a3d5a] shadow-transparent"

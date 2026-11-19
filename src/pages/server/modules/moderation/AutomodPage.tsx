@@ -225,8 +225,8 @@ const AutomodPage: React.FC = () => {
                       <span className="text-[#dbe3ff] font-medium">Moderationsregeln</span>
                       <p className="text-[0.82rem] sm:text-[0.85rem] text-muted-foreground mt-0.5">Lege fest, welche Aktion bei einer bestimmten Anzahl von Verwarnungen automatisch ausgeführt wird.</p>
                     </div>
-                    <StyledButton variant="secondary" size="sm" onClick={addRule} leftIcon={<Plus className="w-4 h-4 shrink-0" />} className="self-start sm:self-auto shrink-0">
-                      Regel
+                    <StyledButton variant="secondary" size="sm" onClick={addRule} leftIcon={<Plus className="w-4 h-4 shrink-0" />} className="w-full sm:w-auto shrink-0">
+                      Regel hinzufügen
                     </StyledButton>
                   </div>
                 }
@@ -344,13 +344,13 @@ const AutomodPage: React.FC = () => {
                         )}
                         
                         {/* Entfernen-Button */}
-                        <div className="flex sm:block justify-end shrink-0">
+                        <div className="w-full sm:w-auto shrink-0">
                           <StyledButton 
                             variant="danger" 
                             size="sm" 
                             onClick={() => removeRule(idx)} 
                             title="Regel entfernen" 
-                            className="h-11 w-full sm:h-10 sm:w-auto px-4 sm:px-3"
+                            className="h-11 w-full sm:h-10 sm:w-auto px-4 sm:px-3 flex-row"
                           >
                             <Trash2 className="w-4 h-4" />
                             <span className="sm:hidden ml-2 font-medium">Löschen</span>

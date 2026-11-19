@@ -194,10 +194,10 @@ const TicketLogPage: React.FC = () => {
                       onClick={onDelete} 
                       disabled={deleting} 
                       variant="danger"
-                      className="h-9 text-[0.85rem]"
+                      className="h-9 w-full sm:w-auto text-[0.85rem] flex-row"
                     >
-                      <Trash2 className="h-4 w-4" />
-                      {deleting ? 'Wird entfernt…' : 'Konfiguration zurücksetzen'}
+                      <Trash2 className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{deleting ? 'Wird entfernt…' : 'Konfiguration zurücksetzen'}</span>
                     </StyledButton>
                   </div>
                 )}

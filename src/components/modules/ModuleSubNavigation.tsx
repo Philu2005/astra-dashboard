@@ -15,7 +15,7 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
   const items = module.subpages ?? [];
 
   return (
-    <div className="w-fit max-w-full rounded-xl border border-[#2d3246] bg-[#0f1220]/80 p-1.5 shadow-astra">
+    <div className="w-fit max-w-full rounded-xl border border-[#2d3246] bg-[#0f1220]/80 p-2 shadow-astra">
       <nav
         className="flex w-full gap-1.5 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label={`${module.name} Unterseiten`}

@@ -232,9 +232,9 @@ const WarningsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex w-full sm:w-auto gap-2">
-                  <StyledButton onClick={() => load()} disabled={loading} variant="secondary" className="flex-1 sm:flex-none gap-2">
-                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    {loading ? 'Lade...' : 'Aktualisieren'}
+                  <StyledButton onClick={() => load()} disabled={loading} variant="secondary" className="w-full sm:w-auto gap-2">
+                    <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? 'animate-spin' : ''}`} />
+                    <span>{loading ? 'Wird geladen...' : 'Aktualisieren'}</span>
                   </StyledButton>
                 </div>
               </div>
@@ -408,19 +408,19 @@ const WarningsPage: React.FC = () => {
                             disabled={!!actionLoading} 
                             size="sm" 
                             variant={confirmOne === String(w.warnId) ? 'danger' : 'ghost'}
-                            className="h-8 gap-2 min-w-[32px] sm:min-w-[100px]"
+                            className="h-9 gap-2 min-w-[36px] sm:min-w-[100px] flex-row"
                           >
                             {actionLoading === String(w.warnId) ? (
-                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              <RefreshCw className="h-3.5 w-3.5 animate-spin shrink-0" />
                             ) : confirmOne === String(w.warnId) ? (
                               <>
-                                <AlertTriangle className="h-3.5 w-3.5" />
-                                <span className="hidden xs:inline">Bestätigen</span>
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                <span className="hidden xs:inline truncate">Bestätigen</span>
                               </>
                             ) : (
                               <>
-                                <Trash2 className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100" />
-                                <span className="hidden sm:inline">Entfernen</span>
+                                <Trash2 className="h-3.5 w-3.5 shrink-0 opacity-40 group-hover:opacity-100" />
+                                <span className="hidden sm:inline truncate">Entfernen</span>
                               </>
                             )}
                           </StyledButton>
@@ -457,10 +457,10 @@ const WarningsPage: React.FC = () => {
                     onClick={onDeleteAll}
                     disabled={!canQuery || loading || actionLoading !== null || warns.length === 0}
                     variant={confirmAll ? 'danger' : 'secondary'}
-                    className="w-full justify-start gap-3 border-red-500/20 text-red-200/70 hover:bg-red-500/10 hover:text-red-200"
+                    className="w-full justify-start gap-3 border-red-500/20 text-red-200/70 hover:bg-red-500/10 hover:text-red-200 flex-row"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    <span>{confirmAll ? 'Sicher? Jetzt klicken.' : 'Alle Verwarnungen löschen'}</span>
+                    <Trash2 className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{confirmAll ? 'Sicher? Jetzt klicken.' : 'Alle Verwarnungen löschen'}</span>
                   </StyledButton>
                   {confirmAll && (
                     <p className="text-[0.7rem] text-red-400 px-1 animate-pulse">
