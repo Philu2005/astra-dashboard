@@ -337,7 +337,7 @@ const WarningsPage: React.FC = () => {
                 <div key={userId} className={`overflow-hidden rounded-xl border transition-all ${
                   memberFilter === userId ? 'border-blue-500/50 bg-[#0f111d] shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-[#2a2f45] bg-[#0f111d] shadow-sm hover:border-[#3a3f5a]'
                 }`}>
-                        <div className="flex flex-col sm:flex-row items-center gap-3 border-b border-[#2a2f45] bg-[#14182d]/50 px-4 py-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-[#2a2f45] bg-[#14182d]/50 px-4 py-3 min-w-0">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="relative shrink-0">
                         {members[userId]?.avatar_url ? (
@@ -357,7 +357,7 @@ const WarningsPage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-[#dbe3ff] truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">
                             {members[userId] ? (
@@ -387,16 +387,16 @@ const WarningsPage: React.FC = () => {
                       .slice()
                       .sort((a, b) => (Number(b.warnId) - Number(a.warnId)))
                       .map((w, idx) => (
-                        <div key={`${w.userId}-${w.warnId}`} className="group flex items-start justify-between gap-4 p-4 transition-colors hover:bg-[#131625]/50">
-                          <div className="flex gap-4">
+                        <div key={`${w.userId}-${w.warnId}`} className="group flex items-start justify-between gap-4 p-4 transition-colors hover:bg-[#131625]/50 min-w-0">
+                          <div className="flex gap-4 min-w-0">
                             <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#1a1e33] text-[0.7rem] font-bold text-[#5c627a] border border-[#2a2f45]">
                               {list.length - idx}
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-2 text-[0.8rem] text-[#9ca2be]">
                                 <span className="font-mono text-[0.7rem] bg-[#1a1e33] px-1 rounded border border-[#2a2f45]">ID: {String(w.warnId).slice(-8)}</span>
                               </div>
-                              <p className="text-[0.95rem] leading-relaxed text-[#dbe3ff]">
+                              <p className="text-[0.95rem] leading-relaxed text-[#dbe3ff] break-words">
                                 {w.reason || <span className="italic opacity-30 text-[#9ca2be]">Kein Grund angegeben</span>}
                               </p>
                             </div>

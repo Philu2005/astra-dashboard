@@ -41,7 +41,7 @@ export const StyledButton = React.forwardRef<HTMLButtonElement, StyledButtonProp
         disabled={isDisabled}
         className={cn(
           'inline-flex flex-row flex-nowrap items-center justify-center gap-2 border transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-astra-purple/40',
-          'shadow-astra select-none shrink-0 w-fit font-medium overflow-hidden',
+          'shadow-astra select-none shrink-0 w-fit font-medium overflow-hidden whitespace-nowrap',
           variantClasses[variant],
           sizeClasses[size],
           isDisabled && 'opacity-70 cursor-not-allowed',

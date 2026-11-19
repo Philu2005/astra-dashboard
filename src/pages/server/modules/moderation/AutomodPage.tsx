@@ -215,9 +215,9 @@ const AutomodPage: React.FC = () => {
           </div>
 
           {/* Hauptlayout */}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,58%)_1fr]">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,58%)_1fr] min-w-0">
             {/* Linke Spalte: Regeln */}
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0">
               <SettingsCard
                 header={
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -238,8 +238,8 @@ const AutomodPage: React.FC = () => {
                     </div>
                   )}
                   {sortedRules.map((rule, idx) => (
-                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-4 shadow-astra hover:border-astra-purple/40 transition-colors">
-                      <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-3">
+                    <div key={`${rule.warns}-${idx}`} className="rounded-lg border border-border bg-secondary p-4 shadow-astra hover:border-astra-purple/40 transition-colors relative">
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-3 min-w-0">
                         <div className="flex items-end gap-3 flex-1 min-w-0">
                           {/* Warnungen */}
                           <div className="w-[80px] xs:w-[100px] shrink-0">
@@ -290,8 +290,8 @@ const AutomodPage: React.FC = () => {
 
                         {/* Timeout-Dauer & Einheit */}
                         {rule.action === 'timeout' && (
-                          <div className="flex items-end gap-2 w-full sm:w-auto">
-                            <div className="flex-1 sm:w-[100px]">
+                          <div className="flex items-end gap-2 w-full sm:w-auto min-w-0">
+                            <div className="flex-1 sm:w-[100px] min-w-0">
                               <div className="mb-1.5 text-[0.82rem] text-muted-foreground font-medium flex items-center gap-1">
                                 Dauer
                               </div>
@@ -315,7 +315,7 @@ const AutomodPage: React.FC = () => {
                                 );
                               })()}
                             </div>
-                            <div className="w-[110px] xs:w-[130px] sm:w-[110px]">
+                            <div className="w-[110px] xs:w-[130px] sm:w-[110px] shrink-0">
                               <div className="mb-1.5 text-[0.82rem] text-transparent select-none hidden sm:block">Einheit</div>
                               {(() => {
                                 const secs = Number(rule.timeout_seconds ?? 0);
@@ -344,16 +344,16 @@ const AutomodPage: React.FC = () => {
                         )}
                         
                         {/* Entfernen-Button */}
-                        <div className="flex sm:block justify-end">
+                        <div className="flex sm:block justify-end shrink-0">
                           <StyledButton 
                             variant="danger" 
                             size="sm" 
                             onClick={() => removeRule(idx)} 
                             title="Regel entfernen" 
-                            className="h-10 w-full sm:h-9 sm:w-auto px-4 sm:px-3"
+                            className="h-11 w-full sm:h-10 sm:w-auto px-4 sm:px-3"
                           >
                             <Trash2 className="w-4 h-4" />
-                            <span className="sm:hidden ml-2 font-medium">Regel entfernen</span>
+                            <span className="sm:hidden ml-2 font-medium">Löschen</span>
                           </StyledButton>
                         </div>
                       </div>
