@@ -376,7 +376,7 @@ const TicketPanelsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-6">
+    <div className="space-y-6">
       <SettingsPageHeader
         heading="Ticket-Panels"
         description="Verwalte und veröffentliche Ticket-Panels in Discord-Kanälen."
@@ -391,7 +391,7 @@ const TicketPanelsPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start max-w-[1600px] mx-auto">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         {/* Linke Seite: Bestehende Panels */}
         <div className="flex-1 min-w-0 space-y-6">
           <div className="flex items-center gap-3">
