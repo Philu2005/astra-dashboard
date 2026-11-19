@@ -401,154 +401,172 @@ const TicketPanelsPage: React.FC = () => {
             const isExpanded = expandedPanel === panel.channel_id;
             
             return (
-              <SettingsCard 
+              <div 
                 key={panel.channel_id || i}
                 className={cn(
-                  'cursor-pointer overflow-hidden transition-all duration-300',
-                  isExpanded ? 'border-astra-purple shadow-astra-glow ring-1 ring-astra-purple/20' : 'hover:border-[#3a4163]'
+                  'rounded-2xl border transition-all duration-300 ease-out group',
+                  isExpanded 
+                    ? 'border-astra-purple/40 bg-[#15182b] shadow-astra-glow ring-1 ring-astra-purple/10' 
+                    : 'border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] hover:border-[#3a4163]'
                 )}
-                onClick={() => {
-                  if (isExpanded) {
-                    setExpandedPanel(null);
-                    setEditPanel(null);
-                  } else {
-                    const snap = editorFromPanel(panel);
-                    initialEditRef.current = snap;
-                    setEditForm(snap);
-                    setEditPanel(panel);
-                    setExpandedPanel(panel.channel_id || null);
-                  }
-                }}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 space-y-1.5 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[0.95rem] font-medium text-white truncate">
-                        {panel.title || 'Ticket-Panel'}
-                      </p>
-                      <StatusBadge tone={st.tone} text={st.text} />
+                {/* Header: Clickable for toggle */}
+                <button
+                  type="button"
+                  className="w-full text-left p-4 focus:outline-none"
+                  onClick={() => {
+                    if (isExpanded) {
+                      setExpandedPanel(null);
+                      setEditPanel(null);
+                    } else {
+                      const snap = editorFromPanel(panel);
+                      initialEditRef.current = snap;
+                      setEditForm(snap);
+                      setEditPanel(panel);
+                      setExpandedPanel(panel.channel_id || null);
+                    }
+                  }}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[0.95rem] font-medium text-white truncate">
+                          {panel.title || 'Ticket-Panel'}
+                        </p>
+                        <StatusBadge tone={st.tone} text={st.text} />
+                      </div>
+                      {panel.description && !isExpanded && (
+                        <p className="text-[0.83rem] text-[#8b8fad] line-clamp-1">{panel.description as string}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8rem] text-[#8b8fad]">
+                        {panel.channel_id && (
+                          <span className="flex items-center gap-1">
+                            <Hash className="h-3.5 w-3.5" />
+                            {channelName[panel.channel_id] || panel.channel_id}
+                          </span>
+                        )}
+                        {panel.support_role_id && (
+                          <span className="flex items-center gap-1">
+                            <Shield className="h-3.5 w-3.5" />
+                            {roleName[panel.support_role_id as string] || panel.support_role_id}
+                          </span>
+                        )}
+                        {panel.category_id && (
+                          <span className="flex items-center gap-1">
+                            <FolderTree className="h-3.5 w-3.5" />
+                            {categoryName[panel.category_id as string] || panel.category_id}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {panel.description && !isExpanded && (
-                      <p className="text-[0.83rem] text-[#8b8fad] line-clamp-2">{panel.description as string}</p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8rem] text-[#8b8fad]">
-                      {panel.channel_id && (
-                        <span className="flex items-center gap-1">
-                          <Hash className="h-3.5 w-3.5" />
-                          {channelName[panel.channel_id] || panel.channel_id}
-                        </span>
-                      )}
-                      {panel.support_role_id && (
-                        <span className="flex items-center gap-1">
-                          <Shield className="h-3.5 w-3.5" />
-                          {roleName[panel.support_role_id as string] || panel.support_role_id}
-                        </span>
-                      )}
-                      {panel.category_id && (
-                        <span className="flex items-center gap-1">
-                          <FolderTree className="h-3.5 w-3.5" />
-                          {categoryName[panel.category_id as string] || panel.category_id}
-                        </span>
-                      )}
+                    <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => { setMovePanel(panel); setMoveChannelId(''); }}
+                        className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
+                        title="Verschieben"
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setDeletePanel(panel); setDeleteError(null); }}
+                        className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-red-400 hover:border-red-500/30 transition-colors"
+                        title="Löschen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <div className={cn(
+                        'flex items-center justify-center w-8 h-8 rounded-full border border-[#2a2d4a] bg-[#13152a]/60 text-[#5c6180] transition-all duration-300', 
+                        isExpanded ? 'rotate-180 border-astra-purple/40 bg-astra-purple/10 text-astra-purple' : 'group-hover:border-[#3a4163]'
+                      )}>
+                        <ChevronDown className="h-4 w-4" />
+                      </div>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => { setMovePanel(panel); setMoveChannelId(''); }}
-                      className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
-                      title="Verschieben"
+                </button>
+
+                {/* Edit Area (Accordion) */}
+                <div 
+                  className={cn(
+                    "grid transition-[grid-template-rows] duration-300 ease-out",
+                    isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  )}
+                >
+                  <div className="overflow-hidden">
+                    <div 
+                      className="px-5 pb-6 pt-2 border-t border-[#2a2f45]/50"
+                      onClick={e => e.stopPropagation()}
                     >
-                      <ArrowRightLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setDeletePanel(panel); setDeleteError(null); }}
-                      className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-red-400 hover:border-red-500/30 transition-colors"
-                      title="Löschen"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <div className={cn('p-1 text-[#5c6180] transition-transform duration-300', isExpanded && 'rotate-180')}>
-                      <ChevronDown className="h-5 w-5" />
+                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+                        <div className="space-y-6 pt-4">
+                          <FieldGroup label="Einstellungen">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              <DiscordSelect 
+                                label="Support-Rolle" 
+                                kind="role" 
+                                items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
+                                loading={resLoading} 
+                                value={editForm.support_role_id || null} 
+                                onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} 
+                                className="w-full" 
+                              />
+                              <DiscordSelect
+                                label="Ziel-Kanal"
+                                kind="channel"
+                                groupByCategory
+                                items={textChannels.map(c => ({ 
+                                  id: c.id, 
+                                  name: c.name, 
+                                  type: c.type, 
+                                  parent_id: c.parent_id ?? null, 
+                                  parent_name: categoryName[c.parent_id || ''] || null 
+                                }))}
+                                loading={resLoading}
+                                value={editForm.channel_id || null}
+                                onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
+                                className="w-full"
+                              />
+                            </div>
+                          </FieldGroup>
+                          <FieldGroup label="Inhalt">
+                            <div className="space-y-4">
+                              <div>
+                                <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
+                                <StyledInput placeholder="z. B. Allgemeiner Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full" />
+                              </div>
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                  <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                                  <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full" />
+                                </div>
+                                <div>
+                                  <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                                  <StyledTextarea placeholder="Panel-Beschreibung" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[80px]" />
+                                </div>
+                              </div>
+                            </div>
+                          </FieldGroup>
+                          
+                          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#2a2f45]">
+                            <StyledButton variant="ghost" onClick={() => setExpandedPanel(null)} disabled={saving}>Abbrechen</StyledButton>
+                            <StyledButton onClick={onSaveEdit} loading={saving} disabled={!isDirty}>
+                              Speichern
+                            </StyledButton>
+                          </div>
+                        </div>
+
+                        <div className="hidden lg:block pt-4">
+                          <div className="sticky top-6">
+                            <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
+                            <EmbedPreview title={editForm.title} description={editForm.description} />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Edit Area (Accordion) */}
-                {isExpanded && (
-                  <div 
-                    className="mt-6 border-t border-[#2a2f45] pt-6 animate-in fade-in slide-in-from-top-4 duration-300"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-                      <div className="space-y-6">
-                        <FieldGroup label="Einstellungen">
-                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <DiscordSelect 
-                              label="Support-Rolle" 
-                              kind="role" 
-                              items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
-                              loading={resLoading} 
-                              value={editForm.support_role_id || null} 
-                              onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} 
-                              className="w-full" 
-                            />
-                            <DiscordSelect
-                              label="Ziel-Kanal"
-                              kind="channel"
-                              groupByCategory
-                              items={textChannels.map(c => ({ 
-                                id: c.id, 
-                                name: c.name, 
-                                type: c.type, 
-                                parent_id: c.parent_id ?? null, 
-                                parent_name: categoryName[c.parent_id || ''] || null 
-                              }))}
-                              loading={resLoading}
-                              value={editForm.channel_id || null}
-                              onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
-                              className="w-full"
-                            />
-                          </div>
-                        </FieldGroup>
-                        <FieldGroup label="Inhalt">
-                          <div className="space-y-4">
-                            <div>
-                              <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
-                              <StyledInput placeholder="z. B. Allgemeiner Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full" />
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                              <div>
-                                <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
-                                <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full" />
-                              </div>
-                              <div>
-                                <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
-                                <StyledTextarea placeholder="Panel-Beschreibung" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[80px]" />
-                              </div>
-                            </div>
-                          </div>
-                        </FieldGroup>
-                        
-                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#2a2f45]">
-                          <StyledButton variant="ghost" onClick={() => setExpandedPanel(null)} disabled={saving}>Abbrechen</StyledButton>
-                          <StyledButton onClick={onSaveEdit} loading={saving} disabled={!isDirty}>
-                            Speichern
-                          </StyledButton>
-                        </div>
-                      </div>
-
-                      <div className="hidden lg:block">
-                        <div className="sticky top-6">
-                          <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
-                          <EmbedPreview title={editForm.title} description={editForm.description} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </SettingsCard>
+              </div>
             );
           })}
         </div>
