@@ -191,6 +191,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
       zIndex: 9999,
       transform: 'translateZ(0)',
       pointerEvents: 'auto',
+      userSelect: 'none',
       ...(openAbove
         ? { bottom: window.innerHeight - rect.top + 6 }
         : { top: rect.bottom + 6 }),

@@ -498,68 +498,76 @@ const TicketPanelsPage: React.FC = () => {
                       className="px-5 pb-6 pt-2 border-t border-[#2a2f45]/50"
                       onClick={e => e.stopPropagation()}
                     >
-                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-                        <div className="space-y-6 pt-4">
-                          <FieldGroup label="Einstellungen">
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                              <DiscordSelect 
-                                label="Support-Rolle" 
-                                kind="role" 
-                                items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
-                                loading={resLoading} 
-                                value={editForm.support_role_id || null} 
-                                onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} 
-                                className="w-full" 
-                              />
-                              <DiscordSelect
-                                label="Ziel-Kanal"
-                                kind="channel"
-                                groupByCategory
-                                items={textChannels.map(c => ({ 
-                                  id: c.id, 
-                                  name: c.name, 
-                                  type: c.type, 
-                                  parent_id: c.parent_id ?? null, 
-                                  parent_name: categoryName[c.parent_id || ''] || null 
-                                }))}
-                                loading={resLoading}
-                                value={editForm.channel_id || null}
-                                onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
-                                className="w-full"
-                              />
-                            </div>
-                          </FieldGroup>
-                          <FieldGroup label="Inhalt">
-                            <div className="space-y-4">
-                              <div>
-                                <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
-                                <StyledInput placeholder="z. B. Allgemeiner Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full" />
-                              </div>
+                      <div className="mx-auto w-full max-w-5xl">
+                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.2fr_0.8fr] pt-4">
+                          <div className="space-y-6">
+                            <FieldGroup label="Discord-Zuweisung">
                               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div>
-                                  <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
-                                  <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full" />
+                                <DiscordSelect 
+                                  label="Support-Rolle" 
+                                  kind="role" 
+                                  items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
+                                  loading={resLoading} 
+                                  value={editForm.support_role_id || null} 
+                                  onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} 
+                                  className="w-full" 
+                                />
+                                <DiscordSelect
+                                  label="Ziel-Kanal"
+                                  kind="channel"
+                                  groupByCategory
+                                  items={textChannels.map(c => ({ 
+                                    id: c.id, 
+                                    name: c.name, 
+                                    type: c.type, 
+                                    parent_id: c.parent_id ?? null, 
+                                    parent_name: categoryName[c.parent_id || ''] || null 
+                                  }))}
+                                  loading={resLoading}
+                                  value={editForm.channel_id || null}
+                                  onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
+                                  className="w-full"
+                                />
+                              </div>
+                            </FieldGroup>
+                            
+                            <FieldGroup label="Panel-Inhalt">
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                  <div>
+                                    <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
+                                    <StyledInput placeholder="z. B. Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full" />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                                    <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full" />
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
-                                  <StyledTextarea placeholder="Panel-Beschreibung" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[80px]" />
+                                  <StyledTextarea placeholder="Beschreibe kurz den Zweck dieses Panels..." value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[100px]" />
                                 </div>
                               </div>
+                            </FieldGroup>
+                            
+                            <div className="flex items-center justify-end gap-3 pt-6 border-t border-[#2a2f45]">
+                              <StyledButton variant="ghost" onClick={() => setExpandedPanel(null)} disabled={saving}>Abbrechen</StyledButton>
+                              <StyledButton onClick={onSaveEdit} loading={saving} disabled={!isDirty}>
+                                Speichern
+                              </StyledButton>
                             </div>
-                          </FieldGroup>
-                          
-                          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#2a2f45]">
-                            <StyledButton variant="ghost" onClick={() => setExpandedPanel(null)} disabled={saving}>Abbrechen</StyledButton>
-                            <StyledButton onClick={onSaveEdit} loading={saving} disabled={!isDirty}>
-                              Speichern
-                            </StyledButton>
                           </div>
-                        </div>
 
-                        <div className="hidden lg:block pt-4">
-                          <div className="sticky top-6">
-                            <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
-                            <EmbedPreview title={editForm.title} description={editForm.description} />
+                          <div className="hidden lg:block">
+                            <div className="sticky top-6">
+                              <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
+                              <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
+                                <EmbedPreview title={editForm.title} description={editForm.description} />
+                              </div>
+                              <p className="mt-3 text-[0.78rem] text-[#6b7094] leading-relaxed">
+                                So wird das Panel in Discord für deine Mitglieder angezeigt.
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>

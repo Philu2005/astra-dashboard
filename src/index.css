@@ -49,6 +49,9 @@
   * {
     @apply border-border;
   }
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-[#070912] text-foreground font-sans antialiased selection:bg-astra-purple/30;
     background-image: radial-gradient(circle at 82% 0%, rgba(75, 70, 200, 0.28) 0%, rgba(75, 70, 200, 0) 33%), linear-gradient(180deg, #11142a 0%, #0b0e1c 28%, #080a14 100%);
