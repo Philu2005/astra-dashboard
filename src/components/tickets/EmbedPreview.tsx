@@ -1,12 +1,13 @@
 import React from 'react';
 import astraLogo from '@/assets/Idee_2_blau.jpg';
+import ticketButtonIcon from '@/assets/ticket-button.png';
 
 export interface EmbedPreviewProps {
   title?: string;
   description?: string;
 }
 
-const EMBED_COLOR = '#4b46c8';
+const EMBED_COLOR = '#3498DB';
 
 export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
   title,
@@ -72,6 +73,11 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
             disabled
             className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#248046] px-4 py-2 text-[0.85rem] font-medium text-white cursor-default hover:bg-[#1a6334] transition-colors"
           >
+            <img 
+              src={ticketButtonIcon} 
+              alt="" 
+              className="w-[18px] h-[18px] object-contain shrink-0"
+            />
             <span>Ticket öffnen</span>
           </button>
         </div>
