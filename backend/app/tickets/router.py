@@ -223,19 +223,41 @@ async def update_ticket_panel(guild_id: str, channel_id: str, request: Request, 
         502: {"description": "Kommunikationsfehler."},
     },
 )
-async def update_ticket_panel_config(guild_id: str, channel_id: str, request: Request, body: TicketPanelConfigRequest) -> dict[str, Any]:
+async def update_ticket_panel_config(
+    guild_id: str,
+    channel_id: str,
+    request: Request,
+    body: TicketPanelConfigRequest
+) -> dict[str, Any]:
     user_id = await _get_user_id_from_session(request)
     payload: dict[str, Any] = {}
-    for field in ("channel_id", "support_role_id", "category_id", "topic", "title", "description",
-                  "embed_color", "footer", "image_url", "thumbnail_url", "button_label", "button_emoji"):
-        val = getattr(body, field, None)
-        if val is not None:
-            payload[field] = val
+
+    # Dashboard-Feldnamen auf den Astra-API-Vertrag abbilden
+    field_mapping = {
+        "title": "title",
+        "description": "description",
+        "topic": "thema",
+        "support_role_id": "role_id",
+        "category_id": "category_id",
+    }
+
+    for source_field, target_field in field_mapping.items():
+        value = getattr(body, source_field, None)
+        if value is not None:
+            payload[target_field] = value
+
     try:
-        data = await astra_client.update_ticket_panel_config(guild_id, channel_id, user_id, payload)
+        data = await astra_client.update_ticket_panel_config(
+            guild_id, channel_id, user_id, payload
+        )
     except AstraApiError as exc:
         raise _handle_astra_error(exc)
-    result: dict[str, Any] = {"success": True, "message": "Panel-Konfiguration aktualisiert."}
+
+    result: dict[str, Any] = {
+        "success": True,
+        "message": "Panel-Konfiguration aktualisiert."
+    }
+
     if isinstance(data, dict):
         if "channel_id" in data:
             result["channel_id"] = data["channel_id"]
@@ -243,6 +265,7 @@ async def update_ticket_panel_config(guild_id: str, channel_id: str, request: Re
             result["panel_message_id"] = data["panel_message_id"]
         if "message" in data:
             result["message"] = data["message"]
+
     return result
 
 
