@@ -544,14 +544,14 @@ const TicketPanelsPage: React.FC = () => {
                             <div className="flex-1 min-w-0 space-y-6">
                               <FieldGroup label="Discord-Zuweisung">
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                  <DiscordSelect 
-                                    label="Support-Rolle" 
-                                    kind="role" 
-                                    items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
-                                    loading={resLoading} 
-                                    value={currentForm.support_role_id || null} 
-                                    onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, support_role_id: v } }))} 
-                                    className="w-full" 
+                                  <DiscordSelect
+                                    label="Support-Rolle"
+                                    kind="role"
+                                    items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))}
+                                    loading={resLoading}
+                                    value={currentForm.support_role_id || null}
+                                    onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, support_role_id: v } }))}
+                                    className="w-full"
                                   />
                                   <ModuleChannelSelect
                                     label="Ziel-Kanal"
@@ -559,6 +559,19 @@ const TicketPanelsPage: React.FC = () => {
                                     loading={resLoading}
                                     value={currentForm.channel_id || null}
                                     onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, channel_id: v } }))}
+                                    className="w-full"
+                                  />
+                                </div>
+                                <div className="mt-4">
+                                  <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">
+                                    In welcher Kategorie sollen die Tickets erstellt werden?
+                                  </label>
+                                  <DiscordSelect
+                                    kind="category"
+                                    items={categories.map(c => ({ id: c.id, name: c.name }))}
+                                    loading={resLoading}
+                                    value={currentForm.category_id || null}
+                                    onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, category_id: v } }))}
                                     className="w-full"
                                   />
                                 </div>
@@ -633,6 +646,19 @@ const TicketPanelsPage: React.FC = () => {
                       onChange={v => setCreateForm(f => ({ ...f, support_role_id: v }))}
                       className="w-full"
                     />
+                    <div>
+                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">
+                        In welcher Kategorie sollen die Tickets erstellt werden?
+                      </label>
+                      <DiscordSelect
+                        kind="category"
+                        items={categories.map(c => ({ id: c.id, name: c.name }))}
+                        loading={resLoading}
+                        value={createForm.category_id || null}
+                        onChange={v => setCreateForm(f => ({ ...f, category_id: v }))}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </FieldGroup>
 
@@ -736,6 +762,19 @@ const TicketPanelsPage: React.FC = () => {
                       className="w-full"
                     />
                     <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={createForm.support_role_id || null} onChange={v => setCreateForm(f => ({ ...f, support_role_id: v }))} className="w-full" />
+                    <div>
+                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">
+                        In welcher Kategorie sollen die Tickets erstellt werden?
+                      </label>
+                      <DiscordSelect
+                        kind="category"
+                        items={categories.map(c => ({ id: c.id, name: c.name }))}
+                        loading={resLoading}
+                        value={createForm.category_id || null}
+                        onChange={v => setCreateForm(f => ({ ...f, category_id: v }))}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </FieldGroup>
                 <FieldGroup label="Inhalt">
