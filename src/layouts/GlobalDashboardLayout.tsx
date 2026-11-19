@@ -17,12 +17,13 @@ export const GlobalDashboardLayout: React.FC<GlobalDashboardLayoutProps> = ({ ch
   useEffect(() => {
     const mountTime = performance.now();
     console.log(`[Performance] GlobalDashboardLayout mounted at ${new Date().toISOString()} (Relative: ${mountTime.toFixed(2)}ms)`);
-    const timer = window.setTimeout(() => {
-      const finishTime = performance.now();
-      setIsLoading(false);
-      console.log(`[Performance] GlobalDashboardLayout loading finished at ${new Date().toISOString()} (Duration: ${(finishTime - mountTime).toFixed(2)}ms, Relative: ${finishTime.toFixed(2)}ms)`);
-    }, 1050);
-    return () => window.clearTimeout(timer);
+    
+    // Wir entfernen die feste 1050ms Blockade und setzen isLoading sofort auf false.
+    // Die StatCards im Dashboard haben ihre eigenen Loading-Skeletons.
+    setIsLoading(false);
+    
+    const finishTime = performance.now();
+    console.log(`[Performance] GlobalDashboardLayout loading finished immediately at ${new Date().toISOString()} (Duration: ${(finishTime - mountTime).toFixed(2)}ms)`);
   }, []);
 
   if (isLoading) {
