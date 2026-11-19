@@ -111,7 +111,7 @@ const TicketLogPage: React.FC = () => {
     : (loading || channelsLoading ? 'Wird geladen...' : (current ? `Unbekannter Kanal (${current})` : 'Nicht konfiguriert'));
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-6">
+    <div className="w-full space-y-5 lg:space-y-6">
       <SettingsPageHeader
         heading="Ticket-Log"
         description="Konfiguriere einen Kanal, in dem Ticket-Ereignisse automatisch protokolliert werden."
@@ -139,36 +139,33 @@ const TicketLogPage: React.FC = () => {
       )}
 
       {!loading && (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px] items-start">
-          <div className="space-y-6">
-            {/* Status */}
-            <SettingsCard>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`h-3 w-3 rounded-full ${isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-[#3a3d5a]'}`} />
-                  <span className="text-[1.05rem] font-medium text-[#dbe3ff]">
-                    {isActive ? 'Ticket-Log ist aktiv' : 'Ticket-Log ist nicht konfiguriert'}
-                  </span>
-                </div>
-                {isActive && current && (
-                  <div className="flex items-center gap-2 rounded-full border border-[#2a2d4a] bg-[#13152a]/80 px-4 py-1.5 text-[0.85rem] text-[#8b8fad]">
-                    <Hash className="h-4 w-4 text-astra-accent" />
-                    <span>Aktueller Kanal: <span className="text-[#dbe3ff] font-medium">{currentChannelName}</span></span>
-                  </div>
-                )}
-              </div>
-            </SettingsCard>
-
-            {/* Konfiguration */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+          <div className="lg:col-span-8 space-y-5 lg:space-y-6">
+            {/* Status & Konfiguration in einer Card für Kompaktheit oder eng zusammen */}
             <SettingsCard 
               header={
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-astra-accent" />
-                  <span className="text-[#dbe3ff] font-medium">Log-Kanal konfigurieren</span>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-astra-accent" />
+                    <span className="text-[#dbe3ff] font-medium">Konfiguration</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[0.85rem]">
+                    <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-[#3a3d5a]'}`} />
+                    <span className={isActive ? 'text-emerald-400' : 'text-[#8b8fad]'}>
+                      {isActive ? 'Aktiv' : 'Inaktiv'}
+                    </span>
+                  </div>
                 </div>
               }
             >
-              <div className="max-w-2xl space-y-6">
+              <div className="space-y-6">
+                {isActive && current && (
+                  <div className="flex items-center gap-2 rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 px-4 py-3 text-[0.9rem]">
+                    <Hash className="h-4 w-4 text-astra-accent" />
+                    <span className="text-[#8b8fad]">Aktuell konfiguriert: <span className="text-[#dbe3ff] font-medium">{currentChannelName}</span></span>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   <ModuleChannelSelect
                     label="Log-Kanal auswählen"
@@ -185,12 +182,12 @@ const TicketLogPage: React.FC = () => {
                     onChange={(id) => setChannelId(id)}
                   />
                   <p className="text-[0.85rem] leading-relaxed text-[#8b8fad]">
-                    Wähle den Discord-Kanal aus, in dem alle Ticket-Aktionen (Erstellung, Schließen, Löschen) dokumentiert werden sollen.
+                    Wähle den Discord-Kanal aus, in dem alle Ticket-Aktionen dokumentiert werden sollen.
                   </p>
                 </div>
                 
                 {isActive && (
-                  <div className="pt-2 border-t border-[#2a2d4a]/50">
+                  <div className="pt-2 border-t border-[#2a2d4a]/50 flex justify-end">
                     <StyledButton 
                       onClick={onDelete} 
                       disabled={deleting} 
@@ -207,7 +204,7 @@ const TicketLogPage: React.FC = () => {
           </div>
 
           {/* Info-Card */}
-          <div className="space-y-6">
+          <div className="lg:col-span-4">
             <SettingsCard 
               header={
                 <div className="flex items-center gap-2 text-[#8b8fad]">
@@ -218,16 +215,24 @@ const TicketLogPage: React.FC = () => {
             >
               <div className="space-y-4 text-[0.9rem] leading-relaxed text-[#8b8fad]">
                 <p>
-                  Der Ticket-Log ist ein wichtiges Sicherheitsfeature. Er protokolliert:
+                  Der Ticket-Log protokolliert automatisch wichtige Ereignisse für maximale Transparenz:
                 </p>
-                <ul className="list-disc list-inside space-y-1 ml-1 text-[0.85rem]">
-                  <li>Wer ein Ticket geöffnet hat</li>
-                  <li>Wann ein Ticket geschlossen wurde</li>
-                  <li>Transkripte (falls aktiviert)</li>
-                  <li>Administrative Eingriffe</li>
+                <ul className="grid grid-cols-1 gap-2 ml-1 text-[0.85rem]">
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-astra-purple mt-1.5 shrink-0" />
+                    <span>Ticket-Erstellung & Schließung</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-astra-purple mt-1.5 shrink-0" />
+                    <span>Transkripte & Nachrichten-Logs</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-astra-purple mt-1.5 shrink-0" />
+                    <span>Administrative Eingriffe</span>
+                  </li>
                 </ul>
                 <div className="rounded-lg bg-[#0f111d] p-3 border border-[#2a2d4a]/40 mt-4">
-                  <p className="text-[0.8rem] italic">
+                  <p className="text-[0.8rem] italic leading-snug">
                     Hinweis: Stelle sicher, dass der Bot Schreibrechte in dem gewählten Kanal besitzt.
                   </p>
                 </div>

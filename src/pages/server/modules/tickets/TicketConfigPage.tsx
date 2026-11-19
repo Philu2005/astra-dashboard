@@ -164,7 +164,7 @@ const TicketConfigPage: React.FC = () => {
   const allGroupIds = [...orderedGroupIds.filter(g => fieldsByGroup[g]), ...extraGroups];
 
   return (
-    <div className="space-y-5">
+    <div className="w-full space-y-5">
       <SettingsPageHeader
         heading="Ticket-Konfiguration"
         description="Verwalte die allgemeinen Einstellungen des Ticket-Systems für diesen Server."
@@ -189,16 +189,18 @@ const TicketConfigPage: React.FC = () => {
       )}
 
       {!loading && !error && (
-        <>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 lg:gap-6 items-start">
           {Object.keys(config).length === 0 ? (
-            <SettingsCard>
-              <div className="flex items-start gap-3 rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-4">
-                <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#8b8fad]" />
-                <p className="text-[0.9rem] leading-relaxed text-[#8b8fad]">
-                  Keine Konfigurationsfelder verfügbar. Die Konfiguration wird von der Astra-API bereitgestellt.
-                </p>
-              </div>
-            </SettingsCard>
+            <div className="xl:col-span-2">
+              <SettingsCard>
+                <div className="flex items-start gap-3 rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-4">
+                  <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#8b8fad]" />
+                  <p className="text-[0.9rem] leading-relaxed text-[#8b8fad]">
+                    Keine Konfigurationsfelder verfügbar. Die Konfiguration wird von der Astra-API bereitgestellt.
+                  </p>
+                </div>
+              </SettingsCard>
+            </div>
           ) : (
             allGroupIds.map(groupId => {
               const groupDef = GROUPS.find(g => g.id === groupId);
@@ -223,66 +225,70 @@ const TicketConfigPage: React.FC = () => {
                     </p>
                   )}
 
-                  <div className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {fields.map(([key, value]) => {
                       const meta = getMeta(key);
                       return (
                         <div
                           key={key}
-                          className="rounded-lg border border-[#2a2d4a]/60 bg-[#13152a]/40 p-4 space-y-2"
+                          className="rounded-lg border border-[#2a2d4a]/60 bg-[#13152a]/40 p-4 space-y-2 flex flex-col justify-between"
                         >
-                          <label className="block text-[0.9rem] font-medium text-[#dbe3ff]">
-                            {meta.label}
-                          </label>
-                          {meta.description && (
-                            <p className="text-[0.8rem] leading-relaxed text-[#8b8fad]">
-                              {meta.description}
-                            </p>
-                          )}
+                          <div>
+                            <label className="block text-[0.9rem] font-medium text-[#dbe3ff]">
+                              {meta.label}
+                            </label>
+                            {meta.description && (
+                              <p className="text-[0.8rem] leading-relaxed text-[#8b8fad] mb-2">
+                                {meta.description}
+                              </p>
+                            )}
+                          </div>
 
-                          {typeof value === 'boolean' ? (
-                            <StyledSwitch
-                              checked={Boolean(value)}
-                              onChange={(v) => updateField(key, v)}
-                              aria-label={meta.label}
-                            />
-                          ) : typeof value === 'number' && (meta.unit === 'Stunden' || meta.unit === 'Minuten') ? (
-                            <DurationPicker
-                              value={value}
-                              unit={meta.unit === 'Stunden' ? 'hours' : 'minutes'}
-                              onChange={(v) => updateField(key, v)}
-                              min={meta.min}
-                              max={meta.max}
-                              className="max-w-full sm:max-w-[280px]"
-                            />
-                          ) : typeof value === 'number' ? (
-                            <div className="flex items-center gap-3">
-                              <StyledInput
-                                type="number"
-                                value={String(value)}
-                                onChange={e => {
-                                  const num = Number(e.target.value);
-                                  if (meta.min !== undefined && num < meta.min) return;
-                                  if (meta.max !== undefined && num > meta.max) return;
-                                  updateField(key, num);
-                                }}
+                          <div className="pt-1">
+                            {typeof value === 'boolean' ? (
+                              <StyledSwitch
+                                checked={Boolean(value)}
+                                onChange={(v) => updateField(key, v)}
+                                aria-label={meta.label}
+                              />
+                            ) : typeof value === 'number' && (meta.unit === 'Stunden' || meta.unit === 'Minuten') ? (
+                              <DurationPicker
+                                value={value}
+                                unit={meta.unit === 'Stunden' ? 'hours' : 'minutes'}
+                                onChange={(v) => updateField(key, v)}
                                 min={meta.min}
                                 max={meta.max}
-                                className="w-full sm:max-w-[160px]"
+                                className="w-full"
                               />
-                              {meta.unit && (
-                                <span className="text-[0.8rem] text-[#8b8fad] whitespace-nowrap">
-                                  {meta.unit}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <StyledInput
-                              value={String(value ?? '')}
-                              onChange={e => updateField(key, e.target.value)}
-                              className="w-full"
-                            />
-                          )}
+                            ) : typeof value === 'number' ? (
+                              <div className="flex items-center gap-3">
+                                <StyledInput
+                                  type="number"
+                                  value={String(value)}
+                                  onChange={e => {
+                                    const num = Number(e.target.value);
+                                    if (meta.min !== undefined && num < meta.min) return;
+                                    if (meta.max !== undefined && num > meta.max) return;
+                                    updateField(key, num);
+                                  }}
+                                  min={meta.min}
+                                  max={meta.max}
+                                  className="w-full"
+                                />
+                                {meta.unit && (
+                                  <span className="text-[0.8rem] text-[#8b8fad] whitespace-nowrap">
+                                    {meta.unit}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <StyledInput
+                                value={String(value ?? '')}
+                                onChange={e => updateField(key, e.target.value)}
+                                className="w-full"
+                              />
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -291,14 +297,16 @@ const TicketConfigPage: React.FC = () => {
               );
             })
           )}
+        </div>
+      )}
 
-          <SettingsSaveBar
-            dirty={dirty}
-            saving={saving}
-            onSave={onSave}
-            onCancel={() => { setConfig(original); setInfo(null); }}
-          />
-        </>
+      {!loading && !error && (
+        <SettingsSaveBar
+          dirty={dirty}
+          saving={saving}
+          onSave={onSave}
+          onCancel={() => { setConfig(original); setInfo(null); }}
+        />
       )}
     </div>
   );
