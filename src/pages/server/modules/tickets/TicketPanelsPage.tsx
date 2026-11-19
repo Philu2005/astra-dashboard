@@ -44,10 +44,10 @@ const EMPTY_EDITOR: EditorState = {
 function editorFromPanel(p: TicketPanel): EditorState {
   return {
     description: p.description || '',
-    ticket_title: (p.topic as string) || (p.title as string) || '', 
-    support_role_id: (p.support_role_id as string) || '',
-    category_id: (p.category_id as string) || '',
-    channel_id: p.channel_id || '',
+    ticket_title: (p.thema as string) || '',
+    support_role_id: String(p.role_id || ''),
+    category_id: String(p.category_id || ''),
+    channel_id: String(p.channel_id || ''),
   };
 }
 
