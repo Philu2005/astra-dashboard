@@ -36,8 +36,12 @@ export function useDashboardStats(intervalMs = 15_000): DashboardStatsState {
     const fetchStats = async () => {
       if (pending) return;
       pending = true;
+      const startTime = performance.now();
+      console.log(`[Performance] fetchStats (/dashboard/stats) started at ${new Date().toISOString()}`);
       try {
         const response = await apiClient.get('/dashboard/stats');
+        const duration = performance.now() - startTime;
+        console.log(`[Performance] fetchStats (/dashboard/stats) finished: HTTP ${response.status}, duration: ${duration.toFixed(2)}ms`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json: DashboardStatsResponse = await response.json();
         if (!cancelled) {

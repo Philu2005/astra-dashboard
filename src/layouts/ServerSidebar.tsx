@@ -4,7 +4,8 @@ import { NavLink, useParams, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { categories, modulesRegistry } from '@/modules/registry';
 import { AstraLogo } from '@/components/AstraLogo';
-import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
+import { useBotStatusContext } from '@/contexts/BotStatusContext';
+import { botStatusConfig } from '@/hooks/useBotStatus';
 import { appConfig } from '@/lib/app-config';
 import { useSidebar } from '@/contexts/SidebarContext';
 
@@ -34,7 +35,7 @@ const NavItem: React.FC<{ to: string; icon: React.ElementType; label: string; on
 export const ServerSidebar: React.FC<ServerSidebarProps> = () => {
   const { guildId } = useParams();
   const base = `/servers/${guildId}`;
-  const botStatus = useBotStatus();
+  const botStatus = useBotStatusContext();
   const sidebarStatusConfig = botStatusConfig[botStatus];
   const inviteUrl = appConfig.botInviteUrl;
   const { isOpen, isDesktop, close } = useSidebar();

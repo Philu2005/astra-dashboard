@@ -1,3 +1,4 @@
+import time
 import logging
 from typing import Any, Optional
 
@@ -38,6 +39,7 @@ class AstraClient:
         url = f"{self.base_url}{path}"
         headers = self._auth_headers() if authenticated else {}
 
+        start_time = time.perf_counter()
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.request(method, url, params=params, headers=headers, json=json)
@@ -50,6 +52,9 @@ class AstraClient:
         except httpx.HTTPError as exc:
             logger.warning("HTTP-Fehler bei Astra-Anfrage: %s (%s)", url, exc.__class__.__name__)
             raise AstraApiError("Kommunikationsfehler mit Astra.", status_code=502)
+        finally:
+            duration = (time.perf_counter() - start_time) * 1000
+            logger.info(f"[Performance] Astra API Request to {path} took {duration:.2f}ms")
 
         if response.status_code == 401:
             logger.error("Astra Bot API: Ungültiger API-Schlüssel")

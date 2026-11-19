@@ -8,6 +8,8 @@ interface GlobalDashboardLayoutProps {
   children: React.ReactNode;
 }
 
+import { BotStatusProvider } from '@/contexts/BotStatusContext';
+
 export const GlobalDashboardLayout: React.FC<GlobalDashboardLayoutProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, isDesktop, close } = useSidebar();
@@ -46,7 +48,8 @@ export const GlobalDashboardLayout: React.FC<GlobalDashboardLayoutProps> = ({ ch
   }
 
   return (
-    <div className="h-dvh bg-[#070912] text-white overflow-hidden relative flex flex-col">
+    <BotStatusProvider>
+      <div className="h-dvh bg-[#070912] text-white overflow-hidden relative flex flex-col">
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_8%,rgba(75,70,200,0.34)_0%,rgba(75,70,200,0.14)_18%,rgba(75,70,200,0)_44%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_86%_20%,rgba(125,227,255,0.2)_0%,rgba(125,227,255,0.08)_14%,rgba(125,227,255,0)_36%)]" />
@@ -75,6 +78,7 @@ export const GlobalDashboardLayout: React.FC<GlobalDashboardLayoutProps> = ({ ch
         </main>
       </div>
     </div>
+    </BotStatusProvider>
   );
 };
 

@@ -20,8 +20,12 @@ export function useCommandStatistics(refreshMs = 30_000): CommandStatisticsState
     const load = async () => {
       if (pending) return;
       pending = true;
+      const startTime = performance.now();
+      console.log(`[Performance] useCommandStatistics (/statistics/commands) started at ${new Date().toISOString()}`);
       try {
         const res = await apiClient.get('/statistics/commands');
+        const duration = performance.now() - startTime;
+        console.log(`[Performance] useCommandStatistics (/statistics/commands) finished: HTTP ${res.status}, duration: ${duration.toFixed(2)}ms`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: CommandStatisticsResponse = await res.json();
         if (!cancelled) {

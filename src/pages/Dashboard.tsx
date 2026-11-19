@@ -3,7 +3,8 @@ import { StatCard } from '@/components/StatCard';
 import { QuickAccessCard } from '@/components/QuickAccessCard';
 import { AstraLogo } from '@/components/AstraLogo';
 import { Loader2 } from 'lucide-react';
-import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
+import { useBotStatusContext } from '@/contexts/BotStatusContext';
+import { botStatusConfig } from '@/hooks/useBotStatus';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useCommandStatistics } from '@/hooks/useCommandStatistics';
 import {
@@ -49,9 +50,25 @@ const statusConfig = botStatusConfig;
 const formatNumber = (n: number): string => n.toLocaleString('de-DE');
 
 export const Dashboard = () => {
-  const botStatus = useBotStatus();
+  React.useEffect(() => {
+    console.log(`[Performance] Dashboard mounted at ${new Date().toISOString()}`);
+  }, []);
+  const botStatus = useBotStatusContext();
   const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats();
   const { data: cmdStats, loading: cmdLoading, error: cmdError } = useCommandStatistics();
+
+  // Logging für Initialload
+  React.useEffect(() => {
+    if (statsData) {
+      console.log(`[Performance] Dashboard Stats loaded: users=${statsData.stats.users}, guilds=${statsData.stats.guilds}, commands=${statsData.stats.commands}`);
+    }
+  }, [statsData]);
+
+  React.useEffect(() => {
+    if (cmdStats) {
+      console.log(`[Performance] Command Stats loaded: total=${cmdStats.total}`);
+    }
+  }, [cmdStats]);
 
   const commandData: ChartPoint[] = React.useMemo(() => {
     if (!cmdStats || !cmdStats.data) return [];

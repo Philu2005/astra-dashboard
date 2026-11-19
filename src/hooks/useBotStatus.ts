@@ -22,8 +22,12 @@ export function useBotStatus(intervalMs = 15_000) {
     const fetchStatus = async () => {
       if (pending) return;
       pending = true;
+      const startTime = performance.now();
+      console.log(`[Performance] useBotStatus (/status) started at ${new Date().toISOString()}`);
       try {
         const data = await serverApi.getAstraStatus();
+        const duration = performance.now() - startTime;
+        console.log(`[Performance] useBotStatus (/status) finished, duration: ${duration.toFixed(2)}ms`);
         if (!cancelled) {
           if (data.status && ['online', 'offline', 'connecting', 'unknown'].includes(data.status)) {
             setStatus(data.status);

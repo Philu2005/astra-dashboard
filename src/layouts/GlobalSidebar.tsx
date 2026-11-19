@@ -12,7 +12,8 @@ import { cn } from '@/lib/utils';
 import { withFrom } from '@/lib/returnTo';
 import { appConfig } from '@/lib/app-config';
 import { AstraLogo } from '@/components/AstraLogo';
-import { useBotStatus, botStatusConfig } from '@/hooks/useBotStatus';
+import { useBotStatusContext } from '@/contexts/BotStatusContext';
+import { botStatusConfig } from '@/hooks/useBotStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
@@ -55,7 +56,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, active, external, 
 };
 
 export const GlobalSidebar: React.FC = () => {
-  const botStatus = useBotStatus();
+  const botStatus = useBotStatusContext();
   const sidebarStatusConfig = botStatusConfig[botStatus];
   const { user } = useAuth();
   const isAdmin = user?.id === '789555434201677824';
