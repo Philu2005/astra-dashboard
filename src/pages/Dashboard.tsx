@@ -221,19 +221,19 @@ export const Dashboard = () => {
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           title="Server"
-          value={statsLoading ? '…' : statsError ? '–' : formatNumber(statsData!.stats.guilds)}
+          value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.guilds ?? 0)}
           icon={Layout}
           className={statsData?.stale ? 'opacity-60' : undefined}
         />
         <StatCard
           title="Nutzer"
-          value={statsLoading ? '…' : statsError ? '–' : formatNumber(statsData!.stats.users)}
+          value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.users ?? 0)}
           icon={Users}
           className={statsData?.stale ? 'opacity-60' : undefined}
         />
         <StatCard
           title="Befehle"
-          value={statsLoading ? '…' : statsError ? '–' : formatNumber(statsData!.stats.commands)}
+          value={(!statsData && statsLoading) ? '…' : (statsError && !statsData) ? '–' : formatNumber(statsData?.stats.commands ?? 0)}
           icon={Zap}
           className={statsData?.stale ? 'opacity-60' : undefined}
         />

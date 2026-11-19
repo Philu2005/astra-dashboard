@@ -8,7 +8,7 @@ export type CommandStatisticsState = {
   error: boolean;
 };
 
-export function useCommandStatistics(refreshMs = 60_000): CommandStatisticsState {
+export function useCommandStatistics(refreshMs = 30_000): CommandStatisticsState {
   const [data, setData] = useState<CommandStatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -28,8 +28,11 @@ export function useCommandStatistics(refreshMs = 60_000): CommandStatisticsState
           setData(json);
           setError(false);
         }
-      } catch {
-        if (!cancelled) setError(true);
+      } catch (err) {
+        if (!cancelled) {
+          setError(true);
+          console.error('[useCommandStatistics] Fetch failed:', err);
+        }
       } finally {
         pending = false;
         if (!cancelled) setLoading(false);

@@ -24,7 +24,7 @@ export type DashboardStatsState = {
  * Hinweis: Der Backend-Endpunkt `/dashboard/stats` muss die Felder
  * `stats` (users, guilds, commands), `last_successful_sync` und `stale` liefern.
  */
-export function useDashboardStats(intervalMs = 60_000): DashboardStatsState {
+export function useDashboardStats(intervalMs = 15_000): DashboardStatsState {
   const [data, setData] = useState<DashboardStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -44,9 +44,10 @@ export function useDashboardStats(intervalMs = 60_000): DashboardStatsState {
           setData(json);
           setError(false);
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setError(true);
+          console.error('[useDashboardStats] Fetch failed:', err);
         }
       } finally {
         pending = false;
