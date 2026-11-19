@@ -190,6 +190,7 @@ export const DiscordSelect: React.FC<DiscordSelectProps> = ({
       width: rect.width,
       zIndex: 9999,
       transform: 'translateZ(0)',
+      pointerEvents: 'auto',
       ...(openAbove
         ? { bottom: window.innerHeight - rect.top + 6 }
         : { top: rect.bottom + 6 }),

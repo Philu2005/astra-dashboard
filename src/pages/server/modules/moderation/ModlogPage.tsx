@@ -6,7 +6,9 @@ import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
-import { BookOpen, Hash, Info } from 'lucide-react';
+import { BookOpen, Hash, Info, ChevronDown } from 'lucide-react';
+import { serversApi, type GuildChannel } from '@/services/servers-api';
+import { ModuleChannelSelect } from '@/components/module-ui';
 
 const ModlogPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
@@ -17,6 +19,29 @@ const ModlogPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
+  const [channels, setChannels] = useState<GuildChannel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadChannels() {
+      if (!guildId) return;
+      setChannelsLoading(true);
+      try {
+        const res = await serversApi.getChannels(guildId);
+        if (!active) return;
+        setChannels(res.channels || []);
+      } catch (e: any) {
+        if (!active) return;
+        setChannelsError(e?.message || 'Kanäle konnten nicht geladen werden.');
+      } finally {
+        if (active) setChannelsLoading(false);
+      }
+    }
+    loadChannels();
+    return () => { active = false; };
+  }, [guildId]);
 
   useEffect(() => {
     let active = true;
@@ -77,6 +102,7 @@ const ModlogPage: React.FC = () => {
 
   const dirty = current !== null && channelId.trim() !== (current ?? '');
   const isActive = Boolean(current);
+  const currentChannelName = channels.find(c => c.id === current)?.name || current;
 
   return (
     <div className="space-y-5">
@@ -124,7 +150,7 @@ const ModlogPage: React.FC = () => {
                   {isActive ? (
                     <div className="flex items-center gap-2 text-[0.88rem] text-muted-foreground">
                       <Hash className="w-4 h-4 text-[#7de3ff]" />
-                      <span>Zielkanal: <span className="text-white font-medium">{current}</span></span>
+                      <span>Zielkanal: <span className="text-white font-medium">{currentChannelName}</span></span>
                     </div>
                   ) : (
                     <p className="text-[0.88rem] text-muted-foreground">
@@ -144,15 +170,22 @@ const ModlogPage: React.FC = () => {
             }>
               <div className="space-y-3">
                 <div>
-                  <div className="mb-1.5 text-[0.88rem] text-[#9ca2be] font-medium">Zielkanal (Kanal‑ID)</div>
-                  <StyledInput
-                    placeholder="z. B. 123456789012345678"
-                    inputMode="numeric"
+                  <ModuleChannelSelect
+                    label="Zielkanal"
+                    items={channels.map(c => ({ 
+                      id: c.id, 
+                      name: c.name,
+                      type: c.type,
+                      parent_id: c.parent_id ?? null,
+                      parent_name: (channels.find(pc => pc.id === c.parent_id)?.name) ?? null
+                    }))}
+                    loading={channelsLoading}
+                    error={channelsError}
                     value={channelId}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChannelId(e.target.value)}
+                    onChange={(id) => setChannelId(id)}
                   />
                   <p className="mt-1.5 text-[0.82rem] text-[#7f89aa]">
-                    Gib die ID des Textkanals ein, in dem Astra die Moderationsprotokolle senden soll. Die Kanal-ID findest du in Discord unter Kanaleinstellungen oder per Rechtsklick bei aktiviertem Entwicklermodus.
+                    Wähle den Textkanal aus, in dem Astra die Moderationsprotokolle senden soll.
                   </p>
                 </div>
                 <div className="flex gap-2 pt-1">

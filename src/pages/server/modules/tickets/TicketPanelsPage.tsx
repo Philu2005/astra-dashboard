@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 import { ticketsApi, type TicketPanel, type TicketPanelConfigRequest } from '@/services/tickets-api';
 import { serversApi, type GuildChannel, type GuildRole, type GuildCategory } from '@/services/servers-api';
+import { cn } from '@/lib/utils';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
@@ -14,6 +15,7 @@ import FloatingActionBar from '@/components/ui/FloatingActionBar';
 import {
   LayoutPanelTop, Plus, Pencil, Trash2, Send, Hash, Shield, FolderTree,
   CheckCircle2, AlertTriangle, XCircle, Loader2, ArrowRightLeft, X,
+  ChevronDown,
 } from 'lucide-react';
 
 /* ── Typen ──────────────────────────────────────────────────────── */
@@ -65,9 +67,9 @@ function StatusBadge({ tone, text }: { tone: 'ok' | 'warn' | 'error' | 'unknown'
   );
 }
 
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldGroup({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="space-y-3">
+    <div className={cn('space-y-3', className)}>
       <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider">{label}</h4>
       {children}
     </div>
@@ -97,6 +99,7 @@ const TicketPanelsPage: React.FC = () => {
   const [editPanel, setEditPanel] = useState<TicketPanel | null>(null);
   const [deletePanel, setDeletePanel] = useState<TicketPanel | null>(null);
   const [movePanel, setMovePanel] = useState<TicketPanel | null>(null);
+  const [expandedPanel, setExpandedPanel] = useState<string | null>(null);
 
   // Create form
   const [createForm, setCreateForm] = useState<EditorState>({ ...EMPTY_EDITOR });
@@ -211,11 +214,11 @@ const TicketPanelsPage: React.FC = () => {
     const norm = st?.status?.toLowerCase();
     const msgId = st?.panel_message_id || (p.panel_message_id as string) || undefined;
     if (norm === 'published' || norm === 'published_updated' || norm === 'published_exists') {
-      return { tone: 'ok', text: 'Veröffentlicht', messageId: msgId };
+      return { tone: 'ok', text: 'Aktiv', messageId: msgId };
     }
     if (norm === 'not_published') return { tone: 'warn', text: 'Nicht veröffentlicht', messageId: msgId };
     if (norm === 'error') return { tone: 'error', text: 'Fehler', messageId: msgId };
-    if (p.panel_message_id) return { tone: 'ok', text: 'Veröffentlicht', messageId: String(p.panel_message_id) };
+    if (p.panel_message_id) return { tone: 'ok', text: 'Aktiv', messageId: String(p.panel_message_id) };
     return { tone: 'unknown', text: 'Status unbekannt', messageId: msgId };
   }
 
@@ -264,6 +267,7 @@ const TicketPanelsPage: React.FC = () => {
         } catch { /* config update succeeded, message update is best-effort */ }
       }
       setToast({ type: 'ok', msg: 'Panel aktualisiert.' });
+      setExpandedPanel(null);
       setEditPanel(null);
       initialEditRef.current = null;
       await loadPanels();
@@ -350,7 +354,7 @@ const TicketPanelsPage: React.FC = () => {
         <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
           {[
             { label: 'Panels', value: panels.length, icon: LayoutPanelTop },
-            { label: 'Veröffentlicht', value: panels.filter(p => getPanelStatus(p).tone === 'ok').length, icon: CheckCircle2 },
+            { label: 'Aktiv', value: panels.filter(p => getPanelStatus(p).tone === 'ok').length, icon: CheckCircle2 },
             { label: 'Kanäle', value: new Set(panels.map(p => p.channel_id).filter(Boolean)).size, icon: Hash },
             { label: 'Rollen', value: new Set(panels.map(p => p.support_role_id).filter(Boolean)).size, icon: Shield },
           ].map(s => (
@@ -394,17 +398,37 @@ const TicketPanelsPage: React.FC = () => {
         <div className="space-y-3">
           {panels.map((panel, i) => {
             const st = getPanelStatus(panel);
+            const isExpanded = expandedPanel === panel.channel_id;
+            
             return (
-              <SettingsCard key={panel.channel_id || i}>
+              <SettingsCard 
+                key={panel.channel_id || i}
+                className={cn(
+                  'cursor-pointer overflow-hidden transition-all duration-300',
+                  isExpanded ? 'border-astra-purple shadow-astra-glow ring-1 ring-astra-purple/20' : 'hover:border-[#3a4163]'
+                )}
+                onClick={() => {
+                  if (isExpanded) {
+                    setExpandedPanel(null);
+                    setEditPanel(null);
+                  } else {
+                    const snap = editorFromPanel(panel);
+                    initialEditRef.current = snap;
+                    setEditForm(snap);
+                    setEditPanel(panel);
+                    setExpandedPanel(panel.channel_id || null);
+                  }
+                }}
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 space-y-1.5">
+                  <div className="min-w-0 space-y-1.5 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-[0.95rem] font-medium text-white truncate">
                         {panel.title || 'Ticket-Panel'}
                       </p>
                       <StatusBadge tone={st.tone} text={st.text} />
                     </div>
-                    {panel.description && (
+                    {panel.description && !isExpanded && (
                       <p className="text-[0.83rem] text-[#8b8fad] line-clamp-2">{panel.description as string}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8rem] text-[#8b8fad]">
@@ -428,7 +452,7 @@ const TicketPanelsPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
                     <button
                       type="button"
                       onClick={() => { setMovePanel(panel); setMoveChannelId(''); }}
@@ -439,27 +463,91 @@ const TicketPanelsPage: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        const snap = editorFromPanel(panel);
-                        initialEditRef.current = snap;
-                        setEditForm(snap);
-                        setEditPanel(panel);
-                      }}
-                      className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
-                      title="Bearbeiten"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => { setDeletePanel(panel); setDeleteError(null); }}
                       className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-red-400 hover:border-red-500/30 transition-colors"
                       title="Löschen"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
+                    <div className={cn('p-1 text-[#5c6180] transition-transform duration-300', isExpanded && 'rotate-180')}>
+                      <ChevronDown className="h-5 w-5" />
+                    </div>
                   </div>
                 </div>
+
+                {/* Edit Area (Accordion) */}
+                {isExpanded && (
+                  <div 
+                    className="mt-6 border-t border-[#2a2f45] pt-6 animate-in fade-in slide-in-from-top-4 duration-300"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+                      <div className="space-y-6">
+                        <FieldGroup label="Einstellungen">
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <DiscordSelect 
+                              label="Support-Rolle" 
+                              kind="role" 
+                              items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} 
+                              loading={resLoading} 
+                              value={editForm.support_role_id || null} 
+                              onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} 
+                              className="w-full" 
+                            />
+                            <DiscordSelect
+                              label="Ziel-Kanal"
+                              kind="channel"
+                              groupByCategory
+                              items={textChannels.map(c => ({ 
+                                id: c.id, 
+                                name: c.name, 
+                                type: c.type, 
+                                parent_id: c.parent_id ?? null, 
+                                parent_name: categoryName[c.parent_id || ''] || null 
+                              }))}
+                              loading={resLoading}
+                              value={editForm.channel_id || null}
+                              onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
+                              className="w-full"
+                            />
+                          </div>
+                        </FieldGroup>
+                        <FieldGroup label="Inhalt">
+                          <div className="space-y-4">
+                            <div>
+                              <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
+                              <StyledInput placeholder="z. B. Allgemeiner Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full" />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              <div>
+                                <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                                <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full" />
+                              </div>
+                              <div>
+                                <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                                <StyledTextarea placeholder="Panel-Beschreibung" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[80px]" />
+                              </div>
+                            </div>
+                          </div>
+                        </FieldGroup>
+                        
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#2a2f45]">
+                          <StyledButton variant="ghost" onClick={() => setExpandedPanel(null)} disabled={saving}>Abbrechen</StyledButton>
+                          <StyledButton onClick={onSaveEdit} loading={saving} disabled={!isDirty}>
+                            Speichern
+                          </StyledButton>
+                        </div>
+                      </div>
+
+                      <div className="hidden lg:block">
+                        <div className="sticky top-6">
+                          <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
+                          <EmbedPreview title={editForm.title} description={editForm.description} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </SettingsCard>
             );
           })}
@@ -486,11 +574,18 @@ const TicketPanelsPage: React.FC = () => {
                       items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
                       loading={resLoading}
                       value={createForm.channel_id}
-                      onChange={v => setCreateForm(f => ({ ...f, channel_id: v }))}
+                      onChange={v => {
+                        // Automatically set category if channel is in a category
+                        const channel = channels.find(c => c.id === v);
+                        setCreateForm(f => ({ 
+                          ...f, 
+                          channel_id: v,
+                          category_id: channel?.parent_id || f.category_id
+                        }));
+                      }}
                       className="w-full"
                     />
                     <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={createForm.support_role_id || null} onChange={v => setCreateForm(f => ({ ...f, support_role_id: v }))} className="w-full" />
-                    <DiscordSelect label="Ticket-Kategorie" kind="category" items={categories.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={createForm.category_id || null} onChange={v => setCreateForm(f => ({ ...f, category_id: v }))} className="w-full" />
                   </div>
                 </FieldGroup>
                 <FieldGroup label="Inhalt">
@@ -533,80 +628,7 @@ const TicketPanelsPage: React.FC = () => {
       )}
 
       {/* ── Edit Dialog ───────────────────────────────────────────── */}
-      {editPanel && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[2vh] sm:pt-[5vh] pb-10 overflow-y-auto">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !saving && setEditPanel(null)} />
-          <div className="relative z-10 w-[95%] max-w-3xl rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-2xl flex flex-col my-auto">
-            <div className="flex items-center justify-between border-b border-[#2a2f45] px-4 sm:px-5 py-3 sm:py-4">
-              <h3 className="text-lg font-semibold text-white">Panel bearbeiten</h3>
-              <button type="button" onClick={() => setEditPanel(null)} className="text-[#8b8fad] hover:text-white p-1"><X className="h-6 w-6" /></button>
-            </div>
-            <div className="grid max-h-[70vh] sm:max-h-[78vh] grid-cols-1 gap-6 overflow-y-auto p-4 sm:p-5 lg:grid-cols-[1fr_280px]">
-              <div className="space-y-6">
-                <FieldGroup label="Discord‑Zuweisungen">
-                  <div className="space-y-4">
-                    <DiscordSelect label="Support-Rolle" kind="role" items={roles.map(r => ({ id: r.id, name: r.name, color: r.color }))} loading={resLoading} value={editForm.support_role_id || null} onChange={v => setEditForm(f => ({ ...f, support_role_id: v }))} className="w-full" />
-                    <DiscordSelect label="Ticket-Kategorie" kind="category" items={categories.map(c => ({ id: c.id, name: c.name }))} loading={resLoading} value={editForm.category_id || null} onChange={v => setEditForm(f => ({ ...f, category_id: v }))} className="w-full" />
-                    <DiscordSelect
-                      label="Zielkanal (fixiert)"
-                      kind="channel"
-                      groupByCategory
-                      items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
-                      loading={resLoading}
-                      value={editForm.channel_id || null}
-                      onChange={v => setEditForm(f => ({ ...f, channel_id: v }))}
-                      disabled
-                      className="w-full"
-                    />
-                  </div>
-                </FieldGroup>
-                <FieldGroup label="Inhalt">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label>
-                      <StyledInput placeholder="z. B. Allgemeiner Support" value={editForm.topic} onChange={e => setEditForm(f => ({ ...f, topic: e.target.value }))} className="w-full h-11" />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
-                      <StyledInput placeholder="Panel-Titel" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="w-full h-11" />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
-                      <StyledTextarea placeholder="Panel-Beschreibung" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className="w-full min-h-[100px]" />
-                    </div>
-                  </div>
-                </FieldGroup>
-                
-                {/* Mobile Preview */}
-                <div className="lg:hidden pt-4 border-t border-[#2a2f45]">
-                  <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
-                  <EmbedPreview title={editForm.title} description={editForm.description} />
-                </div>
-              </div>
-              {/* Vorschau Desktop */}
-              <div className="hidden lg:block">
-                <div className="sticky top-0">
-                  <EmbedPreview
-                    title={editForm.title}
-                    description={editForm.description}
-                  />
-                </div>
-              </div>
-            </div>
-            {/* Floating Action Bar */}
-            {isDirty && (
-              <div className="border-t border-[#2a2f45] px-4 sm:px-5 py-3 sm:py-4 bg-[#111427]/80 backdrop-blur-md rounded-b-2xl">
-                <div className="flex items-center justify-end gap-3">
-                  <StyledButton variant="ghost" onClick={() => setEditPanel(null)} disabled={saving} className="h-11 sm:h-10">Abbrechen</StyledButton>
-                  <StyledButton onClick={onSaveEdit} loading={saving} className="h-11 sm:h-10 px-6">
-                    {saving ? 'Speichere…' : 'Speichern'}
-                  </StyledButton>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Removed separate Edit Modal in favor of Accordion-Style inline edit */}
 
       {/* ── Move Dialog ───────────────────────────────────────────── */}
       {movePanel && (

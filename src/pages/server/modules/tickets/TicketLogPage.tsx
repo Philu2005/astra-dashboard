@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { moderationApi } from '@/services/moderation-api';
+import { ticketsApi } from '@/services/tickets-api';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
@@ -8,7 +8,7 @@ import { StyledButton } from '@/components/ui/StyledButton';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { BookOpen, Hash, Info, Trash2 } from 'lucide-react';
 import { serversApi, type GuildChannel } from '@/services/servers-api';
-import DiscordSelect from '@/components/ui/DiscordSelect';
+import { ModuleChannelSelect } from '@/components/module-ui';
 
 const TicketLogPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
@@ -30,10 +30,10 @@ const TicketLogPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await moderationApi.getModlog(guildId);
+        const res = await ticketsApi.getLog(guildId);
         if (!active) return;
-        setCurrent(res.channelId ?? null);
-        setChannelId(res.channelId ?? '');
+        setCurrent(res.channel_id ?? null);
+        setChannelId(res.channel_id ?? '');
       } catch (e: any) {
         if (!active) return;
         setError(e?.message || 'Fehler beim Laden der Ticket-Log-Konfiguration.');
@@ -74,8 +74,8 @@ const TicketLogPage: React.FC = () => {
     try {
       const trimmed = channelId.trim();
       if (!trimmed) throw new Error('Bitte eine gültige Kanal-ID eingeben.');
-      const res = await moderationApi.putModlog(guildId, trimmed);
-      setCurrent(res.channelId ?? null);
+      const res = await ticketsApi.putLog(guildId, trimmed);
+      setCurrent(res.channel_id ?? null);
       setInfo('Gespeichert.');
     } catch (e: any) {
       setError(e?.message || 'Speichern fehlgeschlagen.');
@@ -90,7 +90,7 @@ const TicketLogPage: React.FC = () => {
     setError(null);
     setInfo(null);
     try {
-      await moderationApi.deleteModlog(guildId);
+      await ticketsApi.deleteLog(guildId);
       setCurrent(null);
       setChannelId('');
       setInfo('Ticket-Log-Konfiguration entfernt.');
@@ -157,10 +157,15 @@ const TicketLogPage: React.FC = () => {
             }>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <DiscordSelect
+                  <ModuleChannelSelect
                     label="Log-Kanal"
-                    kind="channel"
-                    items={channels.map(c => ({ id: c.id, name: c.name }))}
+                    items={channels.map(c => ({ 
+                      id: c.id, 
+                      name: c.name,
+                      type: c.type,
+                      parent_id: c.parent_id ?? null,
+                      parent_name: (channels.find(pc => pc.id === c.parent_id)?.name) ?? null
+                    }))}
                     loading={channelsLoading}
                     error={channelsError}
                     value={channelId}

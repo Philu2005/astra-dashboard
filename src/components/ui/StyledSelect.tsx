@@ -151,6 +151,7 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
       width: rect.width,
       zIndex: 9999,
       transform: 'translateZ(0)',
+      pointerEvents: 'auto',
       ...(openAbove
         ? { bottom: window.innerHeight - rect.top + 4 }
         : { top: rect.bottom + 4 }),

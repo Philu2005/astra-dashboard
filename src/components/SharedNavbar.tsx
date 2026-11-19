@@ -1,4 +1,4 @@
-import { Menu, X, ChevronLeft } from 'lucide-react';
+import { Menu, X, ChevronLeft, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AstraLogo } from '@/components/AstraLogo';
@@ -246,29 +246,38 @@ export const SharedNavbar = ({ activeRoute, variant = 'landing', customLeftConte
 
             {/* Ressourcen (mobil) */}
             <div className="mt-4">
-              <div className="px-1.5 pb-2 text-[0.86rem] font-bold uppercase tracking-wider text-[#8288a5]">Ressourcen</div>
-              <div className="grid grid-cols-1 gap-2">
-                <a
-                  href={withFrom('/docs', currentPath)}
-                  onClick={() => setOpen(false)}
-                  className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-3 text-[#d7ddf2] hover:border-[#3a4060]"
-                >
-                  Dokumentation
-                </a>
-                <a
-                  href={withFrom('/status', currentPath)}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-3 text-[#d7ddf2] hover:border-[#3a4060]"
-                >
-                  Status
-                </a>
-                <div
-                  aria-disabled="true"
-                  className="rounded-xl border border-dashed border-layout-divider bg-layout-topbar/50 px-4 py-3 text-[#6b7194] cursor-not-allowed"
-                >
-                  Updates (Demnächst)
+              <button
+                type="button"
+                onClick={() => setResourcesOpen((v) => !v)}
+                className="flex w-full items-center justify-between px-1.5 pb-2 text-[0.86rem] font-bold uppercase tracking-wider text-[#8288a5]"
+              >
+                Ressourcen
+                <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', resourcesOpen && 'rotate-180')} />
+              </button>
+              {resourcesOpen && (
+                <div className="grid grid-cols-1 gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <a
+                    href={withFrom('/docs', currentPath)}
+                    onClick={() => setOpen(false)}
+                    className="rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-3 text-[#d7ddf2] hover:border-[#3a4060]"
+                  >
+                    Dokumentation
+                  </a>
+                  <a
+                    href={withFrom('/status', currentPath)}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-xl border border-layout-divider bg-layout-topbar/70 px-4 py-3 text-[#d7ddf2] hover:border-[#3a4060]"
+                  >
+                    Status
+                  </a>
+                  <div
+                    aria-disabled="true"
+                    className="rounded-xl border border-dashed border-layout-divider bg-layout-topbar/50 px-4 py-3 text-[#6b7194] cursor-not-allowed"
+                  >
+                    Updates (Demnächst)
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="mt-4 flex flex-col gap-2 border-t border-layout-divider pt-4">
