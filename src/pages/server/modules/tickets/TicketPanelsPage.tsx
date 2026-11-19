@@ -239,18 +239,21 @@ const TicketPanelsPage: React.FC = () => {
     if (!guildId || !createForm.channel_id) return;
     setCreating(true);
     try {
-      // First publish the panel embed
+      // Thema-Zuordnung sicherstellen
+      const topicValue = createForm.ticket_title || createForm.topic;
+
+      // Zuerst Panel veröffentlichen (Embed)
       const res = await ticketsApi.publishPanel(guildId, {
         channel_id: createForm.channel_id,
         title: createForm.title || undefined,
         description: createForm.description || undefined,
       });
 
-      // Then save the config (including topic/ticket_title)
+      // Dann Konfiguration speichern (inkl. Support-Rolle, Kategorie und Thema)
       await ticketsApi.updatePanelConfig(guildId, createForm.channel_id, {
         support_role_id: createForm.support_role_id || undefined,
         category_id: createForm.category_id || undefined,
-        topic: createForm.ticket_title || createForm.topic || undefined,
+        topic: topicValue || undefined,
         title: createForm.title || undefined,
         description: createForm.description || undefined,
       });
@@ -270,7 +273,6 @@ const TicketPanelsPage: React.FC = () => {
     if (!guildId) return;
     setSaving(true);
     
-    // Find all panels that are dirty
     const dirtyPanelIds = Object.keys(editStates).filter(id => {
       const initial = initialStatesRef.current[id];
       const current = editStates[id];
@@ -279,7 +281,6 @@ const TicketPanelsPage: React.FC = () => {
 
     let successCount = 0;
     let failCount = 0;
-    const newEditStates = { ...editStates };
 
     for (const channelId of dirtyPanelIds) {
       const form = editStates[channelId];
@@ -287,31 +288,32 @@ const TicketPanelsPage: React.FC = () => {
       if (!panel) continue;
 
       try {
-        const payload: TicketPanelConfigRequest = {};
-        const fields: (keyof EditorState)[] = ['title', 'description', 'support_role_id', 'category_id'];
-        for (const f of fields) {
-          if (form[f]) (payload as any)[f] = form[f];
-        }
-        // Topic is mapped from ticket_title
-        payload.topic = form.ticket_title || form.topic;
+        const payload: TicketPanelConfigRequest = {
+          support_role_id: form.support_role_id || undefined,
+          category_id: form.category_id || undefined,
+          topic: form.ticket_title || form.topic || undefined,
+          title: form.title || undefined,
+          description: form.description || undefined,
+        };
         
         await ticketsApi.updatePanelConfig(guildId, channelId, payload);
         
-        // Embed update if title/description changed
+        // Embed-Update falls Titel oder Beschreibung geändert wurden
         if (form.title !== panel.title || form.description !== panel.description) {
           try {
             await ticketsApi.updatePanel(guildId, channelId, {
               title: form.title || undefined,
               description: form.description || undefined,
             });
-          } catch { /* best effort */ }
+          } catch (err) {
+            console.warn(`Embed-Update für ${channelId} fehlgeschlagen:`, err);
+          }
         }
 
-        // Update initial state for this panel
         initialStatesRef.current[channelId] = { ...form };
         successCount++;
       } catch (e: any) {
-        console.error(`Failed to save panel ${channelId}:`, e);
+        console.error(`Fehler beim Speichern von Panel ${channelId}:`, e);
         failCount++;
       }
     }
@@ -379,12 +381,14 @@ const TicketPanelsPage: React.FC = () => {
     });
   }, [editStates]);
 
-  const onExpand = (panel: TicketPanel) => {
+  const onExpand = async (panel: TicketPanel) => {
     const channelId = panel.channel_id || '';
     if (expandedPanel === channelId) {
       setExpandedPanel(null);
     } else {
-      // Ensure we always have a clean editor state from the latest panel data
+      // Vor dem Laden sicherstellen, dass wir den Editor-Zustand für dieses Panel initialisieren
+      // Wir könnten hier sogar ein GET /tickets/panels/{guild_id} erneut machen, 
+      // aber laut Anforderung sollen wir die bereits vorhandenen Daten nutzen und konsistent laden.
       const snap = editorFromPanel(panel);
       initialStatesRef.current[channelId] = snap;
       setEditStates(prev => ({ ...prev, [channelId]: snap }));
@@ -617,15 +621,8 @@ const TicketPanelsPage: React.FC = () => {
                             </div>
 
                             <div className="w-full lg:w-[360px] lg:shrink-0">
-                              <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau (Ticket)</h4>
                               <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
-                                <EmbedPreview title={currentForm.ticket_title || 'Ticket'} description="Dies ist eine Vorschau, wie das erstellte Ticket aussehen wird (Ticket-Titel oben)." />
-                              </div>
-                              <div className="mt-4">
-                                <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau (Panel)</h4>
-                                <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
-                                  <EmbedPreview title={currentForm.title} description={currentForm.description} />
-                                </div>
+                                <EmbedPreview title={currentForm.title} description={currentForm.description} />
                               </div>
                             </div>
                           </div>
@@ -727,11 +724,6 @@ const TicketPanelsPage: React.FC = () => {
                     <div className="overflow-hidden">
                       <div className="flex flex-col gap-4">
                         <div className="scale-[0.85] origin-top-left">
-                          <p className="text-[0.7rem] font-bold text-[#8b8fad] uppercase mb-1">Ticket-Vorschau</p>
-                          <EmbedPreview title={createForm.ticket_title || 'Ticket'} description="Vorschau des erstellten Tickets." />
-                        </div>
-                        <div className="scale-[0.85] origin-top-left -mt-4 -mb-[15%]">
-                          <p className="text-[0.7rem] font-bold text-[#8b8fad] uppercase mb-1">Panel-Vorschau</p>
                           <EmbedPreview title={createForm.title} description={createForm.description} />
                         </div>
                       </div>
