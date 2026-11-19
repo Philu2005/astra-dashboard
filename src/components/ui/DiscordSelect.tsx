@@ -15,6 +15,7 @@ export interface DiscordEntity {
   emoji?: string | null;
   position?: number;
   categoryPosition?: number;
+  isCategoryOnly?: boolean;
 }
 
 export interface DiscordSelectProps {
@@ -76,42 +77,18 @@ function buildOptions(
 
   if (kind === 'channel' && groupByCategory) {
     const UNCATEGORIZED = '__uncategorized__';
+    // Map: Category ID -> { name, items, position }
     const groupsMap = new Map<string, { name: string; items: DiscordEntity[]; position: number }>();
 
-    // 1. Alle Kategorien als Gruppen initialisieren (auch wenn sie noch keine Kanäle haben)
-    for (const it of items) {
-      if (it.parent_id && it.parent_name) {
-        if (!groupsMap.has(it.parent_id)) {
-          groupsMap.set(it.parent_id, {
-            name: it.parent_name.trim() || `Kategorie ${it.parent_id}`,
-            items: [],
-            position: it.categoryPosition ?? 999999
-          });
-        }
-      }
-    }
-
-    // 2. Kanäle den Gruppen zuordnen
+    // 1. Alle verfügbaren Gruppen initialisieren (basierend auf parent_id/parent_name)
     for (const it of items) {
       const parentId = it.parent_id || UNCATEGORIZED;
       
       if (parentId === UNCATEGORIZED) {
         if (!groupsMap.has(UNCATEGORIZED)) {
-          // Wir suchen die minimale Position aller Kanäle ohne Kategorie für die Gruppensortierung
           groupsMap.set(UNCATEGORIZED, { name: 'Ohne Kategorie', items: [], position: 1000000 });
         }
-        const group = groupsMap.get(UNCATEGORIZED)!;
-        group.items.push(it);
-        // Falls ein Kanal ohne Kategorie eine sehr niedrige Position hat, 
-        // bleibt er dennoch am Ende, außer wir würden hier group.position anpassen.
-        // Discord zeigt Kanäle ohne Kategorie oben an, wenn sie über den Kategorien stehen.
-        if (it.position !== undefined && it.position < group.position && it.position < 1000) {
-           // Experimentell: Wenn Position < 1000, könnte es vor den Kategorien sein
-           // Aber meistens haben Kategorien auch Positionen.
-           // Wir lassen es erstmal bei 1000000 (Ende), wie gewünscht.
-        }
       } else {
-        // Falls die Kategorie durch einen Kanal bekannt ist, aber noch nicht in der Map
         if (!groupsMap.has(parentId)) {
           groupsMap.set(parentId, {
             name: (it.parent_name || '').trim() || `Kategorie ${parentId}`,
@@ -119,18 +96,23 @@ function buildOptions(
             position: it.categoryPosition ?? 999999
           });
         }
+      }
+
+      // Falls es kein Platzhalter für eine leere Kategorie ist, zum Inhalt hinzufügen
+      if (!it.isCategoryOnly) {
         groupsMap.get(parentId)!.items.push(it);
       }
     }
 
     const out: InternalOption[] = [];
     
-    // 3. Nur Gruppen mit Inhalten anzeigen und nach Position sortieren
+    // 2. Gruppen nach Position sortieren
     const sortedGroups = Array.from(groupsMap.entries())
       .sort((a, b) => a[1].position - b[1].position);
 
     for (const [key, group] of sortedGroups) {
-      if (group.items.length === 0) continue;
+      // Wir zeigen die Gruppe an, wenn sie Kanäle hat ODER wenn es eine echte Kategorie ist (nicht "Ohne Kategorie" wenn leer)
+      if (group.items.length === 0 && key === UNCATEGORIZED) continue;
       
       out.push({
         type: 'group',
@@ -138,7 +120,8 @@ function buildOptions(
         label: group.name,
         disabled: true,
       });
-      // Channels innerhalb der Gruppe nach Position sortieren
+
+      // Kanäle innerhalb der Gruppe nach Position sortieren
       const sortedItems = [...group.items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
       for (const it of sortedItems) {
         out.push({
@@ -153,13 +136,17 @@ function buildOptions(
     return out;
   }
 
-  return items.map(it => ({
-    type: 'option' as const,
-    value: it.id,
-    label: it.name || it.id,
-    icon: iconFor(it) ?? undefined,
-    emoji: it.emoji ?? null,
-  }));
+  // Fallback / Keine Gruppierung: Nur nach Position sortieren
+  return [...items]
+    .filter(it => !it.isCategoryOnly)
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .map(it => ({
+      type: 'option' as const,
+      value: it.id,
+      label: it.name || it.id,
+      icon: iconFor(it) ?? undefined,
+      emoji: it.emoji ?? null,
+    }));
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────

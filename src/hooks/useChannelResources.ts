@@ -8,51 +8,51 @@ import { type DiscordEntity } from '@/components/ui/DiscordSelect';
  */
 export function useChannelResources(channels: GuildChannel[], categories: GuildCategory[] = []) {
   const channelResources = useMemo((): DiscordEntity[] => {
-    // 1. Map für schnellen Zugriff auf Namen und Positionen
-    const nameMap = new Map<string, string>();
-    const posMap = new Map<string, number>();
-    
-    // Zuerst Kategorien in die Map
-    categories.forEach(cat => {
-      nameMap.set(cat.id, cat.name || cat.id);
-      if (cat.position !== undefined) {
-        posMap.set(cat.id, cat.position);
-      }
-    });
-    
-    // Dann Kanäle
-    channels.forEach(ch => {
-      if (!nameMap.has(ch.id)) {
-        nameMap.set(ch.id, ch.name || ch.id);
-      }
-    });
+    // 1. Map für Kategorien (für schnellen Zugriff)
+    const categoryMap = new Map<string, GuildCategory>();
+    categories.forEach(cat => categoryMap.set(cat.id, cat));
 
-    // 2. Kanäle transformieren und parent_name/position auflösen
-    return channels.map(ch => {
-      const categoryPos = ch.parent_id ? posMap.get(ch.parent_id) : undefined;
+    // 2. Kanäle transformieren
+    const transformedChannels = channels.map(ch => {
+      const category = ch.parent_id ? categoryMap.get(ch.parent_id) : undefined;
       return {
         id: ch.id,
         name: ch.name || ch.id,
         type: ch.type,
         parent_id: ch.parent_id ?? null,
-        parent_name: ch.parent_id ? (nameMap.get(ch.parent_id) || null) : null,
-        // WICHTIG: position des Kanals für die Sortierung innerhalb der Gruppe erhalten
-        position: ch.position ?? 0,
-        // Information für die Kategorie-Sortierung
-        // Falls categoryPos fehlt, nutzen wir die Position des Kanals selbst als Fallback für die Gruppe
-        categoryPosition: categoryPos !== undefined ? categoryPos : (ch.position ?? 999999),
+        parent_name: category ? category.name : (ch.parent_id ? `Kategorie ${ch.parent_id}` : null),
+        position: ch.position,
+        categoryPosition: category ? category.position : 1000000,
       };
     });
+
+    // 3. Kategorien ohne Kanäle finden
+    const channelParentIds = new Set(channels.map(ch => ch.parent_id).filter(Boolean));
+    const emptyCategories = categories
+      .filter(cat => !channelParentIds.has(cat.id))
+      .map(cat => ({
+        id: `cat-${cat.id}`, // Eigene ID für die Kategorie-Entität
+        name: cat.name,
+        type: 4, // Discord category type
+        parent_id: cat.id, // Wir missbrauchen parent_id hier, um sie als Gruppe zu identifizieren
+        parent_name: cat.name,
+        position: -1, // Am Anfang der Gruppe (unwichtig, da Gruppe leer)
+        categoryPosition: cat.position,
+        isCategoryOnly: true, // Markierung für leere Kategorien
+      }));
+
+    return [...transformedChannels, ...emptyCategories];
   }, [channels, categories]);
 
-  // Nur Text-Kanäle (Type 0 oder undefined)
+  // Nur Text-Kanäle (Type 0 oder 5 - Announcement)
   const textChannelResources = useMemo(() => 
-    channelResources.filter(ch => !ch.type || ch.type === 0),
+    channelResources.filter(ch => ch.type === 0 || ch.type === 5),
     [channelResources]
   );
 
   return {
     channelResources,
     textChannelResources,
+    categories, // Auch die rohen Kategorien zurückgeben
   };
 }

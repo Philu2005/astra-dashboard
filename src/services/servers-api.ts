@@ -9,15 +9,15 @@ export interface GuildRole {
 export interface GuildChannel {
   id: string;
   name: string;
-  type?: number; // Discord channel type
-  parent_id?: string | null;
-  position?: number;
+  type: number;
+  parent_id: string | null;
+  position: number;
 }
 
 export interface GuildCategory {
   id: string;
   name: string;
-  position?: number;
+  position: number;
 }
 
 function ensureJson<T = unknown>(res: Response): Promise<T> {

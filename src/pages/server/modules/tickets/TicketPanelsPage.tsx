@@ -13,10 +13,9 @@ import { ModuleChannelSelect } from '@/components/module-ui';
 import DiscordSelect from '@/components/ui/DiscordSelect';
 import AstraConfirmDialog from '@/components/ui/AstraConfirmDialog';
 import EmbedPreview from '@/components/tickets/EmbedPreview';
-import FloatingActionBar from '@/components/ui/FloatingActionBar';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import {
-  LayoutPanelTop, Plus, Pencil, Trash2, Send, Hash, Shield, FolderTree,
+  LayoutPanelTop, Plus, Trash2, Send, Hash, Shield, FolderTree,
   CheckCircle2, AlertTriangle, XCircle, Loader2, ArrowRightLeft, X,
   ChevronDown, LayoutGrid,
 } from 'lucide-react';
@@ -105,7 +104,6 @@ const TicketPanelsPage: React.FC = () => {
 
   // Dialogs
   const [showCreate, setShowCreate] = useState(false);
-  const [editPanel, setEditPanel] = useState<TicketPanel | null>(null);
   const [deletePanel, setDeletePanel] = useState<TicketPanel | null>(null);
   const [movePanel, setMovePanel] = useState<TicketPanel | null>(null);
   const [expandedPanel, setExpandedPanel] = useState<string | null>(null);
