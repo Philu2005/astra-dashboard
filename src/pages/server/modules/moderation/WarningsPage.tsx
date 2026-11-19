@@ -246,7 +246,7 @@ const WarningsPage: React.FC = () => {
                     <Filter className="h-4 w-4" />
                     <span>Filter:</span>
                   </div>
-                  <div className="flex flex-wrap gap-2 flex-1">
+                  <div className="flex flex-wrap gap-2 flex-1 min-w-0">
                     <button
                       onClick={() => setMemberFilter(null)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
@@ -261,18 +261,20 @@ const WarningsPage: React.FC = () => {
                       <button
                         key={opt.id}
                         onClick={() => setMemberFilter(opt.id)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all max-w-[120px] xs:max-w-[180px] sm:max-w-none ${
                           memberFilter === opt.id
                             ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
                             : 'bg-[#1a1e33] text-[#9ca2be] border border-[#2a2f45] hover:border-[#3a3f5a]'
                         }`}
                       >
                         {opt.member?.avatar_url ? (
-                          <img src={opt.member.avatar_url} alt="" className="h-4 w-4 rounded-full" />
+                          <img src={opt.member.avatar_url} alt="" className="h-4 w-4 rounded-full shrink-0" />
                         ) : (
-                          <User className="h-3 w-3" />
+                          <User className="h-3 w-3 shrink-0" />
                         )}
-                        <span>{opt.member?.display_name ? `${opt.member.display_name} (${String(opt.id).slice(0, 8)})` : String(opt.id).slice(0, 8)}</span>
+                        <span className="truncate">
+                          {opt.member?.display_name ? `${opt.member.display_name} (${String(opt.id).slice(0, 8)})` : String(opt.id).slice(0, 8)}
+                        </span>
                       </button>
                     ))}
                     {memberOptions.length > 5 && !memberFilter && (
@@ -335,9 +337,9 @@ const WarningsPage: React.FC = () => {
                 <div key={userId} className={`overflow-hidden rounded-xl border transition-all ${
                   memberFilter === userId ? 'border-blue-500/50 bg-[#0f111d] shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-[#2a2f45] bg-[#0f111d] shadow-sm hover:border-[#3a3f5a]'
                 }`}>
-                  <div className="flex items-center justify-between border-b border-[#2a2f45] bg-[#14182d]/50 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 border-b border-[#2a2f45] bg-[#14182d]/50 px-4 py-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="relative shrink-0">
                         {members[userId]?.avatar_url ? (
                           <img 
                             src={members[userId].avatar_url!} 
@@ -357,11 +359,11 @@ const WarningsPage: React.FC = () => {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[#dbe3ff]">
+                          <span className="font-semibold text-[#dbe3ff] truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">
                             {members[userId] ? (
                               <>
                                 {members[userId].display_name} 
-                                <span className="ml-1 text-[#7c83ac] font-normal">
+                                <span className="ml-1 text-[#7c83ac] font-normal hidden xs:inline">
                                   ({members[userId].username})
                                 </span>
                               </>
@@ -369,7 +371,7 @@ const WarningsPage: React.FC = () => {
                               'Unbekanntes Mitglied'
                             )}
                           </span>
-                          <StyledBadge variant="default" className="bg-[#1a1e33] text-[0.7rem] px-1.5 font-mono opacity-80">
+                          <StyledBadge variant="default" className="bg-[#1a1e33] text-[0.7rem] px-1.5 font-mono opacity-80 shrink-0">
                             {userId}
                           </StyledBadge>
                         </div>
@@ -400,29 +402,29 @@ const WarningsPage: React.FC = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2 self-center">
-                            <StyledButton 
-                              onClick={() => onDeleteOne(String(w.warnId))} 
-                              disabled={!!actionLoading} 
-                              size="sm" 
-                              variant={confirmOne === String(w.warnId) ? 'danger' : 'ghost'}
-                              className="h-8 gap-2"
-                            >
-                              {actionLoading === String(w.warnId) ? (
-                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                              ) : confirmOne === String(w.warnId) ? (
-                                <>
-                                  <AlertTriangle className="h-3.5 w-3.5" />
-                                  <span>Bestätigen</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Trash2 className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100" />
-                                  <span className="hidden sm:inline">Entfernen</span>
-                                </>
-                              )}
-                            </StyledButton>
-                          </div>
+                        <div className="flex items-center gap-2 self-center shrink-0">
+                          <StyledButton 
+                            onClick={() => onDeleteOne(String(w.warnId))} 
+                            disabled={!!actionLoading} 
+                            size="sm" 
+                            variant={confirmOne === String(w.warnId) ? 'danger' : 'ghost'}
+                            className="h-8 gap-2 min-w-[32px] sm:min-w-[100px]"
+                          >
+                            {actionLoading === String(w.warnId) ? (
+                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                            ) : confirmOne === String(w.warnId) ? (
+                              <>
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                <span className="hidden xs:inline">Bestätigen</span>
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100" />
+                                <span className="hidden sm:inline">Entfernen</span>
+                              </>
+                            )}
+                          </StyledButton>
+                        </div>
                         </div>
                       ))}
                   </div>

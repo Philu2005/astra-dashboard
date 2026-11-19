@@ -344,10 +344,16 @@ const AutomodPage: React.FC = () => {
                         )}
                         
                         {/* Entfernen-Button */}
-                        <div className="flex sm:block justify-end pt-2 sm:pt-0">
-                          <StyledButton variant="danger" size="sm" onClick={() => removeRule(idx)} title="Regel entfernen" className="h-11 w-11 sm:h-9 sm:w-auto p-0 sm:px-3">
-                            <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
-                            <span className="sm:hidden ml-2 font-medium">Löschen</span>
+                        <div className="flex sm:block justify-end">
+                          <StyledButton 
+                            variant="danger" 
+                            size="sm" 
+                            onClick={() => removeRule(idx)} 
+                            title="Regel entfernen" 
+                            className="h-10 w-full sm:h-9 sm:w-auto px-4 sm:px-3"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="sm:hidden ml-2 font-medium">Regel entfernen</span>
                           </StyledButton>
                         </div>
                       </div>
