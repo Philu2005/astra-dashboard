@@ -169,11 +169,13 @@ import { SidebarProvider } from '@/contexts/SidebarContext';
 
 const router = createBrowserRouter([
   {
-    // Root wrapper provides Sidebar context for ALL routes
+    path: '/',
     element: (
-      <SidebarProvider>
-        <Outlet />
-      </SidebarProvider>
+      <WithServerProvider>
+        <SidebarProvider>
+          <Outlet />
+        </SidebarProvider>
+      </WithServerProvider>
     ),
     children: [
       {
@@ -190,9 +192,7 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: (
-          <WithServerProvider>
-            <GlobalLayoutOutlet />
-          </WithServerProvider>
+          <GlobalLayoutOutlet />
         ),
         children: [
           {
@@ -253,9 +253,7 @@ const router = createBrowserRouter([
         path: '/servers/:guildId',
         element: (
           <RequireAuth message="servers">
-            <WithServerProvider>
-              <ServerLayout />
-            </WithServerProvider>
+            <ServerLayout />
           </RequireAuth>
         ),
         children: [

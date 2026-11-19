@@ -9,11 +9,16 @@ import { useSidebar } from '@/contexts/SidebarContext';
 
 const ServerLayout: React.FC = () => {
   const { guildId } = useParams();
-  const { servers, selectedServer, loadingState } = useServerContext();
+  const { servers, loadingState } = useServerContext();
   const { isOpen, isDesktop, close } = useSidebar();
 
   // Ladezustände
-  if (loadingState.status === 'loading' || loadingState.status === 'idle') {
+  if ((loadingState.status === 'loading' || loadingState.status === 'idle') && servers.length === 0) {
+    // Wenn wir bereits eine guildId haben (wir sind auf einer Server-Unterseite),
+    // prüfen wir ob die Server-Liste noch geladen wird.
+    // Falls wir bereits Server im Speicher haben (aus einem vorherigen Erfolg), 
+    // könnten wir sie theoretisch nutzen. Aber der Context setzt servers=[] bei loading.
+    
     return (
       <StaticInfoPage
         title="Wird geladen..."
