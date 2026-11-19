@@ -272,7 +272,7 @@ const WarningsPage: React.FC = () => {
                         ) : (
                           <User className="h-3 w-3" />
                         )}
-                        <span>{opt.member?.display_name || opt.id.slice(0, 8)}</span>
+                        <span>{opt.member?.display_name || (typeof opt.id === 'string' ? opt.id.slice(0, 8) : String(opt.id))}</span>
                       </button>
                     ))}
                     {memberOptions.length > 5 && !memberFilter && (
