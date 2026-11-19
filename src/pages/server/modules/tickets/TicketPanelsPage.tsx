@@ -333,15 +333,33 @@ const TicketPanelsPage: React.FC = () => {
   };
 
   const onMove = async () => {
-    if (!guildId || !movePanel?.channel_id || !moveChannelId) return;
+    console.log('[TicketPanel Move] Click', {
+      guildId,
+      panelChannelId: movePanel?.channel_id,
+      targetChannelId: moveChannelId,
+    });
+
+    if (!guildId || !movePanel?.channel_id || !moveChannelId) {
+      console.error('[TicketPanel Move] Aborted: Missing values');
+      return;
+    }
+
     setMoving(true);
     try {
-      const res = await ticketsApi.updatePanelConfig(guildId, movePanel.channel_id, { channel_id: moveChannelId });
+      const res = await ticketsApi.updatePanelConfig(
+          guildId,
+          movePanel.channel_id,
+          { channel_id: moveChannelId }
+      );
+
+      console.log('[TicketPanel Move] Response:', res);
+
       setToast({ type: 'ok', msg: res.message || 'Panel verschoben.' });
       setMovePanel(null);
       setMoveChannelId('');
       await loadPanels();
     } catch (e: any) {
+      console.error('[TicketPanel Move] Failed:', e);
       setToast({ type: 'error', msg: e?.message || 'Verschieben fehlgeschlagen.' });
     } finally {
       setMoving(false);
