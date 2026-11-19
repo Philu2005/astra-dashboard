@@ -41,10 +41,19 @@ export function useBotStatus(intervalMs = 15_000) {
     };
 
     fetchStatus();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const id = setInterval(fetchStatus, intervalMs);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [intervalMs]);
 

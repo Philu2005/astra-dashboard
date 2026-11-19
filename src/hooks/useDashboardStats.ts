@@ -56,10 +56,20 @@ export function useDashboardStats(intervalMs = 15_000): DashboardStatsState {
     };
 
     fetchStats();
+
+    // Re-fetch when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const id = setInterval(fetchStats, intervalMs);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [intervalMs]);
 

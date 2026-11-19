@@ -40,10 +40,19 @@ export function useCommandStatistics(refreshMs = 30_000): CommandStatisticsState
     };
 
     load();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        load();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const id = setInterval(load, refreshMs);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refreshMs]);
 
