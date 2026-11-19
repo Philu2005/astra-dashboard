@@ -272,7 +272,7 @@ const WarningsPage: React.FC = () => {
                         ) : (
                           <User className="h-3 w-3" />
                         )}
-                        <span>{opt.member?.display_name || (typeof opt.id === 'string' ? opt.id.slice(0, 8) : String(opt.id))}</span>
+                        <span>{opt.member?.display_name ? `${opt.member.display_name} (${opt.id.slice(0, 8)})` : opt.id.slice(0, 8)}</span>
                       </button>
                     ))}
                     {memberOptions.length > 5 && !memberFilter && (
@@ -358,13 +358,17 @@ const WarningsPage: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-[#dbe3ff]">
-                            {members[userId]?.display_name || 'Mitglied'}
+                            {members[userId] ? (
+                              <>
+                                {members[userId].display_name} 
+                                <span className="ml-1 text-[#7c83ac] font-normal">
+                                  ({members[userId].username})
+                                </span>
+                              </>
+                            ) : (
+                              'Unbekanntes Mitglied'
+                            )}
                           </span>
-                          {members[userId]?.username && (
-                            <span className="text-[0.75rem] text-[#7c83ac]">
-                              @{members[userId].username}
-                            </span>
-                          )}
                           <StyledBadge variant="default" className="bg-[#1a1e33] text-[0.7rem] px-1.5 font-mono opacity-80">
                             {userId}
                           </StyledBadge>
