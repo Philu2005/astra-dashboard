@@ -80,6 +80,12 @@ export const modulesRegistry: ModuleMeta[] = [
     icon: ShieldCheck,
     subpages: [
       {
+        id: 'overview',
+        name: 'Übersicht',
+        path: '',
+        icon: LayoutDashboard,
+      },
+      {
         id: 'automod',
         name: 'AutoMod',
         path: 'automod',

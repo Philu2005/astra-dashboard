@@ -7,7 +7,7 @@ import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { BookOpen, Hash, Info, ChevronDown } from 'lucide-react';
-import { serversApi, type GuildChannel } from '@/services/servers-api';
+import { serversApi, type GuildChannel, type GuildCategory } from '@/services/servers-api';
 import { ModuleChannelSelect } from '@/components/module-ui';
 import { useChannelResources } from '@/hooks/useChannelResources';
 
@@ -21,19 +21,25 @@ const ModlogPage: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const [channels, setChannels] = useState<GuildChannel[]>([]);
+  const [categories, setCategories] = useState<GuildCategory[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(false);
   const [channelsError, setChannelsError] = useState<string | null>(null);
-  const { textChannelResources } = useChannelResources(channels);
+  const { textChannelResources } = useChannelResources(channels, categories);
 
   useEffect(() => {
     let active = true;
-    async function loadChannels() {
+    async function loadResources() {
       if (!guildId) return;
       setChannelsLoading(true);
       try {
-        const res = await serversApi.getChannels(guildId);
+        const [chRes, caRes] = await Promise.allSettled([
+          serversApi.getChannels(guildId),
+          serversApi.getCategories(guildId),
+        ]);
         if (!active) return;
-        setChannels(res.channels || []);
+        
+        if (chRes.status === 'fulfilled') setChannels(chRes.value.channels || []);
+        if (caRes.status === 'fulfilled') setCategories(caRes.value.categories || []);
       } catch (e: any) {
         if (!active) return;
         setChannelsError(e?.message || 'Kanäle konnten nicht geladen werden.');
@@ -41,7 +47,7 @@ const ModlogPage: React.FC = () => {
         if (active) setChannelsLoading(false);
       }
     }
-    loadChannels();
+    loadResources();
     return () => { active = false; };
   }, [guildId]);
 

@@ -9,6 +9,7 @@ import SettingsCard from '@/components/settings/SettingsCard';
 import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledTextarea } from '@/components/ui/StyledTextarea';
 import { StyledButton } from '@/components/ui/StyledButton';
+import { ModuleChannelSelect } from '@/components/module-ui';
 import DiscordSelect from '@/components/ui/DiscordSelect';
 import AstraConfirmDialog from '@/components/ui/AstraConfirmDialog';
 import EmbedPreview from '@/components/tickets/EmbedPreview';
@@ -93,7 +94,7 @@ const TicketPanelsPage: React.FC = () => {
   const [channels, setChannels] = useState<GuildChannel[]>([]);
   const [roles, setRoles] = useState<GuildRole[]>([]);
   const [categories, setCategories] = useState<GuildCategory[]>([]);
-  const { channelResources, textChannelResources } = useChannelResources(channels);
+  const { textChannelResources } = useChannelResources(channels, categories);
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -234,21 +235,13 @@ const TicketPanelsPage: React.FC = () => {
     if (!guildId || !createForm.channel_id) return;
     setCreating(true);
     try {
-      // Zuerst Panel veröffentlichen (Embed)
-      // Wir verwenden ticket_title auch als Titel für das Embed, da 'title' im UI entfernt wurde
+      // Panel veröffentlichen (Embed + Konfiguration in einem Schritt im Backend)
       const res = await ticketsApi.publishPanel(guildId, {
         channel_id: createForm.channel_id,
         title: createForm.ticket_title || undefined,
         description: createForm.description || undefined,
-      });
-
-      // Dann Konfiguration speichern (inkl. Support-Rolle, Kategorie und Thema)
-      await ticketsApi.updatePanelConfig(guildId, createForm.channel_id, {
         support_role_id: createForm.support_role_id || undefined,
         category_id: createForm.category_id || undefined,
-        topic: createForm.ticket_title || undefined,
-        title: createForm.ticket_title || undefined,
-        description: createForm.description || undefined,
       });
 
       setToast({ type: 'ok', msg: res.message || 'Panel veröffentlicht.' });
@@ -281,6 +274,7 @@ const TicketPanelsPage: React.FC = () => {
       if (!panel) continue;
 
       try {
+        // Konfiguration und Embed-Inhalt in einem Rutsch aktualisieren
         const payload: TicketPanelConfigRequest = {
           support_role_id: form.support_role_id || undefined,
           category_id: form.category_id || undefined,
@@ -291,15 +285,10 @@ const TicketPanelsPage: React.FC = () => {
         
         await ticketsApi.updatePanelConfig(guildId, channelId, payload);
         
-        // Embed-Update
-        try {
-          await ticketsApi.updatePanel(guildId, channelId, {
-            title: form.ticket_title || undefined,
-            description: form.description || undefined,
-          });
-        } catch (err) {
-          console.warn(`Embed-Update für ${channelId} fehlgeschlagen:`, err);
-        }
+        // Da das Backend bei updatePanelConfig auch den Titel/Description im Embed ändert,
+        // ist ein zusätzlicher Aufruf von updatePanel (Embed-Update) meist redundant,
+        // aber wir lassen ihn für die Design-Treue/Sicherheit weg, wenn nicht explizit nötig,
+        // um den "doppelten Aufruf"-Fehler zu vermeiden.
 
         initialStatesRef.current[channelId] = { ...form };
         successCount++;
@@ -567,10 +556,8 @@ const TicketPanelsPage: React.FC = () => {
                                     onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, support_role_id: v } }))} 
                                     className="w-full" 
                                   />
-                                  <DiscordSelect
+                                  <ModuleChannelSelect
                                     label="Ziel-Kanal"
-                                    kind="channel"
-                                    groupByCategory
                                     items={textChannelResources}
                                     loading={resLoading}
                                     value={currentForm.channel_id || null}
@@ -629,10 +616,8 @@ const TicketPanelsPage: React.FC = () => {
               <div className="space-y-5">
                 <FieldGroup label="Discord-Zuweisung">
                   <div className="space-y-3">
-                    <DiscordSelect
+                    <ModuleChannelSelect
                       label="Zielkanal *"
-                      kind="channel"
-                      groupByCategory
                       items={textChannelResources}
                       loading={resLoading}
                       value={createForm.channel_id}
@@ -738,10 +723,8 @@ const TicketPanelsPage: React.FC = () => {
               <div className="space-y-6">
                 <FieldGroup label="Discord‑Zuweisungen">
                   <div className="space-y-4">
-                    <DiscordSelect
+                    <ModuleChannelSelect
                       label="Zielkanal *"
-                      kind="channel"
-                      groupByCategory
                       items={textChannelResources}
                       loading={resLoading}
                       value={createForm.channel_id}
@@ -804,10 +787,8 @@ const TicketPanelsPage: React.FC = () => {
             <p className="text-[0.85rem] text-[#8b8fad]">
               Verschiebe das Panel aus <span className="text-white font-medium">#{channelName[movePanel.channel_id || ''] || movePanel.channel_id}</span> in einen anderen Kanal.
             </p>
-            <DiscordSelect
+            <ModuleChannelSelect
               label="Neuer Zielkanal"
-              kind="channel"
-              groupByCategory
               items={textChannelResources.filter(c => c.id !== movePanel.channel_id)}
               loading={resLoading}
               value={moveChannelId || null}

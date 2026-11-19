@@ -72,23 +72,40 @@ function buildOptions(
     return null;
   };
 
-  if (kind === 'channel' && (groupByCategory || items.some(i => i.parent_name))) {
-    const groups = new Map<string, DiscordEntity[]>();
+  if (kind === 'channel' && groupByCategory) {
     const UNCATEGORIZED = '__uncategorized__';
+    const groupsMap = new Map<string, { name: string; items: DiscordEntity[] }>();
+
     for (const it of items) {
-      const key = (it.parent_name || '').trim() || UNCATEGORIZED;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(it);
+      const parentName = (it.parent_name || '').trim();
+      const parentId = it.parent_id || UNCATEGORIZED;
+      
+      const key = parentId === UNCATEGORIZED ? UNCATEGORIZED : parentId;
+      const groupName = parentId === UNCATEGORIZED ? 'Ohne Kategorie' : parentName || `Kategorie ${parentId}`;
+
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, { name: groupName, items: [] });
+      }
+      groupsMap.get(key)!.items.push(it);
     }
+
     const out: InternalOption[] = [];
-    for (const [group, ents] of groups) {
+    
+    // Zuerst Kategorien mit Inhalten
+    const sortedGroups = Array.from(groupsMap.entries()).sort((a, b) => {
+      if (a[0] === UNCATEGORIZED) return 1;
+      if (b[0] === UNCATEGORIZED) return -1;
+      return a[1].name.localeCompare(b[1].name);
+    });
+
+    for (const [key, group] of sortedGroups) {
       out.push({
         type: 'group',
-        value: `g-${group}`,
-        label: group === UNCATEGORIZED ? 'Ohne Kategorie' : group,
+        value: `g-${key}`,
+        label: group.name,
         disabled: true,
       });
-      for (const it of ents) {
+      for (const it of group.items) {
         out.push({
           type: 'option',
           value: it.id,

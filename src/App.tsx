@@ -24,6 +24,7 @@ import ModuleLayout from '@/layouts/modules/ModuleLayout';
 import AutomodPage from '@/pages/server/modules/moderation/AutomodPage';
 import WarningsPage from '@/pages/server/modules/moderation/WarningsPage';
 import ModlogPage from '@/pages/server/modules/moderation/ModlogPage';
+import AutomodOverviewPage from '@/pages/server/modules/moderation/AutomodOverviewPage';
 import ServerPermissionsPlaceholder from '@/pages/server/ServerPermissionsPlaceholder';
 import ServerLogsPlaceholder from '@/pages/server/ServerLogsPlaceholder';
 import ServerStatsPlaceholder from '@/pages/server/ServerStatsPlaceholder';
@@ -265,7 +266,7 @@ const router = createBrowserRouter([
             path: 'modules/moderation',
             element: <ModuleLayout moduleKey="moderation" />,
             children: [
-              { index: true, element: <Navigate to="automod" replace /> },
+              { index: true, element: <AutomodOverviewPage /> },
               { path: 'automod', element: <AutomodPage /> },
               { path: 'warnings', element: <WarningsPage /> },
               { path: 'modlog', element: <ModlogPage /> },

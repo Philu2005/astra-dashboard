@@ -7,7 +7,7 @@ import { StyledInput } from '@/components/ui/StyledInput';
 import { StyledButton } from '@/components/ui/StyledButton';
 import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { BookOpen, Hash, Info, Trash2 } from 'lucide-react';
-import { serversApi, type GuildChannel } from '@/services/servers-api';
+import { serversApi, type GuildChannel, type GuildCategory } from '@/services/servers-api';
 import { ModuleChannelSelect } from '@/components/module-ui';
 import { useChannelResources } from '@/hooks/useChannelResources';
 
@@ -21,9 +21,10 @@ const TicketLogPage: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const [channels, setChannels] = useState<GuildChannel[]>([]);
+  const [categories, setCategories] = useState<GuildCategory[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(false);
   const [channelsError, setChannelsError] = useState<string | null>(null);
-  const { textChannelResources } = useChannelResources(channels);
+  const { textChannelResources } = useChannelResources(channels, categories);
 
   useEffect(() => {
     let active = true;
@@ -47,7 +48,7 @@ const TicketLogPage: React.FC = () => {
     return () => { active = false; };
   }, [guildId]);
 
-  // Kanäle laden für Dropdown
+  // Ressourcen (Kanäle & Kategorien) laden für Dropdown
   useEffect(() => {
     let active = true;
     (async () => {
@@ -55,12 +56,17 @@ const TicketLogPage: React.FC = () => {
       setChannelsLoading(true);
       setChannelsError(null);
       try {
-        const res = await serversApi.getChannels(guildId);
+        const [chRes, caRes] = await Promise.allSettled([
+          serversApi.getChannels(guildId),
+          serversApi.getCategories(guildId),
+        ]);
         if (!active) return;
-        setChannels(res.channels || []);
+        
+        if (chRes.status === 'fulfilled') setChannels(chRes.value.channels || []);
+        if (caRes.status === 'fulfilled') setCategories(caRes.value.categories || []);
       } catch (e: any) {
         if (!active) return;
-        setChannelsError(e?.message || 'Konnte Kanäle nicht laden.');
+        setChannelsError(e?.message || 'Konnte Ressourcen nicht laden.');
       } finally {
         if (active) setChannelsLoading(false);
       }
