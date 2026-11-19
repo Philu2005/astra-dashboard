@@ -143,8 +143,9 @@ const WarningsPage: React.FC = () => {
                 <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-[#2d3246]">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
-                      <span className="opacity-70">Benutzer‑ID:</span>
-                      <span className="font-medium">{userId}</span>
+                      <span className="opacity-70">Benutzer:</span>
+                      <span className="font-medium">Mitglied</span>
+                      <span className="text-[0.7rem] opacity-50 ml-1">({userId})</span>
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
                       <span className="opacity-70">Verwarnungen:</span>
@@ -161,8 +162,8 @@ const WarningsPage: React.FC = () => {
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
-                              <span className="opacity-70">Warnungs‑ID:</span>
-                              <span className="font-medium">{w.warnId}</span>
+                              <span className="opacity-70">Warnung</span>
+                              <span className="text-[0.7rem] opacity-50">#{w.warnId.slice(-6)}</span>
                             </span>
                           </div>
                           <div className="text-[#dbe3ff]">{w.reason || '—'}</div>

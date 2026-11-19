@@ -41,6 +41,12 @@ const TicketOpenPage: React.FC = () => {
     return m;
   }, [channels]);
 
+  const userName = useMemo(() => {
+    // Falls das Ticket-Objekt Benutzernamen enthalten würde, könnten wir sie hier mappen.
+    // Aktuell haben wir nur user_id. Wir lassen den Platzhalter für zukünftiges Mapping.
+    return (id: string) => id;
+  }, []);
+
   useEffect(() => {
     let active = true;
     async function load() {
@@ -113,7 +119,8 @@ const TicketOpenPage: React.FC = () => {
                     {ticket.user_id && (
                       <span className="flex items-center gap-1 text-[#8b8fad]">
                         <User className="h-4 w-4" />
-                        {ticket.user_id}
+                        <span className="font-medium text-[#c1c7de]">Benutzer</span>
+                        <span className="text-[0.75rem] opacity-70">({ticket.user_id})</span>
                       </span>
                     )}
                   </div>

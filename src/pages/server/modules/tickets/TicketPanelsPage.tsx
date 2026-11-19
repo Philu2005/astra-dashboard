@@ -62,8 +62,12 @@ function StatusBadge({ tone, text }: { tone: 'ok' | 'warn' | 'error' | 'unknown'
   }[tone];
   const Icon = { ok: CheckCircle2, warn: AlertTriangle, error: XCircle, unknown: AlertTriangle }[tone];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[0.78rem] font-medium ${cls}`}>
-      <Icon className="h-3 w-3" /> {text}
+    <span className={cn(
+      'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[0.78rem] font-medium transition-colors',
+      cls
+    )}>
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="truncate max-w-[120px]">{text}</span>
     </span>
   );
 }
@@ -351,12 +355,27 @@ const TicketPanelsPage: React.FC = () => {
     return Object.keys(editStates).some(id => {
       const initial = initialStatesRef.current[id];
       const current = editStates[id];
-      return initial && JSON.stringify(initial) !== JSON.stringify(current);
+      if (!initial || !current) return false;
+      return JSON.stringify(initial) !== JSON.stringify(current);
     });
   }, [editStates]);
 
+  const onExpand = (panel: TicketPanel) => {
+    const channelId = panel.channel_id || '';
+    if (expandedPanel === channelId) {
+      setExpandedPanel(null);
+    } else {
+      if (!editStates[channelId]) {
+        const snap = editorFromPanel(panel);
+        initialStatesRef.current[channelId] = snap;
+        setEditStates(prev => ({ ...prev, [channelId]: snap }));
+      }
+      setExpandedPanel(channelId);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1440px] mx-auto space-y-6">
       <SettingsPageHeader
         heading="Ticket-Panels"
         description="Verwalte und veröffentliche Ticket-Panels in Discord-Kanälen."
@@ -425,6 +444,8 @@ const TicketPanelsPage: React.FC = () => {
                 const channelId = panel.channel_id || '';
                 const isExpanded = expandedPanel === channelId;
                 const currentForm = editStates[channelId] || editorFromPanel(panel);
+                const isPanelDirty = initialStatesRef.current[channelId] && 
+                  JSON.stringify(initialStatesRef.current[channelId]) !== JSON.stringify(editStates[channelId]);
                 
                 return (
                   <div 
@@ -440,18 +461,7 @@ const TicketPanelsPage: React.FC = () => {
                     <button
                       type="button"
                       className="w-full text-left p-4 focus:outline-none"
-                      onClick={() => {
-                        if (isExpanded) {
-                          setExpandedPanel(null);
-                        } else {
-                          if (!editStates[channelId]) {
-                            const snap = editorFromPanel(panel);
-                            initialStatesRef.current[channelId] = snap;
-                            setEditStates(prev => ({ ...prev, [channelId]: snap }));
-                          }
-                          setExpandedPanel(channelId);
-                        }
-                      }}
+                      onClick={() => onExpand(panel)}
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-1.5 flex-1">
@@ -460,7 +470,7 @@ const TicketPanelsPage: React.FC = () => {
                               {panel.title || 'Ticket-Panel'}
                             </p>
                             <StatusBadge tone={st.tone} text={st.text} />
-                            {initialStatesRef.current[channelId] && JSON.stringify(initialStatesRef.current[channelId]) !== JSON.stringify(editStates[channelId]) && (
+                            {isPanelDirty && (
                               <span className="flex h-2 w-2 rounded-full bg-astra-purple shadow-[0_0_8px_rgba(75,70,200,0.6)]" title="Ungespeicherte Änderungen" />
                             )}
                           </div>
@@ -576,9 +586,9 @@ const TicketPanelsPage: React.FC = () => {
                               </FieldGroup>
                             </div>
 
-                            <div className="w-full lg:w-[320px] lg:shrink-0">
+                            <div className="w-full lg:w-[360px] lg:shrink-0">
                               <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
-                              <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4 scale-[0.9] origin-top">
+                              <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
                                 <EmbedPreview title={currentForm.title} description={currentForm.description} />
                               </div>
                             </div>
@@ -594,7 +604,7 @@ const TicketPanelsPage: React.FC = () => {
         </div>
 
         {/* Rechte Seite: Neues Panel erstellen */}
-        <div className="w-full lg:w-[400px] lg:shrink-0">
+        <div className="w-full lg:w-[380px] lg:shrink-0">
           <div className="sticky top-6">
             <div className="rounded-2xl border border-astra-cyan/20 bg-[#15182b] p-5 shadow-2xl">
               <div className="mb-5 flex items-center gap-2">
@@ -686,7 +696,7 @@ const TicketPanelsPage: React.FC = () => {
         onCancel={onCancelAll}
       />
 
-      {/* ── Create Dialog ─────────────────────────────────────────── */}
+      {/* Create Dialog (legacy, kept for safety) */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[2vh] sm:pt-[5vh] pb-10 overflow-y-auto">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !creating && setShowCreate(false)} />
@@ -707,7 +717,6 @@ const TicketPanelsPage: React.FC = () => {
                       loading={resLoading}
                       value={createForm.channel_id}
                       onChange={v => {
-                        // Automatically set category if channel is in a category
                         const channel = channels.find(c => c.id === v);
                         setCreateForm(f => ({ 
                           ...f, 
@@ -737,7 +746,6 @@ const TicketPanelsPage: React.FC = () => {
                   </div>
                 </FieldGroup>
                 
-                {/* Mobile Preview (only visible on small screens) */}
                 <div className="lg:hidden pt-4 border-t border-[#2a2f45]">
                   <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
                   <EmbedPreview title={createForm.title} description={createForm.description} />

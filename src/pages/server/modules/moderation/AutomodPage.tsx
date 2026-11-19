@@ -438,11 +438,12 @@ const AutomodPage: React.FC = () => {
         saving={saveState === 'saving'}
         onSave={onSave}
         onCancel={() => {
-          if (guildId) {
-            setLoading(true);
-            moderationApi.getAutomod(guildId).then((res) => {
-              applyConfig(res.config || {});
-            }).finally(() => setLoading(false));
+          if (initialSnapshot) {
+            const data = JSON.parse(initialSnapshot);
+            setRules(data.rules);
+            setCapsEnabled(data.capsEnabled);
+            setCapsPercent(data.capsPercent);
+            setProfanityEnabled(data.profanityEnabled);
           }
         }}
       />

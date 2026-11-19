@@ -103,6 +103,7 @@ const TicketLogPage: React.FC = () => {
 
   const dirty = (current !== null && channelId.trim() !== (current ?? '')) || (!current && channelId.trim().length > 0);
   const isActive = Boolean(current);
+  const currentChannelName = channels.find(c => c.id === current)?.name || current;
 
   return (
     <div className="space-y-5">
@@ -123,7 +124,7 @@ const TicketLogPage: React.FC = () => {
           <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-[0.95rem] text-red-200">{error}</div>
         </SettingsCard>
       )}
-      {info && (
+      {info && !dirty && (
         <SettingsCard>
           <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-[0.95rem] text-emerald-200">{info}</div>
         </SettingsCard>
@@ -143,7 +144,7 @@ const TicketLogPage: React.FC = () => {
               {isActive && current && (
                 <div className="mt-3 flex items-center gap-2 rounded-md border border-[#2a2d4a] bg-[#13152a]/60 px-3 py-2 text-[0.85rem] text-[#8b8fad]">
                   <Hash className="h-4 w-4" />
-                  <span>Aktueller Kanal: <span className="text-white">{current}</span></span>
+                  <span>Aktueller Kanal: <span className="text-white">{currentChannelName}</span></span>
                 </div>
               )}
             </SettingsCard>

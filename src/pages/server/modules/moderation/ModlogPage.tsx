@@ -188,14 +188,13 @@ const ModlogPage: React.FC = () => {
                     Wähle den Textkanal aus, in dem Astra die Moderationsprotokolle senden soll.
                   </p>
                 </div>
-                <div className="flex gap-2 pt-1">
-                  <StyledButton onClick={onSave} disabled={saving || !channelId.trim()} variant="primary">
-                    {saving ? 'Speichern…' : 'Speichern'}
-                  </StyledButton>
-                  <StyledButton onClick={onDelete} disabled={deleting || current === null} variant="ghost">
-                    {deleting ? 'Entfernen…' : 'Konfiguration entfernen'}
-                  </StyledButton>
-                </div>
+                {isActive && (
+                  <div className="pt-2">
+                    <StyledButton onClick={onDelete} disabled={deleting} variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-400/10">
+                      {deleting ? 'Entfernen…' : 'Konfiguration entfernen'}
+                    </StyledButton>
+                  </div>
+                )}
               </div>
             </SettingsCard>
           </div>
