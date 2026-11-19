@@ -1,5 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { 
+  Shield, 
+  User, 
+  AlertTriangle, 
+  Trash2, 
+  RefreshCw, 
+  Search, 
+  AlertCircle,
+  XCircle,
+  CheckCircle2
+} from 'lucide-react';
 import { moderationApi } from '@/services/moderation-api';
 import type { WarnItem } from '@/types/moderation';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
@@ -10,17 +21,20 @@ import { StyledBadge } from '@/components/ui/StyledBadge';
 const WarningsPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [warns, setWarns] = useState<WarnItem[]>([]);
   const [count, setCount] = useState<number>(0);
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmOne, setConfirmOne] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const canQuery = useMemo(() => Boolean(guildId), [guildId]);
 
-  const load = async () => {
+  const load = async (silent = false) => {
     if (!canQuery || !guildId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const res = await moderationApi.getGuildWarns(guildId);
@@ -43,34 +57,40 @@ const WarningsPage: React.FC = () => {
     setWarns([]);
     setCount(0);
     setError(null);
+    setSuccess(null);
     setConfirmAll(false);
-    // Beim Öffnen/Wechsel der Guild laden
     if (guildId) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guildId]);
 
   const onDeleteOne = async (warnId: string) => {
     if (!guildId || !canQuery) return;
-    // Einzellöschung: kurze Bestätigung
     if (confirmOne !== warnId) {
       setConfirmOne(warnId);
-      // Reset nach kurzer Zeit, falls nicht bestätigt
-      setTimeout(() => setConfirmOne((curr) => (curr === warnId ? null : curr)), 3000);
+      setTimeout(() => setConfirmOne((curr) => (curr === warnId ? null : curr)), 4000);
       return;
     }
-    setLoading(true);
+    
+    setActionLoading(warnId);
     setError(null);
+    setSuccess(null);
     try {
-      // Einzel-Löschung setzt einen member-spezifischen Endpoint voraus.
-      // Wir ermitteln die userId aus dem Datensatz.
       const warn = warns.find((w) => w.warnId === warnId);
       if (!warn) throw new Error('Verwarnung nicht gefunden.');
       await moderationApi.deleteWarn(guildId, warn.userId, warnId);
-      await load();
+      
+      // Optimistic update
+      setWarns(prev => prev.filter(w => w.warnId !== warnId));
+      setCount(prev => Math.max(0, prev - 1));
+      setSuccess('Verwarnung wurde erfolgreich entfernt.');
       setConfirmOne(null);
+      
+      // Re-load in background to ensure sync
+      void load(true);
     } catch (e: any) {
       setError(e?.message || 'Löschen fehlgeschlagen.');
-      setLoading(false);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -80,110 +100,230 @@ const WarningsPage: React.FC = () => {
       setConfirmAll(true);
       return;
     }
+    
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
       await moderationApi.deleteAllWarnsGuild(guildId);
-      await load();
+      setWarns([]);
+      setCount(0);
+      setSuccess('Alle Verwarnungen des Servers wurden gelöscht.');
       setConfirmAll(false);
     } catch (e: any) {
       setError(e?.message || 'Löschen fehlgeschlagen.');
+    } finally {
       setLoading(false);
     }
   };
 
+  const filteredGroups = useMemo(() => {
+    const groups = warns.reduce<Record<string, WarnItem[]>>((acc, w) => {
+      (acc[w.userId] ||= []).push(w);
+      return acc;
+    }, {});
+
+    if (!searchQuery.trim()) return Object.entries(groups);
+
+    const q = searchQuery.toLowerCase();
+    return Object.entries(groups).filter(([userId]) => userId.includes(q));
+  }, [warns, searchQuery]);
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <SettingsPageHeader
-        heading="Verwarnungen"
-        description="Zeigt alle aktiven Verwarnungen dieses Servers an. Verwarnungen werden durch Moderatoren oder automatisch durch AutoMod-Regeln vergeben. Bei Erreichen einer konfigurierten Warnstufe wird die zugehörige Moderationsaktion ausgelöst."
+        heading="Verwarnungs-Management"
+        description="Überblicken und verwalten Sie alle aktiven Verwarnungen auf Ihrem Server. Hier können Sie einzelne Fehltritte korrigieren oder die Historie ganzer Benutzer bereinigen."
         backTo={`/servers/${guildId}/modules`}
         backLabel="Modulübersicht"
-        actions={<StyledBadge variant="default">{count} Ergebnis(se)</StyledBadge>}
+        actions={
+          <div className="flex items-center gap-3">
+             {count > 0 && (
+               <StyledBadge variant="default" className="border-[#3a3f5a] bg-[#1a1e33] text-[#cbd4ff]">
+                 {count} {count === 1 ? 'Verwarnung' : 'Verwarnungen'} insgesamt
+               </StyledBadge>
+             )}
+          </div>
+        }
       />
 
-      {error && (
-        <SettingsCard>
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-[0.95rem] text-red-200">{error}</div>
-        </SettingsCard>
-      )}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <SettingsCard>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca2be]" />
+                <input
+                  type="text"
+                  placeholder="Nach User-ID suchen..."
+                  className="w-full rounded-md border border-[#2a2f45] bg-[#131625] py-2 pl-10 pr-4 text-sm text-[#dbe3ff] placeholder-[#5c627a] outline-none focus:border-[#4c5581]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex w-full sm:w-auto gap-2">
+                <StyledButton onClick={() => load()} disabled={loading} variant="secondary" className="flex-1 sm:flex-none gap-2">
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Lade...' : 'Aktualisieren'}
+                </StyledButton>
+              </div>
+            </div>
+          </SettingsCard>
 
-      <SettingsCard header={<span className="text-[#dbe3ff]">Aktionen</span>}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-[0.9rem] text-[#9ca2be]">
-            Die Verwarnungen werden direkt aus Astras API geladen und nach Benutzer gruppiert. Einzelne Verwarnungen können gezielt entfernt werden, um die Warnstufe eines Benutzers zu reduzieren.
-          </div>
-          <div className="flex gap-2">
-            <StyledButton onClick={load} disabled={!canQuery || loading} variant="primary">
-              {loading ? 'Aktualisiere…' : 'Aktualisieren'}
-            </StyledButton>
-            <StyledButton
-              onClick={onDeleteAll}
-              disabled={!canQuery || loading || warns.length === 0}
-              title={confirmAll ? 'Zum Bestätigen erneut klicken' : undefined}
-              variant="ghost"
-            >
-              {confirmAll ? 'Wirklich alle löschen?' : 'Alle Verwarnungen löschen'}
-            </StyledButton>
-          </div>
-        </div>
-      </SettingsCard>
+          {error && (
+            <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-200 shadow-sm animate-in fade-in slide-in-from-top-2">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              <div className="text-[0.92rem] font-medium">{error}</div>
+              <button onClick={() => setError(null)} className="ml-auto opacity-70 hover:opacity-100">
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+          )}
 
-      <SettingsCard header={<span className="text-[#dbe3ff]">Ergebnisse ({count})</span>}>
-        {loading && <div className="text-[0.95rem] text-[#c1c7de]">Laden…</div>}
-        {!loading && warns.length === 0 && (
-          <div className="text-[0.95rem] text-[#9ca2be]">Keine Verwarnungen vorhanden.</div>
-        )}
-        {!loading && warns.length > 0 && (
+          {success && (
+            <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-200 shadow-sm animate-in fade-in slide-in-from-top-2">
+              <CheckCircle2 className="h-5 w-5 shrink-0" />
+              <div className="text-[0.92rem] font-medium">{success}</div>
+              <button onClick={() => setSuccess(null)} className="ml-auto opacity-70 hover:opacity-100">
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           <div className="space-y-4">
-            {Object.entries(
-              warns.reduce<Record<string, WarnItem[]>>((acc, w) => {
-                (acc[w.userId] ||= []).push(w);
-                return acc;
-              }, {})
-            ).map(([userId, list]) => (
-              <div key={userId} className="rounded-lg border border-[#2a2f45] bg-[#131625]">
-                <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-[#2d3246]">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
-                      <span className="opacity-70">Benutzer:</span>
-                      <span className="font-medium">Mitglied</span>
-                      <span className="text-[0.7rem] opacity-50 ml-1">({userId})</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
-                      <span className="opacity-70">Verwarnungen:</span>
-                      <span className="font-medium">{list.length}</span>
-                    </span>
+            {loading && warns.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-[#9ca2be] space-y-3">
+                <RefreshCw className="h-8 w-8 animate-spin opacity-20" />
+                <p>Lade Verwarnungen...</p>
+              </div>
+            ) : filteredGroups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#2a2f45] py-20 text-[#9ca2be] space-y-4">
+                <div className="rounded-full bg-[#1a1e33] p-4">
+                  <Shield className="h-8 w-8 opacity-20" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-[#dbe3ff] font-medium">Keine Ergebnisse</h3>
+                  <p className="text-sm mt-1">{searchQuery ? 'Kein Benutzer mit dieser ID gefunden.' : 'Dieser Server ist sauber. Keine aktiven Verwarnungen.'}</p>
+                </div>
+              </div>
+            ) : (
+              filteredGroups.map(([userId, list]) => (
+                <div key={userId} className="overflow-hidden rounded-xl border border-[#2a2f45] bg-[#0f111d] shadow-sm transition-all hover:border-[#3a3f5a]">
+                  <div className="flex items-center justify-between border-b border-[#2a2f45] bg-[#14182d]/50 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1e33] border border-[#2a2f45] text-[#cbd4ff]">
+                        <User className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-[#dbe3ff]">Mitglied</span>
+                          <StyledBadge variant="default" className="bg-[#1a1e33] text-[0.7rem] px-1.5 font-mono opacity-80">
+                            {userId}
+                          </StyledBadge>
+                        </div>
+                        <div className="text-[0.75rem] text-[#9ca2be]">
+                          {list.length} aktive {list.length === 1 ? 'Verwarnung' : 'Verwarnungen'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="divide-y divide-[#2a2f45]">
+                    {list
+                      .slice()
+                      .sort((a, b) => (Number(b.warnId) - Number(a.warnId)))
+                      .map((w, idx) => (
+                        <div key={`${w.userId}-${w.warnId}`} className="group flex items-start justify-between gap-4 p-4 transition-colors hover:bg-[#131625]/50">
+                          <div className="flex gap-4">
+                            <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#1a1e33] text-[0.7rem] font-bold text-[#5c627a] border border-[#2a2f45]">
+                              {list.length - idx}
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 text-[0.8rem] text-[#9ca2be]">
+                                <span className="font-mono text-[0.7rem] bg-[#1a1e33] px-1 rounded border border-[#2a2f45]">ID: {String(w.warnId).slice(-8)}</span>
+                              </div>
+                              <p className="text-[0.95rem] leading-relaxed text-[#dbe3ff]">
+                                {w.reason || <span className="italic opacity-30 text-[#9ca2be]">Kein Grund angegeben</span>}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 self-center">
+                            <StyledButton 
+                              onClick={() => onDeleteOne(String(w.warnId))} 
+                              disabled={!!actionLoading} 
+                              size="sm" 
+                              variant={confirmOne === String(w.warnId) ? 'danger' : 'ghost'}
+                              className="h-8 gap-2"
+                            >
+                              {actionLoading === String(w.warnId) ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              ) : confirmOne === String(w.warnId) ? (
+                                <>
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                  <span>Bestätigen</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100" />
+                                  <span className="hidden sm:inline">Entfernen</span>
+                                </>
+                              )}
+                            </StyledButton>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 </div>
-                <ul className="divide-y divide-[#2d3246] text-[0.95rem]">
-                  {list
-                    .slice()
-                    .sort((a, b) => (a.warnId > b.warnId ? -1 : 1))
-                    .map((w) => (
-                      <li key={`${w.userId}-${w.warnId}`} className="flex items-start justify-between gap-4 px-3 py-2.5">
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
-                              <span className="opacity-70">Warnung</span>
-                              <span className="text-[0.7rem] opacity-50">#{String(w.warnId).slice(-6)}</span>
-                            </span>
-                          </div>
-                          <div className="text-[#dbe3ff]">{w.reason || '—'}</div>
-                        </div>
-                        <div className="shrink-0 pt-1">
-                          <StyledButton onClick={() => onDeleteOne(String(w.warnId))} disabled={loading} size="sm" variant={confirmOne === String(w.warnId) ? 'ghost' : 'danger'}>
-                            {confirmOne === String(w.warnId) ? 'Wirklich löschen?' : 'Entfernen'}
-                          </StyledButton>
-                        </div>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-        )}
-      </SettingsCard>
+        </div>
+
+        <div className="space-y-6">
+          <SettingsCard header={<div className="flex items-center gap-2"><Shield className="h-4 w-4 text-[#7c83ac]" /><span>Moderations-Status</span></div>}>
+             <div className="space-y-4">
+               <div className="rounded-lg bg-[#14182d] border border-[#2a2f45] p-4">
+                 <div className="text-sm text-[#9ca2be] mb-1">Auslastung</div>
+                 <div className="text-2xl font-bold text-[#dbe3ff]">{count}</div>
+                 <div className="mt-2 h-1.5 w-full rounded-full bg-[#0a0c14] overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000" 
+                      style={{ width: `${Math.min(100, (count / 20) * 100)}%` }}
+                    />
+                 </div>
+                 <p className="mt-2 text-[0.7rem] text-[#5c627a]">
+                   {count > 10 ? 'Hohes Moderationsaufkommen auf diesem Server.' : 'Normale Moderationsaktivität.'}
+                 </p>
+               </div>
+               
+               <div className="space-y-2">
+                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[#5c627a]">Gefahrenzone</h4>
+                 <StyledButton
+                    onClick={onDeleteAll}
+                    disabled={!canQuery || loading || actionLoading !== null || warns.length === 0}
+                    variant={confirmAll ? 'danger' : 'secondary'}
+                    className="w-full justify-start gap-3 border-red-500/20 text-red-200/70 hover:bg-red-500/10 hover:text-red-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>{confirmAll ? 'Sicher? Jetzt klicken.' : 'Alle Verwarnungen löschen'}</span>
+                  </StyledButton>
+                  {confirmAll && (
+                    <p className="text-[0.7rem] text-red-400 px-1 animate-pulse">
+                      Achtung: Dieser Vorgang kann nicht rückgängig gemacht werden.
+                    </p>
+                  )}
+               </div>
+             </div>
+          </SettingsCard>
+
+          <SettingsCard header={<div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-[#7c83ac]" /><span>Hinweis</span></div>}>
+            <p className="text-[0.85rem] leading-relaxed text-[#9ca2be]">
+              Verwarnungen werden dauerhaft in der Datenbank gespeichert. Das Entfernen einer Verwarnung reduziert die Warnstufe des Benutzers sofort, was eventuelle automatische Sperren (AutoMod) beeinflussen kann.
+            </p>
+          </SettingsCard>
+        </div>
+      </div>
     </div>
   );
 };
