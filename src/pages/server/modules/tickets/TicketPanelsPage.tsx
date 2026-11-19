@@ -33,18 +33,23 @@ interface EditorState {
   support_role_id: string;
   category_id: string;
   channel_id: string;
+  // Field for Ticket-Title (internally mapped to topic)
+  ticket_title: string;
 }
 
 const EMPTY_EDITOR: EditorState = {
   title: '', description: '', topic: '',
   support_role_id: '', category_id: '', channel_id: '',
+  ticket_title: '',
 };
 
 function editorFromPanel(p: TicketPanel): EditorState {
+  const topicValue = (p.topic as string) || '';
   return {
     title: p.title || '',
     description: p.description || '',
-    topic: (p.topic as string) || '',
+    topic: topicValue,
+    ticket_title: topicValue, // Thema corresponds to Ticket-Title
     support_role_id: (p.support_role_id as string) || '',
     category_id: (p.category_id as string) || '',
     channel_id: p.channel_id || '',
@@ -234,11 +239,22 @@ const TicketPanelsPage: React.FC = () => {
     if (!guildId || !createForm.channel_id) return;
     setCreating(true);
     try {
+      // First publish the panel embed
       const res = await ticketsApi.publishPanel(guildId, {
         channel_id: createForm.channel_id,
         title: createForm.title || undefined,
         description: createForm.description || undefined,
       });
+
+      // Then save the config (including topic/ticket_title)
+      await ticketsApi.updatePanelConfig(guildId, createForm.channel_id, {
+        support_role_id: createForm.support_role_id || undefined,
+        category_id: createForm.category_id || undefined,
+        topic: createForm.ticket_title || createForm.topic || undefined,
+        title: createForm.title || undefined,
+        description: createForm.description || undefined,
+      });
+
       setToast({ type: 'ok', msg: res.message || 'Panel veröffentlicht.' });
       setShowCreate(false);
       setCreateForm({ ...EMPTY_EDITOR });
@@ -272,10 +288,12 @@ const TicketPanelsPage: React.FC = () => {
 
       try {
         const payload: TicketPanelConfigRequest = {};
-        const fields: (keyof EditorState)[] = ['title', 'description', 'topic', 'support_role_id', 'category_id'];
+        const fields: (keyof EditorState)[] = ['title', 'description', 'support_role_id', 'category_id'];
         for (const f of fields) {
           if (form[f]) (payload as any)[f] = form[f];
         }
+        // Topic is mapped from ticket_title
+        payload.topic = form.ticket_title || form.topic;
         
         await ticketsApi.updatePanelConfig(guildId, channelId, payload);
         
@@ -366,11 +384,10 @@ const TicketPanelsPage: React.FC = () => {
     if (expandedPanel === channelId) {
       setExpandedPanel(null);
     } else {
-      if (!editStates[channelId]) {
-        const snap = editorFromPanel(panel);
-        initialStatesRef.current[channelId] = snap;
-        setEditStates(prev => ({ ...prev, [channelId]: snap }));
-      }
+      // Ensure we always have a clean editor state from the latest panel data
+      const snap = editorFromPanel(panel);
+      initialStatesRef.current[channelId] = snap;
+      setEditStates(prev => ({ ...prev, [channelId]: snap }));
       setExpandedPanel(channelId);
     }
   };
@@ -578,11 +595,16 @@ const TicketPanelsPage: React.FC = () => {
                                 <div className="space-y-4">
                                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
-                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (intern)</label>
-                                      <StyledInput placeholder="z. B. Support" value={currentForm.topic} onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, topic: e.target.value } }))} className="w-full" />
+                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (Ticket-Titel)</label>
+                                      <StyledInput 
+                                        placeholder="z. B. Support" 
+                                        value={currentForm.ticket_title} 
+                                        onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, ticket_title: e.target.value, topic: e.target.value } }))} 
+                                        className="w-full" 
+                                      />
                                     </div>
                                     <div>
-                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Panel-Überschrift</label>
                                       <StyledInput placeholder="Panel-Titel" value={currentForm.title} onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, title: e.target.value } }))} className="w-full" />
                                     </div>
                                   </div>
@@ -595,9 +617,15 @@ const TicketPanelsPage: React.FC = () => {
                             </div>
 
                             <div className="w-full lg:w-[360px] lg:shrink-0">
-                              <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
+                              <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau (Ticket)</h4>
                               <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
-                                <EmbedPreview title={currentForm.title} description={currentForm.description} />
+                                <EmbedPreview title={currentForm.ticket_title || 'Ticket'} description="Dies ist eine Vorschau, wie das erstellte Ticket aussehen wird (Ticket-Titel oben)." />
+                              </div>
+                              <div className="mt-4">
+                                <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau (Panel)</h4>
+                                <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
+                                  <EmbedPreview title={currentForm.title} description={currentForm.description} />
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -653,7 +681,16 @@ const TicketPanelsPage: React.FC = () => {
                 <FieldGroup label="Embed Inhalt">
                   <div className="space-y-3">
                     <div>
-                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">Titel</label>
+                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">Thema (Ticket-Titel)</label>
+                      <StyledInput
+                        placeholder="z. B. Support"
+                        value={createForm.ticket_title}
+                        onChange={e => setCreateForm(f => ({ ...f, ticket_title: e.target.value, topic: e.target.value }))}
+                        className="w-full h-10"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">Panel-Überschrift</label>
                       <StyledInput
                         placeholder="z. B. Support Tickets"
                         value={createForm.title}
@@ -688,8 +725,15 @@ const TicketPanelsPage: React.FC = () => {
                     showPreview ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
                   )}>
                     <div className="overflow-hidden">
-                      <div className="scale-[0.85] origin-top-left -mb-[15%]">
-                        <EmbedPreview title={createForm.title} description={createForm.description} />
+                      <div className="flex flex-col gap-4">
+                        <div className="scale-[0.85] origin-top-left">
+                          <p className="text-[0.7rem] font-bold text-[#8b8fad] uppercase mb-1">Ticket-Vorschau</p>
+                          <EmbedPreview title={createForm.ticket_title || 'Ticket'} description="Vorschau des erstellten Tickets." />
+                        </div>
+                        <div className="scale-[0.85] origin-top-left -mt-4 -mb-[15%]">
+                          <p className="text-[0.7rem] font-bold text-[#8b8fad] uppercase mb-1">Panel-Vorschau</p>
+                          <EmbedPreview title={createForm.title} description={createForm.description} />
+                        </div>
                       </div>
                     </div>
                   </div>
