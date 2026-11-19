@@ -27,29 +27,24 @@ interface PanelStatus {
 }
 
 interface EditorState {
-  title: string;
   description: string;
-  topic: string;
   support_role_id: string;
   category_id: string;
   channel_id: string;
-  // Field for Ticket-Title (internally mapped to topic)
+  // ticket_title entspricht dem Feld 'topic' in der API/DB
   ticket_title: string;
 }
 
 const EMPTY_EDITOR: EditorState = {
-  title: '', description: '', topic: '',
+  description: '', 
   support_role_id: '', category_id: '', channel_id: '',
   ticket_title: '',
 };
 
 function editorFromPanel(p: TicketPanel): EditorState {
-  const topicValue = (p.topic as string) || '';
   return {
-    title: p.title || '',
     description: p.description || '',
-    topic: topicValue,
-    ticket_title: topicValue, // Thema corresponds to Ticket-Title
+    ticket_title: (p.topic as string) || (p.title as string) || '', 
     support_role_id: (p.support_role_id as string) || '',
     category_id: (p.category_id as string) || '',
     channel_id: p.channel_id || '',
@@ -239,13 +234,11 @@ const TicketPanelsPage: React.FC = () => {
     if (!guildId || !createForm.channel_id) return;
     setCreating(true);
     try {
-      // Thema-Zuordnung sicherstellen
-      const topicValue = createForm.ticket_title || createForm.topic;
-
       // Zuerst Panel veröffentlichen (Embed)
+      // Wir verwenden ticket_title auch als Titel für das Embed, da 'title' im UI entfernt wurde
       const res = await ticketsApi.publishPanel(guildId, {
         channel_id: createForm.channel_id,
-        title: createForm.title || undefined,
+        title: createForm.ticket_title || undefined,
         description: createForm.description || undefined,
       });
 
@@ -253,8 +246,8 @@ const TicketPanelsPage: React.FC = () => {
       await ticketsApi.updatePanelConfig(guildId, createForm.channel_id, {
         support_role_id: createForm.support_role_id || undefined,
         category_id: createForm.category_id || undefined,
-        topic: topicValue || undefined,
-        title: createForm.title || undefined,
+        topic: createForm.ticket_title || undefined,
+        title: createForm.ticket_title || undefined,
         description: createForm.description || undefined,
       });
 
@@ -291,23 +284,21 @@ const TicketPanelsPage: React.FC = () => {
         const payload: TicketPanelConfigRequest = {
           support_role_id: form.support_role_id || undefined,
           category_id: form.category_id || undefined,
-          topic: form.ticket_title || form.topic || undefined,
-          title: form.title || undefined,
+          topic: form.ticket_title || undefined,
+          title: form.ticket_title || undefined,
           description: form.description || undefined,
         };
         
         await ticketsApi.updatePanelConfig(guildId, channelId, payload);
         
-        // Embed-Update falls Titel oder Beschreibung geändert wurden
-        if (form.title !== panel.title || form.description !== panel.description) {
-          try {
-            await ticketsApi.updatePanel(guildId, channelId, {
-              title: form.title || undefined,
-              description: form.description || undefined,
-            });
-          } catch (err) {
-            console.warn(`Embed-Update für ${channelId} fehlgeschlagen:`, err);
-          }
+        // Embed-Update
+        try {
+          await ticketsApi.updatePanel(guildId, channelId, {
+            title: form.ticket_title || undefined,
+            description: form.description || undefined,
+          });
+        } catch (err) {
+          console.warn(`Embed-Update für ${channelId} fehlgeschlagen:`, err);
         }
 
         initialStatesRef.current[channelId] = { ...form };
@@ -597,20 +588,14 @@ const TicketPanelsPage: React.FC = () => {
                               
                               <FieldGroup label="Panel-Inhalt">
                                 <div className="space-y-4">
-                                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div>
-                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (Ticket-Titel)</label>
-                                      <StyledInput 
-                                        placeholder="z. B. Support" 
-                                        value={currentForm.ticket_title} 
-                                        onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, ticket_title: e.target.value, topic: e.target.value } }))} 
-                                        className="w-full" 
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Panel-Überschrift</label>
-                                      <StyledInput placeholder="Panel-Titel" value={currentForm.title} onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, title: e.target.value } }))} className="w-full" />
-                                    </div>
+                                  <div>
+                                    <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema (Ticket-Titel)</label>
+                                    <StyledInput 
+                                      placeholder="z. B. Support" 
+                                      value={currentForm.ticket_title} 
+                                      onChange={e => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, ticket_title: e.target.value } }))} 
+                                      className="w-full" 
+                                    />
                                   </div>
                                   <div>
                                     <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
@@ -622,7 +607,7 @@ const TicketPanelsPage: React.FC = () => {
 
                             <div className="w-full lg:w-[360px] lg:shrink-0">
                               <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4">
-                                <EmbedPreview title={currentForm.title} description={currentForm.description} />
+                                <EmbedPreview title={currentForm.ticket_title} description={currentForm.description} />
                               </div>
                             </div>
                           </div>
@@ -682,16 +667,7 @@ const TicketPanelsPage: React.FC = () => {
                       <StyledInput
                         placeholder="z. B. Support"
                         value={createForm.ticket_title}
-                        onChange={e => setCreateForm(f => ({ ...f, ticket_title: e.target.value, topic: e.target.value }))}
-                        className="w-full h-10"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">Panel-Überschrift</label>
-                      <StyledInput
-                        placeholder="z. B. Support Tickets"
-                        value={createForm.title}
-                        onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
+                        onChange={e => setCreateForm(f => ({ ...f, ticket_title: e.target.value }))}
                         className="w-full h-10"
                       />
                     </div>
@@ -724,7 +700,7 @@ const TicketPanelsPage: React.FC = () => {
                     <div className="overflow-hidden">
                       <div className="flex flex-col gap-4">
                         <div className="scale-[0.85] origin-top-left">
-                          <EmbedPreview title={createForm.title} description={createForm.description} />
+                          <EmbedPreview title={createForm.ticket_title} description={createForm.description} />
                         </div>
                       </div>
                     </div>
@@ -792,11 +768,7 @@ const TicketPanelsPage: React.FC = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Thema</label>
-                      <StyledInput placeholder="z. B. Allgemeiner Support" value={createForm.topic} onChange={e => setCreateForm(f => ({ ...f, topic: e.target.value }))} className="w-full h-11" />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
-                      <StyledInput placeholder="Panel-Titel" value={createForm.title} onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))} className="w-full h-11" />
+                      <StyledInput placeholder="z. B. Allgemeiner Support" value={createForm.ticket_title} onChange={e => setCreateForm(f => ({ ...f, ticket_title: e.target.value }))} className="w-full h-11" />
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
@@ -807,12 +779,12 @@ const TicketPanelsPage: React.FC = () => {
                 
                 <div className="lg:hidden pt-4 border-t border-[#2a2f45]">
                   <h4 className="text-[0.85rem] font-semibold text-astra-cyan/80 uppercase tracking-wider mb-3">Vorschau</h4>
-                  <EmbedPreview title={createForm.title} description={createForm.description} />
+                  <EmbedPreview title={createForm.ticket_title} description={createForm.description} />
                 </div>
               </div>
               <div className="hidden lg:block">
                 <div className="sticky top-0">
-                  <EmbedPreview title={createForm.title} description={createForm.description} />
+                  <EmbedPreview title={createForm.ticket_title} description={createForm.description} />
                 </div>
               </div>
             </div>
