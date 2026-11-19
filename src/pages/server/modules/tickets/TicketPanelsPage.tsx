@@ -333,33 +333,45 @@ const TicketPanelsPage: React.FC = () => {
   };
 
   const onMove = async () => {
-    console.log('[TicketPanel Move] Click', {
+    console.log('[TicketPanel Move] Triggered', {
       guildId,
       panelChannelId: movePanel?.channel_id,
       targetChannelId: moveChannelId,
     });
 
     if (!guildId || !movePanel?.channel_id || !moveChannelId) {
-      console.error('[TicketPanel Move] Aborted: Missing values');
+      console.warn('[TicketPanel Move] Validation failed - missing IDs');
       return;
     }
 
     setMoving(true);
     try {
+      console.log('[TicketPanel Move] API Call: updatePanelConfig', {
+        guildId,
+        channelId: movePanel.channel_id,
+        new_channel_id: moveChannelId
+      });
+      
       const res = await ticketsApi.updatePanelConfig(
           guildId,
           movePanel.channel_id,
           { channel_id: moveChannelId }
       );
 
-      console.log('[TicketPanel Move] Response:', res);
+      console.log('[TicketPanel Move] API Success:', res);
 
       setToast({ type: 'ok', msg: res.message || 'Panel verschoben.' });
       setMovePanel(null);
       setMoveChannelId('');
       await loadPanels();
     } catch (e: any) {
-      console.error('[TicketPanel Move] Failed:', e);
+      console.error('[TicketPanel Move] Failed:', {
+        error: e,
+        message: e?.message,
+        guildId,
+        panelChannelId: movePanel.channel_id,
+        targetChannelId: moveChannelId
+      });
       setToast({ type: 'error', msg: e?.message || 'Verschieben fehlgeschlagen.' });
     } finally {
       setMoving(false);
@@ -526,7 +538,13 @@ const TicketPanelsPage: React.FC = () => {
                         <div className="flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => { setMovePanel(panel); setMoveChannelId(''); }}
+                            onClick={(e) => { 
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('[TicketPanel] Move button clicked for panel:', panel.channel_id);
+                              setMovePanel(panel); 
+                              setMoveChannelId(''); 
+                            }}
                             className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-astra-cyan hover:border-astra-cyan/30 transition-colors"
                             title="Verschieben"
                           >
@@ -534,7 +552,13 @@ const TicketPanelsPage: React.FC = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => { setDeletePanel(panel); setDeleteError(null); }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('[TicketPanel] Delete button clicked for panel:', panel.channel_id);
+                              setDeletePanel(panel); 
+                              setDeleteError(null); 
+                            }}
                             className="rounded-lg border border-[#2a2d4a] bg-[#13152a]/60 p-2 text-[#8b8fad] hover:text-red-400 hover:border-red-500/30 transition-colors"
                             title="Löschen"
                           >
@@ -808,7 +832,10 @@ const TicketPanelsPage: React.FC = () => {
               items={textChannelResources.filter(c => c.id !== movePanel.channel_id)}
               loading={resLoading}
               value={moveChannelId || null}
-              onChange={v => setMoveChannelId(v)}
+              onChange={v => {
+                console.log('[TicketPanel Move] targetChannelId selected:', v);
+                setMoveChannelId(v);
+              }}
             />
             <div className="flex items-center justify-end gap-3 pt-2">
               <StyledButton variant="ghost" onClick={() => setMovePanel(null)} disabled={moving}>Abbrechen</StyledButton>
