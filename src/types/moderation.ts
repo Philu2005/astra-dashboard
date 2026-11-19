@@ -35,7 +35,7 @@ export type ModlogResponse = {
 
 export type WarnItem = {
   userId: string;
-  warnId: string;
+  warnId: string | number;
   reason: string | null;
 };
 

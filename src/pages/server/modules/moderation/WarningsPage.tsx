@@ -24,7 +24,10 @@ const WarningsPage: React.FC = () => {
     setError(null);
     try {
       const res = await moderationApi.getGuildWarns(guildId);
-      const items = (res.warns || []).map((w) => ({ ...w }));
+      const items = (res.warns || []).map((w) => ({
+        ...w,
+        warnId: String(w.warnId),
+      }));
       setWarns(items);
       setCount(res.count || items.length || 0);
     } catch (e: any) {
@@ -163,14 +166,14 @@ const WarningsPage: React.FC = () => {
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center gap-1 rounded-md border border-[#2a2f45] bg-[#14182d] px-2.5 py-0.5 text-[0.8rem] text-[#cbd4ff]">
                               <span className="opacity-70">Warnung</span>
-                              <span className="text-[0.7rem] opacity-50">#{w.warnId.slice(-6)}</span>
+                              <span className="text-[0.7rem] opacity-50">#{String(w.warnId).slice(-6)}</span>
                             </span>
                           </div>
                           <div className="text-[#dbe3ff]">{w.reason || '—'}</div>
                         </div>
                         <div className="shrink-0 pt-1">
-                          <StyledButton onClick={() => onDeleteOne(w.warnId)} disabled={loading} size="sm" variant={confirmOne === w.warnId ? 'ghost' : 'danger'}>
-                            {confirmOne === w.warnId ? 'Wirklich löschen?' : 'Entfernen'}
+                          <StyledButton onClick={() => onDeleteOne(String(w.warnId))} disabled={loading} size="sm" variant={confirmOne === String(w.warnId) ? 'ghost' : 'danger'}>
+                            {confirmOne === String(w.warnId) ? 'Wirklich löschen?' : 'Entfernen'}
                           </StyledButton>
                         </div>
                       </li>

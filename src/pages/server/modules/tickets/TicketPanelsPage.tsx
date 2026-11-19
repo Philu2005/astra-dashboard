@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 import { ticketsApi, type TicketPanel, type TicketPanelConfigRequest } from '@/services/tickets-api';
 import { serversApi, type GuildChannel, type GuildRole, type GuildCategory } from '@/services/servers-api';
+import { useChannelResources } from '@/hooks/useChannelResources';
 import { cn } from '@/lib/utils';
 import { SettingsPageHeader } from '@/components/settings/SettingsPageHeader';
 import SettingsCard from '@/components/settings/SettingsCard';
@@ -92,6 +93,7 @@ const TicketPanelsPage: React.FC = () => {
   const [channels, setChannels] = useState<GuildChannel[]>([]);
   const [roles, setRoles] = useState<GuildRole[]>([]);
   const [categories, setCategories] = useState<GuildCategory[]>([]);
+  const { channelResources, textChannelResources } = useChannelResources(channels);
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -209,8 +211,6 @@ const TicketPanelsPage: React.FC = () => {
     categories.forEach(c => { m[c.id] = c.name || c.id; });
     return m;
   }, [categories]);
-
-  const textChannels = useMemo(() => channels.filter(c => !c.type || c.type === 0), [channels]);
 
   /* ── Panel-Status ─────────────────────────────────────────────── */
 
@@ -571,13 +571,7 @@ const TicketPanelsPage: React.FC = () => {
                                     label="Ziel-Kanal"
                                     kind="channel"
                                     groupByCategory
-                                    items={textChannels.map(c => ({ 
-                                      id: c.id, 
-                                      name: c.name, 
-                                      type: c.type, 
-                                      parent_id: c.parent_id ?? null, 
-                                      parent_name: categoryName[c.parent_id || ''] || null 
-                                    }))}
+                                    items={textChannelResources}
                                     loading={resLoading}
                                     value={currentForm.channel_id || null}
                                     onChange={v => setEditStates(prev => ({ ...prev, [channelId]: { ...currentForm, channel_id: v } }))}
@@ -639,7 +633,7 @@ const TicketPanelsPage: React.FC = () => {
                       label="Zielkanal *"
                       kind="channel"
                       groupByCategory
-                      items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+                      items={textChannelResources}
                       loading={resLoading}
                       value={createForm.channel_id}
                       onChange={v => {
@@ -748,7 +742,7 @@ const TicketPanelsPage: React.FC = () => {
                       label="Zielkanal *"
                       kind="channel"
                       groupByCategory
-                      items={textChannels.map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+                      items={textChannelResources}
                       loading={resLoading}
                       value={createForm.channel_id}
                       onChange={v => {
@@ -814,9 +808,7 @@ const TicketPanelsPage: React.FC = () => {
               label="Neuer Zielkanal"
               kind="channel"
               groupByCategory
-              items={textChannels
-                .filter(c => c.id !== movePanel.channel_id)
-                .map(c => ({ id: c.id, name: c.name, type: c.type, parent_id: c.parent_id ?? null, parent_name: categoryName[c.parent_id || ''] || null }))}
+              items={textChannelResources.filter(c => c.id !== movePanel.channel_id)}
               loading={resLoading}
               value={moveChannelId || null}
               onChange={v => setMoveChannelId(v)}

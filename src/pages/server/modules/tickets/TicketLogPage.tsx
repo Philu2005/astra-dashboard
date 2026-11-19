@@ -9,6 +9,7 @@ import SettingsSaveBar from '@/components/settings/SettingsSaveBar';
 import { BookOpen, Hash, Info, Trash2 } from 'lucide-react';
 import { serversApi, type GuildChannel } from '@/services/servers-api';
 import { ModuleChannelSelect } from '@/components/module-ui';
+import { useChannelResources } from '@/hooks/useChannelResources';
 
 const TicketLogPage: React.FC = () => {
   const { guildId } = useParams<{ guildId: string }>();
@@ -22,6 +23,7 @@ const TicketLogPage: React.FC = () => {
   const [channels, setChannels] = useState<GuildChannel[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(false);
   const [channelsError, setChannelsError] = useState<string | null>(null);
+  const { textChannelResources } = useChannelResources(channels);
 
   useEffect(() => {
     let active = true;
@@ -169,13 +171,7 @@ const TicketLogPage: React.FC = () => {
                 <div className="space-y-3">
                   <ModuleChannelSelect
                     label="Log-Kanal auswählen"
-                    items={channels.map(c => ({ 
-                      id: c.id, 
-                      name: c.name,
-                      type: c.type,
-                      parent_id: c.parent_id ?? null,
-                      parent_name: (channels.find(pc => pc.id === c.parent_id)?.name) ?? null
-                    }))}
+                    items={textChannelResources}
                     loading={channelsLoading}
                     error={channelsError}
                     value={channelId}
