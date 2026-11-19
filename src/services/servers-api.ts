@@ -11,11 +11,13 @@ export interface GuildChannel {
   name: string;
   type?: number; // Discord channel type
   parent_id?: string | null;
+  position?: number;
 }
 
 export interface GuildCategory {
   id: string;
   name: string;
+  position?: number;
 }
 
 function ensureJson<T = unknown>(res: Response): Promise<T> {

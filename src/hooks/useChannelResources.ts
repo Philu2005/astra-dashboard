@@ -8,28 +8,33 @@ import { type DiscordEntity } from '@/components/ui/DiscordSelect';
  */
 export function useChannelResources(channels: GuildChannel[], categories: GuildCategory[] = []) {
   const channelResources = useMemo((): DiscordEntity[] => {
-    // 1. Map für schnellen Zugriff auf Namen (Kategorien und Kanäle)
+    // 1. Map für schnellen Zugriff auf Namen und Positionen
     const nameMap = new Map<string, string>();
+    const posMap = new Map<string, number>();
     
-    // Zuerst Kategorien in die Map (haben Vorrang für parent_id Auflösung)
+    // Zuerst Kategorien in die Map
     categories.forEach(cat => {
       nameMap.set(cat.id, cat.name || cat.id);
+      if (cat.position !== undefined) {
+        posMap.set(cat.id, cat.position);
+      }
     });
     
-    // Dann Kanäle (falls parent_id auf einen Kanal verweist oder Kategorien als Kanäle mitkommen)
+    // Dann Kanäle
     channels.forEach(ch => {
       if (!nameMap.has(ch.id)) {
         nameMap.set(ch.id, ch.name || ch.id);
       }
     });
 
-    // 2. Kanäle transformieren und parent_name auflösen
+    // 2. Kanäle transformieren und parent_name/position auflösen
     return channels.map(ch => ({
       id: ch.id,
       name: ch.name || ch.id,
       type: ch.type,
       parent_id: ch.parent_id ?? null,
       parent_name: ch.parent_id ? (nameMap.get(ch.parent_id) || null) : null,
+      position: ch.parent_id ? (posMap.get(ch.parent_id) ?? ch.position) : ch.position,
     }));
   }, [channels, categories]);
 
