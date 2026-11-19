@@ -39,6 +39,8 @@ class TicketPanelPublishRequest(BaseModel):
     channel_id: str = Field(..., description="Zielkanal-ID für die Veröffentlichung.")
     title: Optional[str] = Field(None, description="Optionaler Titel des Panel-Embeds.")
     description: Optional[str] = Field(None, description="Optionale Beschreibung des Panel-Embeds.")
+    support_role_id: Optional[str] = Field(None, description="Support-Rollen-ID.")
+    category_id: Optional[str] = Field(None, description="Ticket-Kategorie-ID.")
 
 
 class TicketPanelPublishResponse(BaseModel):
@@ -76,12 +78,6 @@ class TicketPanelConfigRequest(BaseModel):
     topic: Optional[str] = Field(None, description="Thema des Panels.")
     title: Optional[str] = Field(None, description="Panel-Titel.")
     description: Optional[str] = Field(None, description="Panel-Beschreibung.")
-    embed_color: Optional[str] = Field(None, description="Embed-Farbe als Hex-String.")
-    footer: Optional[str] = Field(None, description="Embed-Footer-Text.")
-    image_url: Optional[str] = Field(None, description="Embed-Bild-URL.")
-    thumbnail_url: Optional[str] = Field(None, description="Embed-Thumbnail-URL.")
-    button_label: Optional[str] = Field(None, description="Button-Beschriftung.")
-    button_emoji: Optional[str] = Field(None, description="Button-Emoji.")
 
 
 class TicketPanelConfigResponse(BaseModel):

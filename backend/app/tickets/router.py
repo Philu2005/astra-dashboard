@@ -164,10 +164,17 @@ async def get_ticket_panels(guild_id: str, request: Request) -> dict[str, Any]:
 async def publish_ticket_panel(guild_id: str, request: Request, body: TicketPanelPublishRequest) -> dict[str, Any]:
     user_id = await _get_user_id_from_session(request)
     payload: dict[str, Any] = {"channel_id": body.channel_id}
+    
+    # Mapping für den Publish-Endpunkt
     if body.title is not None:
         payload["title"] = body.title
     if body.description is not None:
         payload["description"] = body.description
+    if body.support_role_id is not None:
+        payload["role_id"] = body.support_role_id
+    if body.category_id is not None:
+        payload["category_id"] = body.category_id
+        
     try:
         data = await astra_client.publish_ticket_panel(guild_id, user_id, payload)
     except AstraApiError as exc:
@@ -233,12 +240,14 @@ async def update_ticket_panel_config(
     payload: dict[str, Any] = {}
 
     # Dashboard-Feldnamen auf den Astra-API-Vertrag abbilden
+    # Hinweis: channel_id wird als new_channel_id übertragen, wenn es sich um ein Verschieben handelt.
     field_mapping = {
         "title": "title",
         "description": "description",
         "topic": "thema",
         "support_role_id": "role_id",
         "category_id": "category_id",
+        "channel_id": "new_channel_id",
     }
 
     for source_field, target_field in field_mapping.items():

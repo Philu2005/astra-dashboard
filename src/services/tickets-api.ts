@@ -56,6 +56,8 @@ export interface TicketPanelPublishRequest {
   channel_id: string;
   title?: string;
   description?: string;
+  support_role_id?: string;
+  category_id?: string;
 }
 
 export interface TicketPanelPublishResponse {
