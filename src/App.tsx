@@ -31,6 +31,7 @@ import TicketConfigPage from '@/pages/server/modules/tickets/TicketConfigPage';
 import TicketPanelsPage from '@/pages/server/modules/tickets/TicketPanelsPage';
 import TicketOpenPage from '@/pages/server/modules/tickets/TicketOpenPage';
 import TicketLogPage from '@/pages/server/modules/tickets/TicketLogPage';
+import TicketOverviewPage from '@/pages/server/modules/tickets/TicketOverviewPage';
 // Dev-only preview page for module UI (guarded by import.meta.env.DEV in routes)
 // Dev-Modulvorschau wurde entfernt – keine Import mehr
 
@@ -274,7 +275,7 @@ const router = createBrowserRouter([
             path: 'modules/tickets',
             element: <ModuleLayout moduleKey="tickets" />,
             children: [
-              { index: true, element: <Navigate to="config" replace /> },
+              { index: true, element: <TicketOverviewPage /> },
               { path: 'config', element: <TicketConfigPage /> },
               { path: 'panels', element: <TicketPanelsPage /> },
               { path: 'open', element: <TicketOpenPage /> },

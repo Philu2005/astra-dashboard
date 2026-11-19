@@ -1,4 +1,4 @@
-import { ShieldCheck, Settings2, FileWarning, NotebookPen, Ticket, LayoutPanelTop, Inbox, BookOpen } from 'lucide-react';
+import { ShieldCheck, Settings2, FileWarning, NotebookPen, Ticket, LayoutPanelTop, Inbox, BookOpen, LayoutDashboard } from 'lucide-react';
 
 // Module categories are derived from actually available functionality.
 // Per project constraints, only "Moderation" is guaranteed and verified.
@@ -38,6 +38,12 @@ export const modulesRegistry: ModuleMeta[] = [
     buildPath: (guildId: string) => `/servers/${guildId}/modules/tickets`,
     icon: Ticket,
     subpages: [
+      {
+        id: 'overview',
+        name: 'Übersicht',
+        path: '',
+        icon: LayoutDashboard,
+      },
       {
         id: 'config',
         name: 'Konfiguration',

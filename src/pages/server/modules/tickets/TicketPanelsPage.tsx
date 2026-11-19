@@ -826,9 +826,9 @@ const TicketPanelsPage: React.FC = () => {
       {/* ── Delete Dialog ─────────────────────────────────────────── */}
       <AstraConfirmDialog
         open={!!deletePanel}
-        title="Panel löschen"
+        title="Panel vollständig löschen?"
         description={`Das Panel „${deletePanel?.title || 'Ticket-Panel'}" in #${channelName[deletePanel?.channel_id || ''] || deletePanel?.channel_id || '?'} wird unwiderruflich gelöscht.`}
-        warning="Die Discord-Nachricht und die Panel-Konfiguration werden entfernt. Aktive Tickets bleiben bestehen."
+        warning="Achtung: Dies löscht die Panel-Nachricht, die Konfiguration UND zugehörige Datenbankeinträge (inkl. Auto-Close-Zustände). Bestehende Ticket-Kanäle bleiben physisch in Discord erhalten, sind aber nicht mehr mit diesem Panel verknüpft."
         confirmLabel="Endgültig löschen"
         loading={deleting}
         error={deleteError}
