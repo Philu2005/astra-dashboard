@@ -634,19 +634,24 @@ const TicketPanelsPage: React.FC = () => {
 
                 <FieldGroup label="Embed Inhalt">
                   <div className="space-y-4">
-                    <StyledInput
-                      label="Titel"
-                      placeholder="z. B. Support Tickets"
-                      value={createForm.title}
-                      onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
-                    />
-                    <StyledTextarea
-                      label="Beschreibung"
-                      placeholder="Klicke auf den Button um ein Ticket zu erstellen..."
-                      value={createForm.description}
-                      onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
-                      className="min-h-[80px]"
-                    />
+                    <div>
+                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                      <StyledInput
+                        placeholder="z. B. Support Tickets"
+                        value={createForm.title}
+                        onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                      <StyledTextarea
+                        placeholder="Klicke auf den Button um ein Ticket zu erstellen..."
+                        value={createForm.description}
+                        onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                        className="min-h-[80px] w-full"
+                      />
+                    </div>
                   </div>
                 </FieldGroup>
 
