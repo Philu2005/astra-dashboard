@@ -41,7 +41,7 @@ export const modulesRegistry: ModuleMeta[] = [
       {
         id: 'overview',
         name: 'Übersicht',
-        path: '',
+        path: 'overview',
         icon: LayoutDashboard,
       },
       {
@@ -82,7 +82,7 @@ export const modulesRegistry: ModuleMeta[] = [
       {
         id: 'overview',
         name: 'Übersicht',
-        path: '',
+        path: 'overview',
         icon: LayoutDashboard,
       },
       {

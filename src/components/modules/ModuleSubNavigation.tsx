@@ -22,8 +22,11 @@ const ModuleSubNavigation: React.FC<Props> = ({ module }) => {
         role="tablist"
       >
         {items.map((sp) => {
-          const href = `${base}/${sp.path}`;
-          const active = location.pathname.startsWith(href);
+          const href = `${base}/${sp.path}`.replace(/\/+$/, '');
+          const currentPath = location.pathname.replace(/\/+$/, '');
+          
+          const active = currentPath === href || currentPath.startsWith(`${href}/`);
+          
           const Icon = sp.icon;
           return (
             <Link

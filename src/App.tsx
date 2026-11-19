@@ -266,7 +266,8 @@ const router = createBrowserRouter([
             path: 'modules/moderation',
             element: <ModuleLayout moduleKey="moderation" />,
             children: [
-              { index: true, element: <AutomodOverviewPage /> },
+              { index: true, element: <Navigate to="overview" replace /> },
+              { path: 'overview', element: <AutomodOverviewPage /> },
               { path: 'automod', element: <AutomodPage /> },
               { path: 'warnings', element: <WarningsPage /> },
               { path: 'modlog', element: <ModlogPage /> },
@@ -276,7 +277,8 @@ const router = createBrowserRouter([
             path: 'modules/tickets',
             element: <ModuleLayout moduleKey="tickets" />,
             children: [
-              { index: true, element: <TicketOverviewPage /> },
+              { index: true, element: <Navigate to="overview" replace /> },
+              { path: 'overview', element: <TicketOverviewPage /> },
               { path: 'config', element: <TicketConfigPage /> },
               { path: 'panels', element: <TicketPanelsPage /> },
               { path: 'open', element: <TicketOpenPage /> },

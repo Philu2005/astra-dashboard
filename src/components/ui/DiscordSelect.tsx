@@ -14,6 +14,7 @@ export interface DiscordEntity {
   parent_name?: string | null;
   emoji?: string | null;
   position?: number;
+  categoryPosition?: number;
 }
 
 export interface DiscordSelectProps {
@@ -83,7 +84,7 @@ function buildOptions(
       
       const key = parentId === UNCATEGORIZED ? UNCATEGORIZED : parentId;
       const groupName = parentId === UNCATEGORIZED ? 'Ohne Kategorie' : parentName || `Kategorie ${parentId}`;
-      const groupPosition = parentId === UNCATEGORIZED ? 999999 : it.position ?? 0;
+      const groupPosition = parentId === UNCATEGORIZED ? 999999 : it.categoryPosition ?? it.position ?? 0;
 
       if (!groupsMap.has(key)) {
         groupsMap.set(key, { name: groupName, items: [], position: groupPosition });
@@ -97,7 +98,7 @@ function buildOptions(
     const sortedGroups = Array.from(groupsMap.entries()).sort((a, b) => {
       if (a[0] === UNCATEGORIZED) return 1;
       if (b[0] === UNCATEGORIZED) return -1;
-      return a[1].position - b[1].position || a[1].name.localeCompare(b[1].name);
+      return a[1].position - b[1].position;
     });
 
     for (const [key, group] of sortedGroups) {
@@ -108,7 +109,7 @@ function buildOptions(
         disabled: true,
       });
       // Channels innerhalb der Gruppe nach Position sortieren
-      const sortedItems = [...group.items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name.localeCompare(b.name));
+      const sortedItems = [...group.items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
       for (const it of sortedItems) {
         out.push({
           type: 'option',

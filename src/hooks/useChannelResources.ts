@@ -34,7 +34,10 @@ export function useChannelResources(channels: GuildChannel[], categories: GuildC
       type: ch.type,
       parent_id: ch.parent_id ?? null,
       parent_name: ch.parent_id ? (nameMap.get(ch.parent_id) || null) : null,
-      position: ch.parent_id ? (posMap.get(ch.parent_id) ?? ch.position) : ch.position,
+      // WICHTIG: position des Kanals für die Sortierung innerhalb der Gruppe erhalten
+      position: ch.position ?? 0,
+      // Optionale Information für die Kategorie-Sortierung
+      categoryPosition: ch.parent_id ? (posMap.get(ch.parent_id) ?? 999999) : 999999,
     }));
   }, [channels, categories]);
 
