@@ -80,15 +80,14 @@ function buildOptions(
     // Map: Category ID -> { name, items, position }
     const groupsMap = new Map<string, { name: string; items: DiscordEntity[]; position: number }>();
 
-    // 1. Alle verfügbaren Gruppen initialisieren (basierend auf parent_id/parent_name)
+    // 1. Alle verfügbaren Gruppen initialisieren
+    // Zuerst "Ohne Kategorie"
+    groupsMap.set(UNCATEGORIZED, { name: 'Ohne Kategorie', items: [], position: 1000000 });
+
     for (const it of items) {
       const parentId = it.parent_id || UNCATEGORIZED;
       
-      if (parentId === UNCATEGORIZED) {
-        if (!groupsMap.has(UNCATEGORIZED)) {
-          groupsMap.set(UNCATEGORIZED, { name: 'Ohne Kategorie', items: [], position: 1000000 });
-        }
-      } else {
+      if (parentId !== UNCATEGORIZED) {
         if (!groupsMap.has(parentId)) {
           groupsMap.set(parentId, {
             name: (it.parent_name || '').trim() || `Kategorie ${parentId}`,

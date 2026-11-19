@@ -31,16 +31,18 @@ export function useChannelResources(channels: GuildChannel[], categories: GuildC
     const emptyCategories = categories
       .filter(cat => !channelParentIds.has(cat.id))
       .map(cat => ({
-        id: `cat-${cat.id}`, // Eigene ID für die Kategorie-Entität
+        id: `cat-${cat.id}`, 
         name: cat.name,
-        type: 4, // Discord category type
-        parent_id: cat.id, // Wir missbrauchen parent_id hier, um sie als Gruppe zu identifizieren
+        type: 4, 
+        parent_id: cat.id, 
         parent_name: cat.name,
-        position: -1, // Am Anfang der Gruppe (unwichtig, da Gruppe leer)
+        position: -1, 
         categoryPosition: cat.position,
-        isCategoryOnly: true, // Markierung für leere Kategorien
+        isCategoryOnly: true, 
       }));
 
+    // WICHTIG: Wir sortieren das flache Array nicht hier, da DiscordSelect die Gruppierung übernimmt.
+    // Aber wir stellen sicher, dass alle Daten vorhanden sind.
     return [...transformedChannels, ...emptyCategories];
   }, [channels, categories]);
 
