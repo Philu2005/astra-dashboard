@@ -820,7 +820,7 @@ const TicketPanelsPage: React.FC = () => {
 
       {/* ── Move Dialog ───────────────────────────────────────────── */}
       {movePanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-70 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => !moving && setMovePanel(null)} />
           <div className="relative z-10 w-[92%] max-w-md rounded-2xl border border-[#2a2f45] bg-[#131625] shadow-xl p-5 space-y-4">
             <h3 className="text-lg font-semibold text-white">Panel verschieben</h3>
@@ -839,7 +839,17 @@ const TicketPanelsPage: React.FC = () => {
             />
             <div className="flex items-center justify-end gap-3 pt-2">
               <StyledButton variant="ghost" onClick={() => setMovePanel(null)} disabled={moving}>Abbrechen</StyledButton>
-              <StyledButton onClick={onMove} disabled={moving || !moveChannelId} leftIcon={<ArrowRightLeft />}>
+              <StyledButton
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('[TicketPanel Move] Button wirklich geklickt');
+                    void onMove();
+                  }}
+                  disabled={moving || !moveChannelId}
+                  leftIcon={<ArrowRightLeft />}
+              >
                 {moving ? 'Wird verschoben…' : 'Verschieben'}
               </StyledButton>
             </div>
