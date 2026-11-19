@@ -98,6 +98,7 @@ const TicketPanelsPage: React.FC = () => {
   const [resLoading, setResLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'ok' | 'error'; msg: string } | null>(null);
+  const [showPreview, setShowPreview] = useState(true);
 
   // Dialogs
   const [showCreate, setShowCreate] = useState(false);
@@ -390,22 +391,29 @@ const TicketPanelsPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start max-w-[1600px] mx-auto">
         {/* Linke Seite: Bestehende Panels */}
-        <div className="flex-1 min-w-0 space-y-5">
+        <div className="flex-1 min-w-0 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-astra-purple/10 text-astra-purple">
+              <LayoutGrid className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-bold text-white">Bestehende Panels</h2>
+          </div>
+
           {/* Statistik-Leiste */}
           {!loading && !error && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
                 { label: 'Panels', value: panels.length, icon: LayoutPanelTop },
                 { label: 'Aktiv', value: panels.filter(p => getPanelStatus(p).tone === 'ok').length, icon: CheckCircle2 },
                 { label: 'Kanäle', value: new Set(panels.map(p => p.channel_id).filter(Boolean)).size, icon: Hash },
                 { label: 'Rollen', value: new Set(panels.map(p => p.support_role_id).filter(Boolean)).size, icon: Shield },
               ].map(s => (
-                <div key={s.label} className="rounded-xl border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-3 text-center">
-                  <s.icon className="mx-auto mb-1 h-4 w-4 text-astra-accent" />
-                  <p className="text-lg font-semibold text-white">{s.value}</p>
-                  <p className="text-[0.72rem] text-[#8b8fad] uppercase tracking-wider">{s.label}</p>
+                <div key={s.label} className="rounded-xl border border-[#2d3246] bg-[linear-gradient(180deg,#141728_0%,#121524_100%)] p-4 text-center">
+                  <s.icon className="mx-auto mb-2 h-4 w-4 text-astra-accent" />
+                  <p className="text-2xl font-bold text-white leading-tight">{s.value}</p>
+                  <p className="text-[0.65rem] text-[#8b8fad] uppercase tracking-[0.1em] font-medium">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -604,19 +612,19 @@ const TicketPanelsPage: React.FC = () => {
         </div>
 
         {/* Rechte Seite: Neues Panel erstellen */}
-        <div className="w-full lg:w-[380px] lg:shrink-0">
+        <div className="w-full lg:w-[420px] lg:shrink-0">
           <div className="sticky top-6">
-            <div className="rounded-2xl border border-astra-cyan/20 bg-[#15182b] p-5 shadow-2xl">
-              <div className="mb-5 flex items-center gap-2">
+            <div className="rounded-2xl border border-astra-cyan/20 bg-[#15182b] p-6 shadow-2xl">
+              <div className="mb-6 flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-astra-cyan/10 text-astra-cyan">
                   <Plus className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-semibold text-white">Neues Panel</h3>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <FieldGroup label="Discord-Zuweisung">
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <DiscordSelect
                       label="Zielkanal *"
                       kind="channel"
@@ -643,32 +651,47 @@ const TicketPanelsPage: React.FC = () => {
                 </FieldGroup>
 
                 <FieldGroup label="Embed Inhalt">
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Titel</label>
+                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">Titel</label>
                       <StyledInput
                         placeholder="z. B. Support Tickets"
                         value={createForm.title}
                         onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
-                        className="w-full"
+                        className="w-full h-10"
                       />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-[0.85rem] font-medium text-[#c1c7de]">Beschreibung</label>
+                      <label className="mb-1.5 block text-[0.8rem] font-medium text-[#c1c7de]">Beschreibung</label>
                       <StyledTextarea
                         placeholder="Klicke auf den Button um ein Ticket zu erstellen..."
                         value={createForm.description}
                         onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
-                        className="min-h-[80px] w-full"
+                        className="min-h-[80px] w-full text-sm"
                       />
                     </div>
                   </div>
                 </FieldGroup>
 
-                <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-4 overflow-hidden">
-                  <p className="mb-2 text-[0.7rem] font-bold text-[#6b7094] uppercase tracking-widest">Vorschau</p>
-                  <div className="scale-[0.85] origin-top-left">
-                    <EmbedPreview title={createForm.title} description={createForm.description} />
+                <div className="rounded-xl border border-[#2a2f45] bg-[#0f111d] p-3 overflow-hidden">
+                  <button 
+                    type="button"
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="flex w-full items-center justify-between px-1"
+                  >
+                    <p className="text-[0.7rem] font-bold text-[#6b7094] uppercase tracking-widest">Discord Vorschau</p>
+                    <ChevronDown className={cn("h-4 w-4 text-[#6b7094] transition-transform duration-200", showPreview && "rotate-180")} />
+                  </button>
+                  
+                  <div className={cn(
+                    "grid transition-all duration-300 ease-in-out",
+                    showPreview ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
+                  )}>
+                    <div className="overflow-hidden">
+                      <div className="scale-[0.85] origin-top-left -mb-[15%]">
+                        <EmbedPreview title={createForm.title} description={createForm.description} />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
