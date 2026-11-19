@@ -182,7 +182,35 @@ async def get_server_categories(guild_id: str, request: Request):
     try:
         data = await astra_client.get_server_categories(guild_id, user_id)
     except AstraApiError as exc:
-        logger.warning("Serverkategorien konnten nicht geladen werden (guild=%s): %s", guild_id, exc)
+        raise _handle_astra_error(exc)
+
+    return data
+
+
+@router.get("/servers/{guild_id}/members/lookup")
+async def get_members_lookup(guild_id: str, request: Request, member_ids: str):
+    """
+    Sucht nach mehreren Discord-Mitgliedern einer Guild (Batch-Lookup).
+    member_ids: Kommagetrennte Liste von IDs.
+    """
+    user_id = await _get_user_id_from_session(request)
+
+    # IDs validieren
+    ids_list = [mid.strip() for mid in member_ids.split(",") if mid.strip()]
+    if not ids_list:
+        raise HTTPException(status_code=400, detail="Keine Member-IDs angegeben.")
+
+    if len(ids_list) > 100:  # Etwas Puffer, Bot-API hat 50er Limit
+        raise HTTPException(status_code=400, detail="Zu viele IDs auf einmal (max 100).")
+
+    try:
+        # AstraClient.get_members_lookup übernimmt das Batching nicht selbst, 
+        # sondern leitet die Anfrage 1:1 weiter. Da die Bot-API 50 IDs pro Request 
+        # erlaubt, sollte das Frontend idealerweise bereits batchen, 
+        # aber wir können hier auch eine einfache Aufteilung machen, falls nötig.
+        # Laut Aufgabe soll das Frontend Batches bilden.
+        data = await astra_client.get_members_lookup(guild_id, user_id, ids_list)
+    except AstraApiError as exc:
         raise _handle_astra_error(exc)
 
     return data

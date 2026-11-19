@@ -287,5 +287,14 @@ class AstraClient:
         """DELETE /tickets/log/{guild_id}?user_id=<user_id>"""
         return await self._request("DELETE", f"/tickets/log/{guild_id}", params={"user_id": user_id})
 
+    # --- Moderation: Member Lookup ---
+    async def get_members_lookup(self, guild_id: str, user_id: str, member_ids: list[str]) -> dict[str, Any]:
+        """GET /moderation/members/lookup/{guild_id}?user_id=<user_id>&member_ids=id1,id2..."""
+        params = {
+            "user_id": user_id,
+            "member_ids": ",".join(member_ids)
+        }
+        return await self._request("GET", f"/moderation/members/lookup/{guild_id}", params=params)
+
 
 astra_client = AstraClient()

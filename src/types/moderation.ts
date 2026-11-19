@@ -44,3 +44,15 @@ export type WarnsResponse = {
   count: number;
   warns: WarnItem[];
 };
+
+export type DiscordMember = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+};
+
+export type MemberLookupResponse = {
+  success: boolean;
+  members: Record<string, DiscordMember>;
+};

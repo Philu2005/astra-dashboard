@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import type { AutomodConfig, AutomodResponse, ModlogResponse, WarnsResponse } from '@/types/moderation';
+import type { AutomodConfig, AutomodResponse, ModlogResponse, WarnsResponse, MemberLookupResponse } from '@/types/moderation';
 
 class ModerationApiError extends Error {
   constructor(message: string, public readonly statusCode: number) {
@@ -72,6 +72,13 @@ export const moderationApi = {
   async deleteAllWarns(guildId: string, memberId: string): Promise<WarnsResponse> {
     const res = await apiClient.delete(`/moderation/warns/${guildId}/${memberId}?all=true`);
     return handleResponse<WarnsResponse>(res);
+  },
+
+  // Member Lookup
+  async lookupMembers(guildId: string, memberIds: string[]): Promise<MemberLookupResponse> {
+    if (memberIds.length === 0) return { success: true, members: {} };
+    const res = await apiClient.get(`/servers/${guildId}/members/lookup?member_ids=${encodeURIComponent(memberIds.join(','))}`);
+    return handleResponse<MemberLookupResponse>(res);
   },
 };
 
