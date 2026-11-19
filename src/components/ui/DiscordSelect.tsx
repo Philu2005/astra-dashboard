@@ -81,26 +81,38 @@ function buildOptions(
     const groupsMap = new Map<string, { name: string; items: DiscordEntity[]; position: number }>();
 
     // 1. Alle verfügbaren Gruppen initialisieren
-    // Zuerst "Ohne Kategorie"
+    // Zuerst "Ohne Kategorie" am Ende
     groupsMap.set(UNCATEGORIZED, { name: 'Ohne Kategorie', items: [], position: 1000000 });
 
+    // WICHTIG: Zuerst alle Einträge verarbeiten, die NUR Kategorien sind (isCategoryOnly),
+    // damit die korrekten Positionsdaten der API Vorrang haben.
     for (const it of items) {
+      if (it.isCategoryOnly) {
+        const catId = it.parent_id || it.id;
+        groupsMap.set(catId, {
+          name: it.name,
+          items: [],
+          position: it.categoryPosition ?? 999999
+        });
+      }
+    }
+
+    // Dann alle Kanäle den Gruppen zuordnen
+    for (const it of items) {
+      if (it.isCategoryOnly) continue;
+
       const parentId = it.parent_id || UNCATEGORIZED;
       
-      if (parentId !== UNCATEGORIZED) {
-        if (!groupsMap.has(parentId)) {
-          groupsMap.set(parentId, {
-            name: (it.parent_name || '').trim() || `Kategorie ${parentId}`,
-            items: [],
-            position: it.categoryPosition ?? 999999
-          });
-        }
+      if (!groupsMap.has(parentId)) {
+        // Fallback: Falls ein Kanal eine parent_id hat, zu der keine Kategorie-Entität geliefert wurde
+        groupsMap.set(parentId, {
+          name: (it.parent_name || '').trim() || `Kategorie ${parentId}`,
+          items: [],
+          position: it.categoryPosition ?? 999999
+        });
       }
 
-      // Falls es kein Platzhalter für eine leere Kategorie ist, zum Inhalt hinzufügen
-      if (!it.isCategoryOnly) {
-        groupsMap.get(parentId)!.items.push(it);
-      }
+      groupsMap.get(parentId)!.items.push(it);
     }
 
     const out: InternalOption[] = [];
