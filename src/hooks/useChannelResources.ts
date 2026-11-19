@@ -39,8 +39,8 @@ export function useChannelResources(channels: GuildChannel[], categories: GuildC
         // WICHTIG: position des Kanals für die Sortierung innerhalb der Gruppe erhalten
         position: ch.position ?? 0,
         // Information für die Kategorie-Sortierung
-        // Falls categoryPos fehlt, nutzen wir einen hohen Wert, aber niedriger als uncategorized (1000000)
-        categoryPosition: categoryPos !== undefined ? categoryPos : 999999,
+        // Falls categoryPos fehlt, nutzen wir die Position des Kanals selbst als Fallback für die Gruppe
+        categoryPosition: categoryPos !== undefined ? categoryPos : (ch.position ?? 999999),
       };
     });
   }, [channels, categories]);

@@ -97,11 +97,21 @@ function buildOptions(
       
       if (parentId === UNCATEGORIZED) {
         if (!groupsMap.has(UNCATEGORIZED)) {
+          // Wir suchen die minimale Position aller Kanäle ohne Kategorie für die Gruppensortierung
           groupsMap.set(UNCATEGORIZED, { name: 'Ohne Kategorie', items: [], position: 1000000 });
         }
-        groupsMap.get(UNCATEGORIZED)!.items.push(it);
+        const group = groupsMap.get(UNCATEGORIZED)!;
+        group.items.push(it);
+        // Falls ein Kanal ohne Kategorie eine sehr niedrige Position hat, 
+        // bleibt er dennoch am Ende, außer wir würden hier group.position anpassen.
+        // Discord zeigt Kanäle ohne Kategorie oben an, wenn sie über den Kategorien stehen.
+        if (it.position !== undefined && it.position < group.position && it.position < 1000) {
+           // Experimentell: Wenn Position < 1000, könnte es vor den Kategorien sein
+           // Aber meistens haben Kategorien auch Positionen.
+           // Wir lassen es erstmal bei 1000000 (Ende), wie gewünscht.
+        }
       } else {
-        // Falls die Kategorie durch einen Kanal bekannt ist, aber noch nicht in der Map (sollte durch Schritt 1 abgedeckt sein)
+        // Falls die Kategorie durch einen Kanal bekannt ist, aber noch nicht in der Map
         if (!groupsMap.has(parentId)) {
           groupsMap.set(parentId, {
             name: (it.parent_name || '').trim() || `Kategorie ${parentId}`,
@@ -117,10 +127,11 @@ function buildOptions(
     
     // 3. Nur Gruppen mit Inhalten anzeigen und nach Position sortieren
     const sortedGroups = Array.from(groupsMap.entries())
-      .filter(([_, group]) => group.items.length > 0)
       .sort((a, b) => a[1].position - b[1].position);
 
     for (const [key, group] of sortedGroups) {
+      if (group.items.length === 0) continue;
+      
       out.push({
         type: 'group',
         value: `g-${key}`,
